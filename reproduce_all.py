@@ -36,6 +36,7 @@ EXPERIMENTS = {
     "f": ("exp_f_learnable_timescales.py", "Experiment F: Learnable Timescales via Backpropagation"),
     "f2": ("exp_f2_timescale_convergence.py", "Experiment F2: Three-Condition Timescale Convergence"),
     "g": ("exp_g_long_rollout_stability.py", "Experiment G: 2048-Step Rollout Numerical Stability"),
+    "h": ("exp_h_prime_selective.py", "Experiment H: 100% PRIME-Selective Distillation Engine (1.5B)"),
 }
 
 def run_experiment(exp_key: str):
