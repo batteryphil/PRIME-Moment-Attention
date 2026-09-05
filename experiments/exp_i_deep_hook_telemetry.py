@@ -123,6 +123,9 @@ def harvest_layer_gradients(student_model) -> Dict[int, Dict[str, float]]:
         def get_norm(p):
             return p.grad.norm(2).item() if (p is not None and p.grad is not None) else 0.0
 
+        norm_p = getattr(attn, "head_norm", None)
+        grad_norm_val = get_norm(norm_p.weight) if (norm_p is not None and hasattr(norm_p, "weight")) else 0.0
+
         grad_data[l_idx] = {
             "grad_wq": get_norm(attn.q_proj.weight),
             "grad_wk": get_norm(attn.k_proj.weight),
@@ -130,6 +133,7 @@ def harvest_layer_gradients(student_model) -> Dict[int, Dict[str, float]]:
             "grad_wo": get_norm(attn.o_proj.weight),
             "grad_wdelta": get_norm(attn.delta_proj.weight),
             "grad_bdelta": get_norm(attn.delta_proj.bias),
+            "grad_head_norm": grad_norm_val,
             "grad_tau": get_norm(attn.log_tau),
             "grad_beta": get_norm(attn.beta_param),
             "grad_total_attn": math.sqrt(
@@ -137,7 +141,8 @@ def harvest_layer_gradients(student_model) -> Dict[int, Dict[str, float]]:
                 get_norm(attn.k_proj.weight)**2 +
                 get_norm(attn.v_proj.weight)**2 +
                 get_norm(attn.o_proj.weight)**2 +
-                get_norm(attn.delta_proj.weight)**2
+                get_norm(attn.delta_proj.weight)**2 +
+                grad_norm_val**2
             )
         }
     return grad_data

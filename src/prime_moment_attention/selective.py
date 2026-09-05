@@ -53,15 +53,22 @@ class PrimeSelectiveAttention(nn.Module):
         self.v_proj = original_attn.v_proj
         self.o_proj = original_attn.o_proj
 
-        # 1. Multiscale timescale bank tau_h in [min_tau, max_tau]
-        init_log_tau = torch.linspace(math.log(min_tau), math.log(max_tau), self.num_heads, device=device)
+        # 1. Output normalization per-head prior to W_o projection (constrains residual stream energy)
+        self.head_norm = nn.RMSNorm(self.head_dim, eps=1e-6, device=device, dtype=dtype)
+
+        # 2. Multiscale timescale bank tau_h: biased toward long horizons for code induction
+        if self.num_heads == 12:
+            tau_schedule = [4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 384.0, 512.0, 768.0, 1024.0, 1500.0]
+            init_log_tau = torch.log(torch.tensor(tau_schedule, device=device, dtype=torch.float32))
+        else:
+            init_log_tau = torch.linspace(math.log(min_tau), math.log(max_tau), self.num_heads, device=device)
         self.log_tau = nn.Parameter(init_log_tau)
 
-        # 2. Learnable inverse temperature beta_h per head (init at 4.0 for ~24.5:1 contrast)
+        # 3. Learnable inverse temperature beta_h per head (init at 4.0 for ~24.5:1 contrast)
         inv_softplus_beta = math.log(math.exp(init_beta - 1.0) - 1.0)
         self.beta_param = nn.Parameter(torch.full((self.num_heads,), inv_softplus_beta, device=device))
 
-        # 3. Input-dependent selective gating projection W_delta: [hidden_size -> num_heads]
+        # 4. Input-dependent selective gating projection W_delta: [hidden_size -> num_heads]
         self.delta_proj = nn.Linear(self.hidden_size, self.num_heads, bias=True, device=device, dtype=dtype)
         nn.init.constant_(self.delta_proj.bias, 0.5413) # softplus(0.5413) ~ 1.0
         nn.init.normal_(self.delta_proj.weight, std=0.01)
@@ -194,6 +201,8 @@ class PrimeSelectiveAttention(nn.Module):
                 K2 = (0.5 * (beta ** 2)).view(1, self.num_heads, 1).float() * ((k_norm**2) * decay_to_end).sum(dim=2)
                 past_key_values.prime_states[self.layer_idx] = (S0, S1, S2, K0, K1, K2)
 
+        # Per-head RMSNorm across head_dim to constrain residual stream energy to ~1.0
+        attn_output = self.head_norm(attn_output)
         attn_output = attn_output.transpose(1, 2).contiguous().view(*input_shape, -1)
         return self.o_proj(attn_output), None
 
