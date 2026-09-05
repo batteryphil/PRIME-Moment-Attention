@@ -20,9 +20,60 @@
 
 Standard autoregressive Softmax Attention requires storing every historical key-value pair $\mathcal{H}_t = \{(k_1, v_1), \dots, (k_t, v_t)\}$, creating an attention state footprint and per-token decoding cost that scale monotonically with sequence length $L$.
 
-**PRIME Moment Attention** converts the context-dependent historical storage and repeated scanning of conventional autoregressive attention into a **bounded recurrent moment state** whose measured memory footprint and decoding cost remain independent of sequence length $L$ (scaling as $\mathcal{O}(D^2)$ with respect to head dimension $D$), while retaining substantially more injected signal than tested first-order linear attention baselines.
+$$O_t = \frac{\sum_{i=1}^{t} \exp(q_t^\top k_i / \sqrt{D}) v_i}{\sum_{i=1}^{t} \exp(q_t^\top k_i / \sqrt{D})}$$
+
+**PRIME Moment Attention** converts the context-dependent historical storage and repeated scanning of conventional attention into a **bounded recurrent moment state** whose measured memory footprint and decoding cost remain independent of sequence length $L$ (scaling as $\mathcal{O}(D^2)$ with respect to head dimension $D$), while retaining substantially more injected signal than tested first-order linear attention baselines.
 
 > **Central Empirical Finding**: In evaluated implementations, PRIME maintained a bounded attention state and approximately constant measured autoregressive decoding cost through a 1M-token (1,048,576) context.
+
+---
+
+## 📐 Mathematical Formulation & Recurrent Mechanics
+
+### 1. Taylor Expansion and the $\mathcal{O}(D^2)$ Diagonal Bottleneck
+To achieve a bounded recurrent state while mimicking softmax, PRIME leverages a truncated second-order Taylor expansion of the exponential function:
+
+$$\exp(x) \approx 1 + x + \frac{1}{2}x^2$$
+
+Substituting $x = \frac{q_t^\top k_i}{\sqrt{D}}$, a naive expansion of the quadratic term $(q_t^\top k_i)^2$ yields $q_t^\top (k_i k_i^\top) q_t$. Integrating this directly into the numerator would require accumulating the third-order tensor $\sum_i (k_i \otimes k_i \otimes v_i) \in \mathbb{R}^{D \times D \times D}$, pushing state complexity to an unworkable $\mathcal{O}(D^3)$ ($262,144$ parameters per head for $D=64$).
+
+PRIME resolves this via the **Diagonal Second-Order Moment Approximation**, discarding off-diagonal covariance cross-terms:
+
+$$(q_t^\top k_i)^2 \approx \sum_{d=1}^D (q_{t,d} k_{i,d})^2 = (q_t \odot q_t)^\top (k_i \odot k_i)$$
+
+This mathematical compromise trades exact softmax reconstruction for hardware feasibility, restricting the state size strictly to $\mathcal{O}(D^2)$ ($4,096$ parameters per head for $D=64$, a **64× reduction**).
+
+### 2. Recurrent State Equations
+By decoupling $q_t$ from the historical summation over token index $i$, attention is computed over recurrently updated moment matrices with per-head decay $\lambda_h \in (0, 1)$:
+
+**Numerator States (Information Payload):**
+* **Zeroth-Order ($D \times 1$):** $S^{(0)}_t = \lambda_h S^{(0)}_{t-1} + v_t$
+* **First-Order ($D \times D$):** $S^{(1)}_t = \lambda_h S^{(1)}_{t-1} + (k_t v_t^\top)$
+* **Second-Order ($D \times D$):** $S^{(2)}_t = \lambda_h S^{(2)}_{t-1} + ((k_t \odot k_t) v_t^\top)$
+
+**Denominator States (Partition Normalizer):**
+* **Zeroth-Order (Scalar):** $Z^{(0)}_t = \lambda_h Z^{(0)}_{t-1} + 1$
+* **First-Order ($D \times 1$):** $Z^{(1)}_t = \lambda_h Z^{(1)}_{t-1} + k_t$
+* **Second-Order ($D \times 1$):** $Z^{(2)}_t = \lambda_h Z^{(2)}_{t-1} + (k_t \odot k_t)$
+
+**Output Readout (strictly $\mathcal{O}(D^2)$ compute, independent of $L$):**
+
+$$O_t = \frac{S^{(0)}_t + \frac{1}{\sqrt{D}} S^{(1)}_t q_t + \frac{1}{2D} S^{(2)}_t (q_t \odot q_t)}{Z^{(0)}_t + \frac{1}{\sqrt{D}} Z^{(1)}_t q_t + \frac{1}{2D} Z^{(2)}_t (q_t \odot q_t)}$$
+
+---
+
+## ⚠️ Algorithmic Vulnerabilities & The QK-Norm Requirement
+
+Polynomial approximations of exponential functions exhibit specific mathematical properties that dictate architectural design:
+
+1. **The Parabolic Rebound ($x < -1$):**
+   * Softmax strictly squashes negative logits toward zero ($\lim_{x \to -\infty} \exp(x) = 0$).
+   * The polynomial $P(x) = 1 + x + \frac{1}{2}x^2 = \frac{1}{2}(x+1)^2 + \frac{1}{2} \ge 0.5$ has its global minimum at $x = -1$. For $x < -1$, the polynomial rebounds upward: at $x = -10$, $\exp(-10) = 4.5 \times 10^{-5}$, whereas $P(-10) = \mathbf{+41.0}$.
+   * *Consequence*: Without constraint, strongly rejected tokens receive massive positive attention weights!
+2. **Divergence at $|s| \gg 1$:**
+   * In un-normalized pretrained Transformers, raw dot products regularly reach $|s| = 20\text{--}100$. Taylor expansions around $0$ diverge violently at these scales.
+3. **Mandatory QK-Normalization:**
+   * To keep $|s| \le 1$ where the Taylor expansion is valid, **strict per-head Query-Key normalization (RMSNorm or LayerNorm) is an absolute necessity**, not an optional embellishment. With QK-Norm, the attention logits remain within the stable convergence radius.
 
 ---
 
@@ -94,31 +145,6 @@ Signal retention cosine similarity $\cos(h_{\text{stored}}, h_{\text{target}})$ 
   * Condition B (Learnable Log): Final loss = 1.4684 ($\tau \in [2.0, 1064.6]$)
   * Condition C (Random Init): Final loss = 7.6987 ($\tau \in [1.1, 84.5]$)
   * *Finding*: Even under random initialization, optimization autonomously disperses decay rates across multiple orders of magnitude to capture high- and low-frequency components.
-
----
-
-## 📐 Mathematical Formulation
-
-### 1. Second-Order Taylor Expansion
-Causal softmax attention expands around $s = \frac{q^T k}{\sqrt{d}} = 0$:
-
-$$\exp(s) = 1 + s + \frac{1}{2} s^2 + \mathcal{O}(s^3)$$
-
-The second-order quadratic term expands as:
-$$s^2 = \left( \frac{q^T k}{\sqrt{d}} \right)^2 = \frac{1}{d} q^T (k k^T) q$$
-
-Yielding the normalized attention output:
-$$y(q) \approx \frac{S_0 + \frac{1}{\sqrt{d}} q^T S_1 + \frac{1}{2d} q^T S_2 q}{K_0 + \frac{1}{\sqrt{d}} q^T K_1 + \frac{1}{2d} q^T K_2 q}$$
-
-### 2. The Diagonal Second-Order Approximation
-The full outer product $S_2 = \sum_j (k_j \otimes k_j) \otimes v_j$ forms a rank-3 tensor requiring $\mathcal{O}(D^3)$ state size ($262,144$ elements per head for $D=64$).
-
-To maintain $\mathcal{O}(D^2)$ parameter compactness matching $S_1$, PRIME employs the **diagonal second-order approximation**:
-$$k_j k_j^T \approx \operatorname{diag}(k_j^2)$$
-
-$$\boxed{S_2 = \sum_{j=1}^t (k_j^2) v_j^T \in \mathbb{R}^{D \times D}, \quad K_2 = \sum_{j=1}^t k_j^2 \in \mathbb{R}^D}$$
-
-This reduces 2nd-order parameter storage by **64×** while capturing quadratic magnitude curvature.
 
 ---
 
