@@ -212,24 +212,41 @@ def convert_transformer_to_prime_selective(
     hybrid_ratio: float = 1.0,
     min_tau: float = 2.0,
     max_tau: float = 1000.0,
-    init_beta: float = 4.0
+    init_beta: float = 4.0,
+    hybrid_pattern: str = "sandwich",
+    interleaved_interval: int = 4,
+    softmax_layers: Optional[Set[int]] = None,
+    layers_to_convert: Optional[Set[int]] = None
 ) -> Tuple[PreTrainedModel, Set[int]]:
     """
     Transplants PRIME-Selective Attention into a Hugging Face Transformer model.
     hybrid_ratio:
       1.0 = 100% layers converted to PRIME-Selective Attention.
-      0.5 = 50% layers converted.
+      0.75 = 75% layers converted (e.g. 21 PRIME layers, 7 Softmax layers).
+    hybrid_pattern:
+      - 'sandwich': Softmax at boundaries (first/last), PRIME in the middle.
+      - 'interleaved': Preserves 1 Softmax layer every `interleaved_interval` layers (e.g. layers 0, 4, 8, ...).
+      - 'custom': Uses `layers_to_convert` or `softmax_layers`.
     """
     layers = model.model.layers
     num_layers = len(layers)
 
-    if hybrid_ratio >= 1.0:
-        layers_to_convert = set(range(num_layers))
+    if layers_to_convert is not None:
+        target_layers = set(layers_to_convert)
+    elif softmax_layers is not None:
+        target_layers = set(range(num_layers)) - set(softmax_layers)
+    elif hybrid_pattern == "interleaved":
+        # Keep every interleaved_interval layer as Softmax (e.g., 0, 4, 8, 12, ...)
+        softmax_set = set(range(0, num_layers, interleaved_interval))
+        target_layers = set(range(num_layers)) - softmax_set
+    elif hybrid_ratio >= 1.0:
+        target_layers = set(range(num_layers))
     else:
+        # Sandwich pattern
         boundary = max(1, int(num_layers * (1.0 - hybrid_ratio) / 2))
-        layers_to_convert = set(range(boundary, num_layers - boundary))
+        target_layers = set(range(boundary, num_layers - boundary))
 
-    for idx in layers_to_convert:
+    for idx in target_layers:
         orig = layers[idx].self_attn
         prime_layer = PrimeSelectiveAttention(
             orig,
@@ -240,4 +257,4 @@ def convert_transformer_to_prime_selective(
         )
         layers[idx].self_attn = prime_layer
 
-    return model, layers_to_convert
+    return model, target_layers
