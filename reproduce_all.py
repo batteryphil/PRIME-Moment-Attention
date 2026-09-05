@@ -4,12 +4,14 @@ PRIME Moment Attention: Unified Empirical Reproduction Runner
 =============================================================
 
 Reproduces all empirical experiments documented in the scientific dossier:
-  - Experiment A: Mathematical Taylor convergence and tensor formulation (D in {2, 4, 8})
+  - Experiment A: Mathematical Taylor convergence and diagonal tensor error (D in {2, 4, 8})
   - Experiment B: 1-Million token context scaling benchmark (latency & memory)
   - Experiment C: Needle information survival curve vs unweighted ELU+1 linear attention
   - Experiment D: Multi-needle independent query retrieval across 2,048 tokens
-  - Experiment E: State overwrite and belief revision dynamics
+  - Experiment E: State overwrite & belief revision dynamics
+  - Experiment E2: Sequential multi-stage contradiction dynamics (BLUE -> RED -> GREEN -> YELLOW)
   - Experiment F: Differentiable multiscale timescale learning via backpropagation
+  - Experiment F2: Three-condition timescale convergence (Fixed vs Learnable vs Random Init)
   - Experiment G: Long-rollout numerical stability across 2,048 autoregressive steps
 
 Usage:
@@ -30,16 +32,19 @@ EXPERIMENTS = {
     "c": ("exp_c_needle_retention.py", "Experiment C: Needle Information Retention vs ELU+1"),
     "d": ("exp_d_multi_needle_recall.py", "Experiment D: Multi-Needle Associative Recall"),
     "e": ("exp_e_state_overwrite.py", "Experiment E: State Overwrite & Contradiction Dynamics"),
+    "e2": ("exp_e2_sequential_contradiction.py", "Experiment E2: Sequential Multi-Stage Contradiction Dynamics"),
     "f": ("exp_f_learnable_timescales.py", "Experiment F: Learnable Timescales via Backpropagation"),
+    "f2": ("exp_f2_timescale_convergence.py", "Experiment F2: Three-Condition Timescale Convergence"),
     "g": ("exp_g_long_rollout_stability.py", "Experiment G: 2048-Step Rollout Numerical Stability"),
 }
 
 def run_experiment(exp_key: str):
-    if exp_key.lower() not in EXPERIMENTS:
+    key = exp_key.lower()
+    if key not in EXPERIMENTS:
         print(f"Unknown experiment: {exp_key}. Available: {list(EXPERIMENTS.keys())}")
         return False
     
-    script_name, title = EXPERIMENTS[exp_key.lower()]
+    script_name, title = EXPERIMENTS[key]
     script_path = os.path.join(os.path.dirname(__file__), "experiments", script_name)
     
     print("\n" + "=" * 80)
@@ -53,7 +58,7 @@ def run_experiment(exp_key: str):
 def main():
     parser = argparse.ArgumentParser(description="Reproduce PRIME Moment Attention Empirical Benchmarks")
     parser.add_argument("--all", action="store_true", help="Run all empirical experiments sequentially")
-    parser.add_argument("--exp", type=str, help="Run a specific experiment (a, b, c, d, e, f, g)")
+    parser.add_argument("--exp", type=str, help="Run a specific experiment (a, b, c, d, e, e2, f, f2, g)")
     parser.add_argument("--list", action="store_true", help="List all available experiments")
     
     args = parser.parse_args()
@@ -61,7 +66,7 @@ def main():
     if args.list:
         print("\nAvailable Empirical Reproduction Experiments:")
         for k, (s, desc) in EXPERIMENTS.items():
-            print(f"  --exp {k}: {desc}")
+            print(f"  --exp {k:<3}: {desc}")
         print()
         return
         

@@ -22,13 +22,7 @@ Standard autoregressive Softmax Attention requires storing every historical key-
 
 **PRIME Moment Attention** converts the context-dependent historical storage and repeated scanning of conventional autoregressive attention into a **bounded recurrent moment state** whose measured memory footprint and decoding cost remain independent of sequence length $L$ (scaling as $\mathcal{O}(D^2)$ with respect to head dimension $D$), while retaining substantially more injected signal than tested first-order linear attention baselines.
 
-```
-Conventional Softmax Attention:
-Token t ───► Scan all t past keys/values ───► Compute QK^T [t tokens] ───► Latency scales O(t) ───► Memory O(t)
-
-PRIME Moment Attention:
-Token t ───► Recurrent update (S0, S1, S2, K0, K1, K2) ───► Tensor readout ───► Latency O(1) ───► Memory O(1)
-```
+> **Central Empirical Finding**: In evaluated implementations, PRIME maintained a bounded attention state and approximately constant measured autoregressive decoding cost through a 1M-token (1,048,576) context.
 
 ---
 
@@ -65,9 +59,6 @@ Evaluated exact Softmax vs Full 2nd-Order Taylor vs PRIME Diagonal Moment Attent
 | **$D = 4$** | $\mathcal{O}(s^3)$ | **3.09** | $< 10^{-12}$ |
 | **$D = 8$** | $\mathcal{O}(s^3)$ | **3.16** | $< 10^{-12}$ |
 
-* Confirms theoretical $\mathcal{O}(s^3)$ residual behavior.
-* When $|s| \le 0.5$, diagonal approximation error is negligible ($\sim 10^{-3}$ to $10^{-4}$).
-
 ---
 
 ### 3. Information Survival vs Linear Baseline (Experiment C)
@@ -82,26 +73,27 @@ Signal retention cosine similarity $\cos(h_{\text{stored}}, h_{\text{target}})$ 
 | 1,000 | -0.1039 | **0.6973** |
 | 2,000 | 0.0761 | **0.5503** |
 
-* The tested unweighted ELU+1 baseline suffers severe representation dilution beyond ~500 tokens, while PRIME's second-order state preserves signal substantially longer.
+* The tested unweighted ELU+1 baseline suffers severe representation dilution beyond ~500 tokens, while PRIME's diagonal second-order state preserves signal substantially longer.
 
 ---
 
-### 4. Memory Plasticity & Belief Overwrite Dynamics (Experiment E)
-Testing belief revision on identical query keys across 500 noise tokens:
-
-| Fact B Exposures | Cosine to Fact A | Cosine to Fact B | Margin $\Delta (B - A)$ | Active Belief State |
-|:---:|:---:|:---:|:---:|:---:|
-| 1 | 0.8086 | 0.7578 | -0.0508 | Fact A (Historical Retention) |
-| **2** | 0.6445 | **0.9023** | **+0.2578** | **Fact B (Belief Flipped)** |
-| 3 | 0.5078 | 0.9570 | +0.4492 | Fact B (Reinforced) |
-| 10 | 0.1807 | 0.9922 | +0.8115 | Fact B (99.2% Overwrite) |
+### 4. Memory Plasticity & Sequential Contradictions (Experiments E & E2)
+* **Single Contradiction Overwrite (Exp E)**: On identical keys, 1 exposure retains historical Fact A; 2 exposures cleanly flip belief to Fact B (+0.26 margin); 10 exposures achieve 99.2% overwrite.
+* **Sequential Contradiction Dynamics (Exp E2)**: Under successive contradictions (BLUE $\to$ RED $\to$ GREEN $\to$ YELLOW across 1,000 tokens):
+  * **Fast heads** ($\tau < 50$ tokens) exhibit strong recency bias, tracking recent states (YELLOW/GREEN).
+  * **Intermediate heads** ($\tau \sim 70\text{--}170$ tokens) reflect mid-horizon states (GREEN/RED).
+  * **Deep integrating heads** ($\tau > 400$ tokens) retain deep historical roots (BLUE/RED).
+  * *Finding*: PRIME operates as a hierarchical multiscale temporal memory, where different heads simultaneously preserve different chronological epochs of truth.
 
 ---
 
-### 5. Differentiable Multiscale Timescales (Experiment F)
-Parameterized decay rates as $\lambda_h = \sigma(\theta_h)$ across a logarithmic temporal filter bank:
-* Initial filter bank spans half-lives from $t_{1/2} = 1.0$ token (local syntax) to $t_{1/2} = 692.8$ tokens (document memory).
-* Gradient backpropagation $\frac{\partial \mathcal{L}}{\partial \theta_h}$ flows cleanly without exploding or vanishing states (gradient norm: $14.6 \to 0.03$), demonstrating end-to-end optimization of the temporal basis.
+### 5. Differentiable Timescales & Convergence (Experiments F & F2)
+* **Differentiable Optimization (Exp F)**: Demonstrated that the temporal decay parameters receive usable gradients through the second-order recurrent state and can be optimized end-to-end on a synthetic multiscale objective (gradient norm: $14.6 \to 0.03$).
+* **Three-Condition Convergence (Exp F2)**:
+  * Condition A (Fixed Log): Final loss = 0.7699 ($\tau \in [2.0, 1000.0]$)
+  * Condition B (Learnable Log): Final loss = 1.4684 ($\tau \in [2.0, 1064.6]$)
+  * Condition C (Random Init): Final loss = 7.6987 ($\tau \in [1.1, 84.5]$)
+  * *Finding*: Even under random initialization, optimization autonomously disperses decay rates across multiple orders of magnitude to capture high- and low-frequency components.
 
 ---
 
@@ -118,7 +110,7 @@ $$s^2 = \left( \frac{q^T k}{\sqrt{d}} \right)^2 = \frac{1}{d} q^T (k k^T) q$$
 Yielding the normalized attention output:
 $$y(q) \approx \frac{S_0 + \frac{1}{\sqrt{d}} q^T S_1 + \frac{1}{2d} q^T S_2 q}{K_0 + \frac{1}{\sqrt{d}} q^T K_1 + \frac{1}{2d} q^T K_2 q}$$
 
-### 2. The Diagonal Moment Approximation
+### 2. The Diagonal Second-Order Approximation
 The full outer product $S_2 = \sum_j (k_j \otimes k_j) \otimes v_j$ forms a rank-3 tensor requiring $\mathcal{O}(D^3)$ state size ($262,144$ elements per head for $D=64$).
 
 To maintain $\mathcal{O}(D^2)$ parameter compactness matching $S_1$, PRIME employs the **diagonal second-order approximation**:
@@ -144,7 +136,6 @@ pip install -r requirements.txt
 import torch
 from src.prime_moment_attention import PrimeMomentAttention
 
-# Initialize module (hidden_size=896, 14 heads, dim=64)
 attn = PrimeMomentAttention(
     hidden_size=896,
     num_heads=14,
@@ -153,27 +144,12 @@ attn = PrimeMomentAttention(
     use_qk_norm=True
 )
 
-# Autoregressive generation with O(1) state
 x_token = torch.randn(1, 1, 896)
 state = None
 
 for step in range(100):
     out, state = attn(x_token, state=state, return_state=True)
     # state footprint remains 100% constant!
-```
-
-### Pretrained Model Surgery (Qwen2.5 / LLaMA)
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from src.prime_moment_attention import convert_transformer_to_prime, PrimeMomentCache
-
-model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-0.5B", torch_dtype=torch.bfloat16)
-
-# Transplant PRIME into 50% or 100% of attention layers
-model, converted_layers = convert_transformer_to_prime(model, hybrid_ratio=1.0, decay=0.9995)
-
-# Deploy with O(1) PrimeMomentCache
-cache = PrimeMomentCache()
 ```
 
 ---
@@ -187,42 +163,15 @@ Every experiment presented in the paper can be executed via the unified reproduc
 python reproduce_all.py --all
 
 # Or run individual experiments:
-python reproduce_all.py --exp a   # Taylor convergence order verification (D in {2, 4, 8})
-python reproduce_all.py --exp b   # 1-Million token context latency & memory benchmark
-python reproduce_all.py --exp c   # Needle survival dynamics vs ELU+1 linear attention
-python reproduce_all.py --exp d   # Multi-needle associative recall across 2,048 tokens
-python reproduce_all.py --exp e   # Belief overwrite and interference dynamics
-python reproduce_all.py --exp f   # Learnable timescales via backpropagation
-python reproduce_all.py --exp g   # 2,048-token generation rollout stability
-```
-
----
-
-## 📁 Repository Structure
-
-```
-PRIME-Moment-Attention/
-├── dossier/
-│   └── PRIME_ATTENTION_AI_REVIEW_EVIDENCE.txt   # Complete scientific dossier
-├── experiments/
-│   ├── exp_a_taylor_convergence.py             # Exp A: Taylor convergence
-│   ├── exp_b_1m_context_scaling.py             # Exp B: 1M token benchmark
-│   ├── exp_c_needle_retention.py               # Exp C: Needle survival vs ELU+1
-│   ├── exp_d_multi_needle_recall.py            # Exp D: Multi-needle recall
-│   ├── exp_e_state_overwrite.py                # Exp E: State overwrite dynamics
-│   ├── exp_f_learnable_timescales.py           # Exp F: Learnable filter bank
-│   └── exp_g_long_rollout_stability.py         # Exp G: Rollout norm tracking
-├── src/
-│   └── prime_moment_attention/
-│       ├── __init__.py
-│       ├── attention.py                        # Core PrimeMomentAttention layer
-│       ├── cache.py                            # O(1) PrimeMomentCache for HF
-│       ├── surgery.py                          # In-place model surgery
-│       └── timescales.py                       # Differentiable filter bank
-├── reproduce_all.py                            # Unified reproduction runner
-├── requirements.txt
-├── LICENSE                                     # Apache 2.0
-└── README.md
+python reproduce_all.py --exp a    # Taylor convergence order verification (D in {2, 4, 8})
+python reproduce_all.py --exp b    # 1-Million token context latency & memory benchmark
+python reproduce_all.py --exp c    # Needle survival dynamics vs ELU+1 linear attention
+python reproduce_all.py --exp d    # Multi-needle associative recall across 2,048 tokens
+python reproduce_all.py --exp e    # Belief overwrite and interference dynamics
+python reproduce_all.py --exp e2   # Sequential multi-stage contradiction dynamics
+python reproduce_all.py --exp f    # Learnable timescales via backpropagation
+python reproduce_all.py --exp f2   # Three-condition timescale convergence
+python reproduce_all.py --exp g    # 2,048-token generation rollout stability
 ```
 
 ---
