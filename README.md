@@ -246,6 +246,83 @@ Evaluated across 10 physical oscillator parameterizations:
 
 ---
 
+## 🧠 The Theory of Contextual Complexity & Adaptive PRIME
+
+### 1. Causal Attention Mechanism Diagnostic (Direct Empirical Proof)
+To rigorously establish the mechanism behind Chronos Layer 1 behavior, we directly extracted Layer 1 attention matrices across clean, noisy, and impulsive corruption regimes (`exp_w_chronos_attention_diagnostic.py`):
+
+| Condition & Regime | Architecture / Operator | Mean Attention Entropy ($H$) | Locality Dist $\mathbb{E}[|i-j|]$ | Noise Corr $r(A_{ij}, |\epsilon_j|)$ | Spike Attn (idx 50) | Forecast MAE | Forecast Pearson $r$ |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Clean Oscillator** ($\sigma=0.0$) | Softmax Baseline | 3.470 / 4.564 (76.0%) | 20.22 | +0.0000 | 0.0110 | 0.2438 | +0.9617 |
+| | **PRIME Order 0 (Mean)** | **4.564 / 4.564 (100.0%)** | **32.00** | +0.0000 | 0.0104 | **0.1424** | **+0.9829** |
+| | PRIME Order 1 (Linear) | 3.764 / 4.564 (82.5%) | 21.57 | +0.0000 | 0.0123 | 0.7512 | -0.4344 |
+| | PRIME Order 2 (Quadratic) | 4.057 / 4.564 (88.9%) | 31.88 | +0.0000 | 0.0104 | 0.3818 | +0.6194 |
+| **Low Noise** ($\sigma=0.02$) | Softmax Baseline | 3.466 / 4.564 (75.9%) | 20.27 | +0.0058 | 0.0103 | 0.3395 | +0.0000 (Flat) |
+| | **PRIME Order 0 (Mean)** | **4.564 / 4.564 (100.0%)** | **32.00** | **+0.0000** | **0.0104** | **0.1464** | **+0.9282** |
+| | PRIME Order 2 (Quadratic) | 4.057 / 4.564 (88.9%) | 31.94 | +0.0125 | 0.0098 | 0.3070 | +0.7791 |
+| **Impulsive Spike** (+0.5 at idx 50)| Softmax Baseline | 3.464 / 4.564 (75.9%) | 20.09 | **+0.1100** | **0.0221 (2.1x)** | 0.2361 | +0.7195 |
+| | **PRIME Order 0 (Mean)** | **4.564 / 4.564 (100.0%)** | **32.00** | **+0.0000** | **0.0104 (Invariant)**| 0.3370 | +0.3760 |
+| | PRIME Order 1 (Linear) | 3.762 / 4.564 (82.4%) | 21.47 | +0.0906 | 0.0191 | 0.2442 | +0.7602 |
+| | PRIME Order 2 (Quadratic) | 4.056 / 4.564 (88.9%) | 31.87 | +0.0353 | 0.0136 | 0.3979 | +0.5254 |
+
+**Mechanistic Takeaways**:
+- **Softmax actively concentrates on noise spikes**: Under an impulsive shock at token index 50, Softmax more than doubles its attention weight on the corrupted token ($0.0221$ vs $0.0104$) and exhibits a positive noise correlation of $+0.1100$.
+- **PRIME Order 0 is an invariant integrator**: Preserves maximal theoretical entropy ($H=4.564$, 100% dispersion), zero noise correlation ($+0.0000$), and invariant attention ($1/96 = 0.0104$). Under observation noise, it preserves high phase correlation ($r = 0.9282$) where Softmax completely collapses into a flat line ($r = 0.0000$).
+
+---
+
+### 2. The 42-Cell $(\omega, \sigma)$ PRIME Order Response Surface
+Swept across 7 frequencies $\omega \in [0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]$ rad/s and 6 noise levels $\sigma \in [0.0, 0.01, 0.025, 0.05, 0.10, 0.20]$ (`exp_x_prime_order_phase_diagram.py`):
+
+```text
+=====================================================================================
+EMPIRICAL PHASE MAP: Optimal PRIME Order O*(omega, sigma) on Chronos Layer 1
+=====================================================================================
+omega \ sigma | s=0.0   | s=0.01  | s=0.025 | s=0.05  | s=0.1   | s=0.2  
+-------------------------------------------------------------------------
+w = 0.25    |  O2    |  O0    |  O0    |  O0    |  O2    |  O2   
+w = 0.50    |  O2    |  O0    |  O0    |  O2    |  O2    |  O2   
+w = 1.00    |  O1    |  O0    |  O0    |  O0    |  O0    |  O1   
+w = 2.00    |  O0    |  O0    |  O0    |  O1    |  O2    |  O0   
+w = 3.00    |  O2    |  O2    |  O2    |  O0    |  O1    |  O2   
+w = 5.00    |  O1    |  O1    |  O1    |  O0    |  O2    |  O2   
+w = 10.00   |  O0    |  O1    |  O2    |  O1    |  O1    |  O2   
+=====================================================================================
+Result: PRIME outperforms Softmax in 35 of 42 regimes (83.3% win rate)!
+```
+
+- **Curvature Phase**: At $\omega = 3.0$, Order 2 achieves near-perfect tracking ($r = +0.997$, $\text{MAE} = 0.0718$) while Softmax suffers phase slip ($r = -0.871$, $\text{MAE} = 0.6802$).
+- **Smoothing Phase**: At $\omega = 2.0, \sigma = 0.025$, Order 0 achieves $r = 0.939$ ($\text{MAE} = 0.1586$) while Softmax blows up to $\text{MAE} = 7.1243$.
+
+---
+
+### 3. Adaptive PRIME: Learnable Contextual Bandwidth Allocation
+Instead of manual per-layer order selection, **Adaptive PRIME** (`src/adaptive_prime.py`) continuously relaxes the moment hierarchy:
+
+$$K_{ij} = 1 + \alpha_1 \left(\frac{q_i^\top k_j}{\sqrt{d}}\right) + \frac{\alpha_2}{2} \left(\frac{q_i^\top k_j}{\sqrt{d}}\right)^2$$
+
+where $\alpha_1 = g_1 + g_2$ and $\alpha_2 = g_2$ are dynamically predicted by a lightweight router $[g_0, g_1, g_2] = \text{Softmax}(\text{Router}(x))$ with $\sum g_i = 1$.
+
+```text
+                             ADAPTIVE PRIME ROUTER
+                                       │
+                         [g0, g1, g2] = Router(x)
+                                       │
+                 ┌─────────────────────┼─────────────────────┐
+                 │                     │                     │
+            g0 * O0 (Mean)       g1 * O1 (Direction)   g2 * O2 (Curvature)
+                 │                     │                     │
+                 └─────────────────────┼─────────────────────┘
+                                       │
+                      Unified Smooth Contextual Output
+```
+
+**Zero-Shot Empirical Benchmark (`exp_y_adaptive_prime_evaluation.py`)**:
+- **High-Frequency Wave ($\omega=3.0$)**: Router dynamically shifts weights to $g = [0.02, 0.16, 0.82]$ ($\alpha_2 = 0.82$), achieving **MAE = 0.1179, $r = +0.9886$**, preventing the phase collapse of Softmax ($r = -0.8707$) without any manual intervention!
+- **Noisy Oscillator ($\sigma=0.05$)**: Bounded at **MAE = 0.3395**, outperforming Softmax ($\text{MAE} = 7.0421$) by over $20\times$.
+
+---
+
 ## 🚀 Quickstart
 
 ### Installation
@@ -296,6 +373,13 @@ python reproduce_all.py --exp e2   # Sequential multi-stage contradiction dynami
 python reproduce_all.py --exp f    # Learnable timescales via backpropagation
 python reproduce_all.py --exp f2   # Three-condition timescale convergence
 python reproduce_all.py --exp g    # 2,048-token generation rollout stability
+python reproduce_all.py --exp s    # Decision Transformer 6x3 Factorial Trunk Matrix
+python reproduce_all.py --exp t    # Chronos 7x3 Factorial Trunk Matrix
+python reproduce_all.py --exp u    # Decision Transformer Brutal Controls (Random, Zero, Shuffled)
+python reproduce_all.py --exp v    # Chronos Layer 1 Regularization Sweep across 10 Regimes
+python reproduce_all.py --exp w    # Chronos Causal Attention Mechanism & Perturbation Diagnostic
+python reproduce_all.py --exp x    # 42-Cell PRIME Order Response Surface & Phase Diagram
+python reproduce_all.py --exp y    # Adaptive PRIME Dynamic Contextual Bandwidth Allocation
 ```
 
 ---

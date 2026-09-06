@@ -51,6 +51,9 @@ EXPERIMENTS = {
     "t": ("exp_t_trunk_matrix_chronos.py", "Experiment T: Amazon Chronos Trunk Substitution Matrix (7x3 Grid)"),
     "u": ("exp_u_dt_brutal_controls.py", "Experiment U: Decision Transformer Brutal Controls (Random, Zero, Shuffled)"),
     "v": ("exp_v_chronos_regularization_sweep.py", "Experiment V: Chronos Layer 1 Regularization Sweep across 10 Physical Regimes"),
+    "w": ("exp_w_chronos_attention_diagnostic.py", "Experiment W: Chronos Causal Attention Mechanism & Noise Diagnostic"),
+    "x": ("exp_x_prime_order_phase_diagram.py", "Experiment X: 42-Cell PRIME Order Response Surface & Phase Diagram"),
+    "y": ("exp_y_adaptive_prime_evaluation.py", "Experiment Y: Adaptive PRIME Dynamic Contextual Bandwidth Routing"),
 }
 
 def run_experiment(exp_key: str):
