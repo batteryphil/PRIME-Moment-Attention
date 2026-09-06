@@ -1,0 +1,54 @@
+{
+  "Single Trunk Substitution (Layer 1 only)": {
+    "PRIME Order 1 ($S_0+S_1$, Linear)": {
+      "mse": 0.0011757789179682732,
+      "cosine": 0.9977895617485046
+    },
+    "PRIME Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+      "mse": 0.005138189997524023,
+      "cosine": 0.9901264309883118
+    },
+    "PRIME Order 0 ($S_0$, Mean Context)": {
+      "mse": 0.005437715910375118,
+      "cosine": 0.9901507496833801
+    },
+    "Control A: Random Causal Weights": {
+      "mse": 0.0054557775147259235,
+      "cosine": 0.9902602434158325
+    },
+    "Control B: Zero Attention (Pure Residual)": {
+      "mse": 0.010570092126727104,
+      "cosine": 0.9800333976745605
+    },
+    "Control C: Shuffled Token History": {
+      "mse": 0.006867545656859875,
+      "cosine": 0.987072229385376
+    }
+  },
+  "Complete 100% Substitution (All 3 Layers)": {
+    "PRIME Order 1 ($S_0+S_1$, Linear)": {
+      "mse": 0.0040976740419864655,
+      "cosine": 0.9922878742218018
+    },
+    "PRIME Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+      "mse": 0.009717075154185295,
+      "cosine": 0.9807153344154358
+    },
+    "PRIME Order 0 ($S_0$, Mean Context)": {
+      "mse": 0.01685226522386074,
+      "cosine": 0.9678526520729065
+    },
+    "Control A: Random Causal Weights": {
+      "mse": 0.017067473381757736,
+      "cosine": 0.9670131206512451
+    },
+    "Control B: Zero Attention (Pure Residual)": {
+      "mse": 0.029065018519759178,
+      "cosine": 0.9443193078041077
+    },
+    "Control C: Shuffled Token History": {
+      "mse": 0.022555097937583923,
+      "cosine": 0.9548287391662598
+    }
+  }
+}

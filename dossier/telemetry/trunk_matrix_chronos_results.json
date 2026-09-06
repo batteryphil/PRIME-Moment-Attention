@@ -1,0 +1,472 @@
+{
+  "baseline": {
+    "Damped Harmonic Oscillator": {
+      "mae": 0.24376651644706726,
+      "mse": 0.07562200725078583,
+      "r": 0.9616954987741558,
+      "latency_ms": 1268.3568000793457
+    },
+    "Nonlinear Trend + Seasonal Wave": {
+      "mae": 0.6778196692466736,
+      "mse": 0.6644155979156494,
+      "r": 0.15305688788750846,
+      "latency_ms": 263.65089416503906
+    }
+  },
+  "positions": {
+    "Layer 0 (Input Boundary)": {
+      "layers": [
+        0
+      ],
+      "orders": {
+        "Order 0 ($S_0$, Mean)": {
+          "order": 0,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.2650444507598877,
+              "mse": 0.09080256521701813,
+              "r": 0.6577928185627901,
+              "pred_cosine": 0.8002949953079224,
+              "latency_ms": 258.1791877746582
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 1.0556846857070923,
+              "mse": 1.425024151802063,
+              "r": 0.5433787923407662,
+              "pred_cosine": 0.11678321659564972,
+              "latency_ms": 230.17549514770508
+            }
+          }
+        },
+        "Order 1 ($S_0+S_1$, Linear)": {
+          "order": 1,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.33794915676116943,
+              "mse": 0.14052800834178925,
+              "r": 0.36237147937872316,
+              "pred_cosine": 0.5654536485671997,
+              "latency_ms": 239.42208290100098
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 1.0013116598129272,
+              "mse": 1.301596760749817,
+              "r": -0.8887715464023427,
+              "pred_cosine": 0.5769724249839783,
+              "latency_ms": 238.38543891906738
+            }
+          }
+        },
+        "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+          "order": 2,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3201030194759369,
+              "mse": 0.1305347979068756,
+              "r": 0.9781215319790276,
+              "pred_cosine": 0.9372047185897827,
+              "latency_ms": 247.85470962524414
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.9973992109298706,
+              "mse": 1.346630334854126,
+              "r": -0.4421201942140026,
+              "pred_cosine": -0.5960991978645325,
+              "latency_ms": 244.00591850280762
+            }
+          }
+        }
+      }
+    },
+    "Layer 1 (Early-Mid Trunk)": {
+      "layers": [
+        1
+      ],
+      "orders": {
+        "Order 0 ($S_0$, Mean)": {
+          "order": 0,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.14240944385528564,
+              "mse": 0.03439098224043846,
+              "r": 0.9828853318435941,
+              "pred_cosine": 0.9647168517112732,
+              "latency_ms": 242.42568016052246
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 1.0870192050933838,
+              "mse": 1.6883578300476074,
+              "r": -0.9928137640071579,
+              "pred_cosine": -0.15164849162101746,
+              "latency_ms": 242.53225326538086
+            }
+          }
+        },
+        "Order 1 ($S_0+S_1$, Linear)": {
+          "order": 1,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.7511837482452393,
+              "mse": 0.7000875473022461,
+              "r": -0.4343552451804124,
+              "pred_cosine": -0.2877747416496277,
+              "latency_ms": 241.55068397521973
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 1.020787000656128,
+              "mse": 1.5181719064712524,
+              "r": -0.40663346290314384,
+              "pred_cosine": -0.6994224786758423,
+              "latency_ms": 239.1517162322998
+            }
+          }
+        },
+        "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+          "order": 2,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3818022310733795,
+              "mse": 0.18968139588832855,
+              "r": 0.6194104545120374,
+              "pred_cosine": 0.8183123469352722,
+              "latency_ms": 242.1436309814453
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.832870602607727,
+              "mse": 1.0698274374008179,
+              "r": -0.05239913588898202,
+              "pred_cosine": -0.09875715523958206,
+              "latency_ms": 241.45007133483887
+            }
+          }
+        }
+      }
+    },
+    "Layer 2 (Late-Mid Trunk)": {
+      "layers": [
+        2
+      ],
+      "orders": {
+        "Order 0 ($S_0$, Mean)": {
+          "order": 0,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.8873299360275269,
+              "mse": 0.9440142512321472,
+              "r": -0.9732036811080732,
+              "pred_cosine": -0.9157821536064148,
+              "latency_ms": 239.87984657287598
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.9050618410110474,
+              "mse": 1.2357463836669922,
+              "r": -0.9019357744900989,
+              "pred_cosine": 0.07139817625284195,
+              "latency_ms": 238.16514015197754
+            }
+          }
+        },
+        "Order 1 ($S_0+S_1$, Linear)": {
+          "order": 1,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.40306419134140015,
+              "mse": 0.2139553278684616,
+              "r": 0.7811203580974336,
+              "pred_cosine": 0.919920802116394,
+              "latency_ms": 241.40453338623047
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.7078568935394287,
+              "mse": 0.6424921751022339,
+              "r": 0.8013135615721636,
+              "pred_cosine": 0.4749828279018402,
+              "latency_ms": 241.5933609008789
+            }
+          }
+        },
+        "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+          "order": 2,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3551321029663086,
+              "mse": 0.1579357385635376,
+              "r": 0.8714420740188754,
+              "pred_cosine": 0.803767204284668,
+              "latency_ms": 240.33761024475098
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.8026133179664612,
+              "mse": 0.8390453457832336,
+              "r": -0.23127479904611453,
+              "pred_cosine": 0.9150601625442505,
+              "latency_ms": 243.67666244506836
+            }
+          }
+        }
+      }
+    },
+    "Layer 3 (Encoder Readout)": {
+      "layers": [
+        3
+      ],
+      "orders": {
+        "Order 0 ($S_0$, Mean)": {
+          "order": 0,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.32590246200561523,
+              "mse": 0.1519891321659088,
+              "r": 0.3607679211463484,
+              "pred_cosine": 0.35496118664741516,
+              "latency_ms": 242.1116828918457
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.6147653460502625,
+              "mse": 0.4925692677497864,
+              "r": -0.5477537142723995,
+              "pred_cosine": 0.6032959818840027,
+              "latency_ms": 242.46454238891602
+            }
+          }
+        },
+        "Order 1 ($S_0+S_1$, Linear)": {
+          "order": 1,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3179435133934021,
+              "mse": 0.13305747509002686,
+              "r": 0.0,
+              "pred_cosine": 0.32395264506340027,
+              "latency_ms": 241.15872383117676
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.6522622108459473,
+              "mse": 0.7046726942062378,
+              "r": 0.36099519973485705,
+              "pred_cosine": 0.7209488153457642,
+              "latency_ms": 223.20818901062012
+            }
+          }
+        },
+        "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+          "order": 2,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3179435133934021,
+              "mse": 0.13305747509002686,
+              "r": 0.0,
+              "pred_cosine": 0.32395264506340027,
+              "latency_ms": 240.76056480407715
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.6272097229957581,
+              "mse": 0.5181356072425842,
+              "r": 0.8628454795958568,
+              "pred_cosine": 0.14720788598060608,
+              "latency_ms": 223.85430335998535
+            }
+          }
+        }
+      }
+    },
+    "Interior Trunk (Layers 1, 2)": {
+      "layers": [
+        1,
+        2
+      ],
+      "orders": {
+        "Order 0 ($S_0$, Mean)": {
+          "order": 0,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3253885507583618,
+              "mse": 0.12952890992164612,
+              "r": -0.060373134255565675,
+              "pred_cosine": 0.31538891792297363,
+              "latency_ms": 242.32888221740723
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.7763591408729553,
+              "mse": 0.9240537285804749,
+              "r": 0.0,
+              "pred_cosine": 0.6250131726264954,
+              "latency_ms": 238.9976978302002
+            }
+          }
+        },
+        "Order 1 ($S_0+S_1$, Linear)": {
+          "order": 1,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3395335078239441,
+              "mse": 0.13687969744205475,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 241.94812774658203
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.7763591408729553,
+              "mse": 0.9240537285804749,
+              "r": 0.0,
+              "pred_cosine": 0.6250131726264954,
+              "latency_ms": 241.75047874450684
+            }
+          }
+        },
+        "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+          "order": 2,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.31702351570129395,
+              "mse": 0.1390685737133026,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 238.84916305541992
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.7191311120986938,
+              "mse": 0.7843632102012634,
+              "r": 0.0,
+              "pred_cosine": 0.6250132322311401,
+              "latency_ms": 238.07811737060547
+            }
+          }
+        }
+      }
+    },
+    "Trunk + Readout (1, 2, 3)": {
+      "layers": [
+        1,
+        2,
+        3
+      ],
+      "orders": {
+        "Order 0 ($S_0$, Mean)": {
+          "order": 0,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3395335078239441,
+              "mse": 0.13687969744205475,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 240.0040626525879
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.7763591408729553,
+              "mse": 0.9240537285804749,
+              "r": 0.0,
+              "pred_cosine": 0.6250131726264954,
+              "latency_ms": 239.1529083251953
+            }
+          }
+        },
+        "Order 1 ($S_0+S_1$, Linear)": {
+          "order": 1,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.31702351570129395,
+              "mse": 0.1390685737133026,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 237.6401424407959
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.5875844359397888,
+              "mse": 0.4367135763168335,
+              "r": 0.0,
+              "pred_cosine": 0.6250132322311401,
+              "latency_ms": 240.3416633605957
+            }
+          }
+        },
+        "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+          "order": 2,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.31702351570129395,
+              "mse": 0.1390685737133026,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 223.8929271697998
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.7763591408729553,
+              "mse": 0.9240537285804749,
+              "r": 0.0,
+              "pred_cosine": 0.6250131726264954,
+              "latency_ms": 218.70684623718262
+            }
+          }
+        }
+      }
+    },
+    "100% Replacement (0, 1, 2, 3)": {
+      "layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "orders": {
+        "Order 0 ($S_0$, Mean)": {
+          "order": 0,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.3395335078239441,
+              "mse": 0.13687969744205475,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 216.02225303649902
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.6114477515220642,
+              "mse": 0.5020779967308044,
+              "r": 0.0,
+              "pred_cosine": 0.6250131726264954,
+              "latency_ms": 215.3453826904297
+            }
+          }
+        },
+        "Order 1 ($S_0+S_1$, Linear)": {
+          "order": 1,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.31702351570129395,
+              "mse": 0.1390685737133026,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 215.20113945007324
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 0.6035719513893127,
+              "mse": 0.48095032572746277,
+              "r": 0.013497187975971481,
+              "pred_cosine": 0.6265560984611511,
+              "latency_ms": 214.89834785461426
+            }
+          }
+        },
+        "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+          "order": 2,
+          "benchmarks": {
+            "Damped Harmonic Oscillator": {
+              "mae": 0.5788383483886719,
+              "mse": 0.4634178578853607,
+              "r": 0.0,
+              "pred_cosine": 0.32395267486572266,
+              "latency_ms": 231.01067543029785
+            },
+            "Nonlinear Trend + Seasonal Wave": {
+              "mae": 1.1246113777160645,
+              "mse": 1.7011704444885254,
+              "r": 0.0,
+              "pred_cosine": -0.6250131726264954,
+              "latency_ms": 215.13104438781738
+            }
+          }
+        }
+      }
+    }
+  }
+}

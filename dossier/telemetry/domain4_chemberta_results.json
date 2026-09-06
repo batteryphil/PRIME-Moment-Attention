@@ -1,0 +1,136 @@
+{
+  "baseline": {
+    "latency_ms": 5.09794553120931
+  },
+  "molecules": [
+    "Aspirin",
+    "Caffeine",
+    "Ibuprofen",
+    "Paracetamol",
+    "Penicillin_G",
+    "Atorvastatin",
+    "Remdesivir"
+  ],
+  "variants": {
+    "PRIME Mid-Trunk (Layer 1)": {
+      "replaced_layers": [
+        1
+      ],
+      "latency_ms": 5.678343772888184,
+      "avg_cls_cosine": 0.731170288154057,
+      "avg_mean_cosine": 0.8721124359539577,
+      "manifold_pearson_r": 0.2804703101577655,
+      "per_molecule": {
+        "Aspirin": {
+          "cls_cosine": 0.6016572713851929,
+          "mean_cosine": 0.6965726613998413
+        },
+        "Caffeine": {
+          "cls_cosine": 0.7852618098258972,
+          "mean_cosine": 0.9252729415893555
+        },
+        "Ibuprofen": {
+          "cls_cosine": 0.510810375213623,
+          "mean_cosine": 0.8872679471969604
+        },
+        "Paracetamol": {
+          "cls_cosine": 0.7264955043792725,
+          "mean_cosine": 0.739598274230957
+        },
+        "Penicillin_G": {
+          "cls_cosine": 0.6927371621131897,
+          "mean_cosine": 0.9677225351333618
+        },
+        "Atorvastatin": {
+          "cls_cosine": 0.8861070871353149,
+          "mean_cosine": 0.9493772983551025
+        },
+        "Remdesivir": {
+          "cls_cosine": 0.9151228070259094,
+          "mean_cosine": 0.9389753937721252
+        }
+      }
+    },
+    "PRIME Deep Trunk (Layers 1, 2)": {
+      "replaced_layers": [
+        1,
+        2
+      ],
+      "latency_ms": 5.732059478759766,
+      "avg_cls_cosine": 0.6304329889161246,
+      "avg_mean_cosine": 0.7578780906541007,
+      "manifold_pearson_r": 0.08273759252194987,
+      "per_molecule": {
+        "Aspirin": {
+          "cls_cosine": 0.5453578233718872,
+          "mean_cosine": 0.4817838668823242
+        },
+        "Caffeine": {
+          "cls_cosine": 0.622691810131073,
+          "mean_cosine": 0.8117440938949585
+        },
+        "Ibuprofen": {
+          "cls_cosine": 0.4440097510814667,
+          "mean_cosine": 0.6127418279647827
+        },
+        "Paracetamol": {
+          "cls_cosine": 0.6278793215751648,
+          "mean_cosine": 0.6350147724151611
+        },
+        "Penicillin_G": {
+          "cls_cosine": 0.40934285521507263,
+          "mean_cosine": 0.9417513608932495
+        },
+        "Atorvastatin": {
+          "cls_cosine": 0.8734886646270752,
+          "mean_cosine": 0.9183428883552551
+        },
+        "Remdesivir": {
+          "cls_cosine": 0.8902606964111328,
+          "mean_cosine": 0.9037678241729736
+        }
+      }
+    },
+    "100% Zero-Shot PRIME (Layers 0, 1, 2)": {
+      "replaced_layers": [
+        0,
+        1,
+        2
+      ],
+      "latency_ms": 5.788413683573404,
+      "avg_cls_cosine": 0.12269588293773788,
+      "avg_mean_cosine": -0.029716028698853085,
+      "manifold_pearson_r": 0.23453693315959215,
+      "per_molecule": {
+        "Aspirin": {
+          "cls_cosine": 0.04720839112997055,
+          "mean_cosine": -0.08582198619842529
+        },
+        "Caffeine": {
+          "cls_cosine": 0.23143090307712555,
+          "mean_cosine": 0.018224209547042847
+        },
+        "Ibuprofen": {
+          "cls_cosine": -0.10571947693824768,
+          "mean_cosine": -0.08276645094156265
+        },
+        "Paracetamol": {
+          "cls_cosine": 0.06012989953160286,
+          "mean_cosine": -0.08517108112573624
+        },
+        "Penicillin_G": {
+          "cls_cosine": 0.0783982202410698,
+          "mean_cosine": -0.12499791383743286
+        },
+        "Atorvastatin": {
+          "cls_cosine": 0.2762519121170044,
+          "mean_cosine": 0.11467007547616959
+        },
+        "Remdesivir": {
+          "cls_cosine": 0.27117133140563965,
+          "mean_cosine": 0.03785094618797302
+        }
+      }
+    }
+  }
+}

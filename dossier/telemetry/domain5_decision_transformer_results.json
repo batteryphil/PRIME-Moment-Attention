@@ -1,0 +1,137 @@
+{
+  "lengths": [
+    10,
+    20,
+    50,
+    100
+  ],
+  "state_dim": 11,
+  "act_dim": 3,
+  "configs": {
+    "Softmax Baseline": {
+      "replaced_layers": [],
+      "per_length": {
+        "10": {
+          "latency_ms": 3.825799624125163,
+          "action_mse": 0.0,
+          "action_cosine": 1.0,
+          "state_mse": 0.0
+        },
+        "20": {
+          "latency_ms": 3.405888875325521,
+          "action_mse": 0.0,
+          "action_cosine": 1.0,
+          "state_mse": 0.0
+        },
+        "50": {
+          "latency_ms": 3.147268295288086,
+          "action_mse": 0.0,
+          "action_cosine": 1.0,
+          "state_mse": 0.0
+        },
+        "100": {
+          "latency_ms": 4.729580879211426,
+          "action_mse": 0.0,
+          "action_cosine": 1.0,
+          "state_mse": 0.0
+        }
+      }
+    },
+    "PRIME Mid-Trunk (Layer 1)": {
+      "replaced_layers": [
+        1
+      ],
+      "per_length": {
+        "10": {
+          "latency_ms": 3.2276550928751626,
+          "action_mse": 0.005444699432700872,
+          "action_cosine": 0.9884819984436035,
+          "state_mse": 0.024382073432207108
+        },
+        "20": {
+          "latency_ms": 4.172937075297037,
+          "action_mse": 0.007529669441282749,
+          "action_cosine": 0.9867366552352905,
+          "state_mse": 0.02350006066262722
+        },
+        "50": {
+          "latency_ms": 3.300619125366211,
+          "action_mse": 0.0053980411030352116,
+          "action_cosine": 0.9890539646148682,
+          "state_mse": 0.02041318267583847
+        },
+        "100": {
+          "latency_ms": 5.663164456685384,
+          "action_mse": 0.005138189997524023,
+          "action_cosine": 0.9901264309883118,
+          "state_mse": 0.017681773751974106
+        }
+      }
+    },
+    "PRIME Deep Trunk (Layers 1, 2)": {
+      "replaced_layers": [
+        1,
+        2
+      ],
+      "per_length": {
+        "10": {
+          "latency_ms": 3.2384872436523438,
+          "action_mse": 0.012739826925098896,
+          "action_cosine": 0.9770455360412598,
+          "state_mse": 0.04694339632987976
+        },
+        "20": {
+          "latency_ms": 3.2530387242635093,
+          "action_mse": 0.011514339596033096,
+          "action_cosine": 0.9800748825073242,
+          "state_mse": 0.042897410690784454
+        },
+        "50": {
+          "latency_ms": 3.2501856486002603,
+          "action_mse": 0.008127410896122456,
+          "action_cosine": 0.983131468296051,
+          "state_mse": 0.03614603355526924
+        },
+        "100": {
+          "latency_ms": 5.7845354080200195,
+          "action_mse": 0.008036214858293533,
+          "action_cosine": 0.9840486645698547,
+          "state_mse": 0.03408405929803848
+        }
+      }
+    },
+    "100% Zero-Shot PRIME (Layers 0, 1, 2)": {
+      "replaced_layers": [
+        0,
+        1,
+        2
+      ],
+      "per_length": {
+        "10": {
+          "latency_ms": 3.448073069254557,
+          "action_mse": 0.015127405524253845,
+          "action_cosine": 0.9721226692199707,
+          "state_mse": 0.03469398245215416
+        },
+        "20": {
+          "latency_ms": 4.009437561035156,
+          "action_mse": 0.012510133907198906,
+          "action_cosine": 0.9774931073188782,
+          "state_mse": 0.034429602324962616
+        },
+        "50": {
+          "latency_ms": 3.2784303029378257,
+          "action_mse": 0.009471869096159935,
+          "action_cosine": 0.9804832935333252,
+          "state_mse": 0.03271236643195152
+        },
+        "100": {
+          "latency_ms": 5.781809488932292,
+          "action_mse": 0.009717075154185295,
+          "action_cosine": 0.9807153344154358,
+          "state_mse": 0.03207074850797653
+        }
+      }
+    }
+  }
+}

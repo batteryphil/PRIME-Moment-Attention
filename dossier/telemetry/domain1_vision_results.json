@@ -1,0 +1,50 @@
+{
+  "clip": {
+    "Standard Softmax": {
+      "top1_label": "a photo of a bald eagle soaring over mountains",
+      "correct_prob": 1.0,
+      "cosine_fidelity": 1.0,
+      "latency_ms": 39.51
+    },
+    "PRIME Mid-Trunk": {
+      "top1_label": "a photo of a bald eagle soaring over mountains",
+      "correct_prob": 1.0,
+      "cosine_fidelity": 0.8674,
+      "latency_ms": 40.28
+    },
+    "PRIME Deep Half": {
+      "top1_label": "a photo of a bald eagle soaring over mountains",
+      "correct_prob": 0.5006,
+      "cosine_fidelity": 0.6826,
+      "latency_ms": 39.83
+    },
+    "100% Zero-Shot PRIME": {
+      "top1_label": "a photo of a plate of sushi",
+      "correct_prob": 0.0131,
+      "cosine_fidelity": 0.4909,
+      "latency_ms": 39.99
+    }
+  },
+  "dinov2": {
+    "Standard Softmax": {
+      "cls_cosine": 1.0,
+      "patch_cosine": 1.0,
+      "latency_ms": 16.36
+    },
+    "PRIME Mid-Trunk": {
+      "cls_cosine": 0.3013,
+      "patch_cosine": 0.4048,
+      "latency_ms": 17.28
+    },
+    "PRIME Deep Half": {
+      "cls_cosine": 0.0675,
+      "patch_cosine": 0.2212,
+      "latency_ms": 17.11
+    },
+    "100% Zero-Shot PRIME": {
+      "cls_cosine": -0.1027,
+      "patch_cosine": 0.135,
+      "latency_ms": 17.77
+    }
+  }
+}

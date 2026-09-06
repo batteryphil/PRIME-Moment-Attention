@@ -1,0 +1,444 @@
+{
+  "Layer 0 (Input Boundary)": {
+    "layers": [
+      0
+    ],
+    "orders": {
+      "Order 0 ($S_0$, Mean)": {
+        "order": 0,
+        "action_mse": 0.004574625287204981,
+        "action_cosine": 0.9924278855323792,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.3643428683280945,
+            "block_output_cosine": 0.9902096390724182,
+            "norm_ratio": 1.017454981803894
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.9620857834815979,
+            "block_output_cosine": 0.990236222743988,
+            "norm_ratio": 1.0190062522888184
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.9780886769294739,
+            "block_output_cosine": 0.9902735352516174,
+            "norm_ratio": 1.0211801528930664
+          }
+        }
+      },
+      "Order 1 ($S_0+S_1$, Linear)": {
+        "order": 1,
+        "action_mse": 0.0011157162953168154,
+        "action_cosine": 0.9978320598602295,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.9010905027389526,
+            "block_output_cosine": 0.997960090637207,
+            "norm_ratio": 0.9973022937774658
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.989284873008728,
+            "block_output_cosine": 0.9977758526802063,
+            "norm_ratio": 0.9979459643363953
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.9950646162033081,
+            "block_output_cosine": 0.9977602958679199,
+            "norm_ratio": 1.0003925561904907
+          }
+        }
+      },
+      "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+        "order": 2,
+        "action_mse": 0.001210249145515263,
+        "action_cosine": 0.9978216290473938,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.5860986113548279,
+            "block_output_cosine": 0.9891983270645142,
+            "norm_ratio": 1.044447422027588
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.9788109064102173,
+            "block_output_cosine": 0.9896748065948486,
+            "norm_ratio": 1.0382221937179565
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.980210542678833,
+            "block_output_cosine": 0.9897878766059875,
+            "norm_ratio": 1.0387336015701294
+          }
+        }
+      }
+    }
+  },
+  "Layer 1 (Interior Trunk)": {
+    "layers": [
+      1
+    ],
+    "orders": {
+      "Order 0 ($S_0$, Mean)": {
+        "order": 0,
+        "action_mse": 0.005437715910375118,
+        "action_cosine": 0.9901507496833801,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.5037751793861389,
+            "block_output_cosine": 0.9797526001930237,
+            "norm_ratio": 0.9818935394287109
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.8982554078102112,
+            "block_output_cosine": 0.9814192652702332,
+            "norm_ratio": 0.9883188605308533
+          }
+        }
+      },
+      "Order 1 ($S_0+S_1$, Linear)": {
+        "order": 1,
+        "action_mse": 0.0011757789179682732,
+        "action_cosine": 0.9977895617485046,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.9187832474708557,
+            "block_output_cosine": 0.9964355230331421,
+            "norm_ratio": 0.9946452379226685
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.9939934015274048,
+            "block_output_cosine": 0.9965448975563049,
+            "norm_ratio": 0.9947198033332825
+          }
+        }
+      },
+      "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+        "order": 2,
+        "action_mse": 0.005138189997524023,
+        "action_cosine": 0.9901264309883118,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.43574172258377075,
+            "block_output_cosine": 0.9748998880386353,
+            "norm_ratio": 1.0007448196411133
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.862290620803833,
+            "block_output_cosine": 0.9755651950836182,
+            "norm_ratio": 1.0056883096694946
+          }
+        }
+      }
+    }
+  },
+  "Layer 2 (Readout Boundary)": {
+    "layers": [
+      2
+    ],
+    "orders": {
+      "Order 0 ($S_0$, Mean)": {
+        "order": 0,
+        "action_mse": 0.004857899621129036,
+        "action_cosine": 0.9897736310958862,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.3662015199661255,
+            "block_output_cosine": 0.9875425100326538,
+            "norm_ratio": 0.9840513467788696
+          }
+        }
+      },
+      "Order 1 ($S_0+S_1$, Linear)": {
+        "order": 1,
+        "action_mse": 0.0013780482113361359,
+        "action_cosine": 0.9958820343017578,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.9392480254173279,
+            "block_output_cosine": 0.9981048703193665,
+            "norm_ratio": 0.9991985559463501
+          }
+        }
+      },
+      "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+        "order": 2,
+        "action_mse": 0.0020699624437838793,
+        "action_cosine": 0.9960213303565979,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.704928457736969,
+            "block_output_cosine": 0.9944108128547668,
+            "norm_ratio": 0.9867232441902161
+          }
+        }
+      }
+    }
+  },
+  "Layers 0, 1 (Input + Trunk)": {
+    "layers": [
+      0,
+      1
+    ],
+    "orders": {
+      "Order 0 ($S_0$, Mean)": {
+        "order": 0,
+        "action_mse": 0.00800217967480421,
+        "action_cosine": 0.9859472513198853,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.3643428683280945,
+            "block_output_cosine": 0.9902096390724182,
+            "norm_ratio": 1.017454981803894
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.4922996461391449,
+            "block_output_cosine": 0.9683676362037659,
+            "norm_ratio": 0.998932421207428
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.8578927516937256,
+            "block_output_cosine": 0.9699386358261108,
+            "norm_ratio": 1.0070325136184692
+          }
+        }
+      },
+      "Order 1 ($S_0+S_1$, Linear)": {
+        "order": 1,
+        "action_mse": 0.002966107102110982,
+        "action_cosine": 0.994526743888855,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.9010905027389526,
+            "block_output_cosine": 0.997960090637207,
+            "norm_ratio": 0.9973022937774658
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.8932254314422607,
+            "block_output_cosine": 0.9934679269790649,
+            "norm_ratio": 0.9937655925750732
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.9880637526512146,
+            "block_output_cosine": 0.9936065673828125,
+            "norm_ratio": 0.996441662311554
+          }
+        }
+      },
+      "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+        "order": 2,
+        "action_mse": 0.006183461286127567,
+        "action_cosine": 0.9877246618270874,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.5860986113548279,
+            "block_output_cosine": 0.9891983270645142,
+            "norm_ratio": 1.044447422027588
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.4429982602596283,
+            "block_output_cosine": 0.965518057346344,
+            "norm_ratio": 1.0357580184936523
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.8506203293800354,
+            "block_output_cosine": 0.9665290117263794,
+            "norm_ratio": 1.0408469438552856
+          }
+        }
+      }
+    }
+  },
+  "Layers 1, 2 (Trunk + Readout)": {
+    "layers": [
+      1,
+      2
+    ],
+    "orders": {
+      "Order 0 ($S_0$, Mean)": {
+        "order": 0,
+        "action_mse": 0.011899732053279877,
+        "action_cosine": 0.975635826587677,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.5037751793861389,
+            "block_output_cosine": 0.9797526001930237,
+            "norm_ratio": 0.9818935394287109
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.30497315526008606,
+            "block_output_cosine": 0.9633610248565674,
+            "norm_ratio": 0.969094455242157
+          }
+        }
+      },
+      "Order 1 ($S_0+S_1$, Linear)": {
+        "order": 1,
+        "action_mse": 0.002359628677368164,
+        "action_cosine": 0.9943583607673645,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.9187832474708557,
+            "block_output_cosine": 0.9964355230331421,
+            "norm_ratio": 0.9946452379226685
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.9359892010688782,
+            "block_output_cosine": 0.9948015213012695,
+            "norm_ratio": 0.9932379722595215
+          }
+        }
+      },
+      "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+        "order": 2,
+        "action_mse": 0.008036214858293533,
+        "action_cosine": 0.9840486645698547,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 1.0,
+            "block_output_cosine": 1.0,
+            "norm_ratio": 1.0
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.43574172258377075,
+            "block_output_cosine": 0.9748998880386353,
+            "norm_ratio": 1.0007448196411133
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.47662296891212463,
+            "block_output_cosine": 0.9641038179397583,
+            "norm_ratio": 0.9889376163482666
+          }
+        }
+      }
+    }
+  },
+  "Layers 0, 1, 2 (100% Replacement)": {
+    "layers": [
+      0,
+      1,
+      2
+    ],
+    "orders": {
+      "Order 0 ($S_0$, Mean)": {
+        "order": 0,
+        "action_mse": 0.01685226522386074,
+        "action_cosine": 0.9678526520729065,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.3643428683280945,
+            "block_output_cosine": 0.9902096390724182,
+            "norm_ratio": 1.017454981803894
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.4922996461391449,
+            "block_output_cosine": 0.9683676362037659,
+            "norm_ratio": 0.998932421207428
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.3305106461048126,
+            "block_output_cosine": 0.9526013135910034,
+            "norm_ratio": 0.9885978698730469
+          }
+        }
+      },
+      "Order 1 ($S_0+S_1$, Linear)": {
+        "order": 1,
+        "action_mse": 0.0040976740419864655,
+        "action_cosine": 0.9922878742218018,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.9010905027389526,
+            "block_output_cosine": 0.997960090637207,
+            "norm_ratio": 0.9973022937774658
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.8932254314422607,
+            "block_output_cosine": 0.9934679269790649,
+            "norm_ratio": 0.9937655925750732
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.9350290894508362,
+            "block_output_cosine": 0.9918200969696045,
+            "norm_ratio": 0.994835376739502
+          }
+        }
+      },
+      "Order 2 ($S_0+S_1+S_2$, Quadratic)": {
+        "order": 2,
+        "action_mse": 0.009717075154185295,
+        "action_cosine": 0.9807153344154358,
+        "layer_metrics": {
+          "layer_0": {
+            "attn_output_cosine": 0.5860986113548279,
+            "block_output_cosine": 0.9891983270645142,
+            "norm_ratio": 1.044447422027588
+          },
+          "layer_1": {
+            "attn_output_cosine": 0.4429982602596283,
+            "block_output_cosine": 0.965518057346344,
+            "norm_ratio": 1.0357580184936523
+          },
+          "layer_2": {
+            "attn_output_cosine": 0.5523654222488403,
+            "block_output_cosine": 0.9569067358970642,
+            "norm_ratio": 1.02617609500885
+          }
+        }
+      }
+    }
+  }
+}

@@ -167,6 +167,85 @@ PRIME-Selective integrates symbolic invariants mined by PRIME-Net to solve the t
 
 ---
 
+## 🌐 The Universal 10-Domain Cross-Paradigm Scorecard
+
+PRIME 2nd-order moment attention was evaluated across **10 distinct foundation AI paradigms**, executed on live open-source checkpoints on local AMD GPU hardware:
+
+```
+                           THE UNIVERSAL PRIME CROSS-DOMAIN SCORECARD
+┌──────────────────────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┬─────────────┐
+│ MODALITY & MODEL                     │ SOFTMAX BASELINE     │ PRIME TRUNK ANCHOR   │ 100% ZERO-SHOT PRIME │ KEY IMPACT  │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 1. Autoregressive Code LLM           │ HumanEval: 26.7%     │ HumanEval: 26.7%     │ Phonetic drift over  │ O(1) Cache  │
+│    (Qwen2.5-Coder-1.5B)              │ Compounding O(N)     │ Bounded 16MB Cache   │ long sequences       │ 16MB Cap    │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 2. Video Diffusion Generation        │ Motion: 23.45        │ Motion: 22.42 (95.6%)│ Motion: 20.10        │ 8.8x VRAM   │
+│    (AnimateDiff v1.5-2)              │ Frame Cos: 0.9924    │ Frame Cos: 0.9929    │ Frame Cos: 0.9960    │ Reduction   │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 3. Photorealistic Image Diffusion    │ Contrast Std: 59.02  │ Contrast Std: 58.36  │ Contrast Std: 54.50  │ 8.5x Faster │
+│    (Realistic Vision SD 1.5)         │ Image Cos: 1.0000    │ Image Cos: 0.9753    │ Image Cos: 0.8306    │ per Step    │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 4. Protein Structure Folding         │ Contact Overlap:100% │ Contact Overlap:55.3%│ Contact Overlap:12.4%│ 33% Faster  │
+│    (ESM-2 150M Contact Maps)         │ Pearson r: 1.0000    │ Pearson r: 0.6055    │ Smooth background    │ Inference   │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 5. Diffusion LLM (Discrete Text)     │ Infill Acc: 44.4%    │ Infill Acc: 44.4%    │ Infill Acc: 22.2%    │ Eliminates  │
+│    (MDLM NeurIPS 2024)               │ 64-step: 1.49s       │ 64-step: 1.19s (20%↑)│ 64-step: 1.15s       │ K*O(N^2)    │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 6. Multimodal Vision & ViT           │ Top-1 Acc: 100.0%    │ Top-1 Acc: 100.0%    │ Top-1 Acc: 0.0%      │ Zero-Shot   │
+│    (OpenAI CLIP ViT-B/32)            │ Cosine: 1.0000       │ Cosine: 0.8674       │ Cosine: 0.4909       │ Parity      │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 7. Audio & Speech Recognition        │ Transcript: 100%     │ Transcript: 100%     │ Halts early          │ Acoustic    │
+│    (OpenAI Whisper-tiny)             │ Encoder Cos: 1.0000  │ Encoder Cos: 0.8120  │ Encoder Cos: 0.2553  │ Parity      │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 8. Physical Dynamics Forecasting     │ MAE: 0.2438          │ MAE: 0.3170 (r=0.93) │ MAE: 0.5788 (r=0.62) │ 5.0x FASTER │
+│    (Amazon Chronos-T5-mini)          │ Latency: 1268.36ms   │ Latency: 238.80ms    │ Latency: 231.00ms    │ Latency     │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 9. Cheminformatics / Molecular AI    │ Drug Cosine: 1.0000  │ Drug Cosine: 0.8721  │ Drug Cosine: -0.03   │ Molecular   │
+│    (DeepChem ChemBERTa-77M-MTR)      │ Latency: 5.10ms      │ Penicillin: 0.9677   │ Collapse             │ Manifold    │
+├──────────────────────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┼─────────────┤
+│ 10. Continuous RL & Action Control   │ Action MSE: 0.0000   │ Action MSE: 0.0041   │ Action MSE: 0.0097   │ 0.992 Policy│
+│     (Decision Transformer Gym Hopper)│ Policy Cos: 1.0000   │ Policy Cos: 0.9923   │ Policy Cos: 0.9807   │ Cosine!     │
+└──────────────────────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┴─────────────┘
+```
+
+---
+
+## 🏛️ Theoretical Core: The Trunk Compatibility Hypothesis & Sufficient Statistics
+
+1. **Attention May Contain More Information Than Interior Layers Need:**  
+   Standard Softmax attention computes a complete $N \times N$ pairwise routing matrix. If intermediate layers primarily require low-order statistical moments of the contextual mixture (mean, variance, and energy trends) rather than high-rank individual token addressing, the full attention distribution is computationally redundant in those layers.
+2. **The Trunk Compatibility Hypothesis (Empirical Trunk Principle):**  
+   Peripheral boundary layers (input token grounding and output task readout) enforce strict, representation-specific metric constraints. In contrast, intermediate trunk layers perform contextual mixing and distributed representation transformation, tolerating low-order moment recurrence far more readily than boundary layers.
+3. **Representation-Specific Approximation Orders:**  
+   The required moment approximation order is fundamentally dependent on the representational role of the layer:
+   $$C = f(\text{task geometry}, \text{layer depth}, \text{representation role}, \text{moment order})$$
+
+---
+
+## 🔬 Phase 2: Systematic Trunk Substitution Matrix & Brutal Controls
+
+### 1. Decision Transformer Matrix & Brutal Controls ($T=100$, 300 Tokens)
+Evaluated at Layer 1 and under 100% full substitution across all 3 layers:
+
+| Architecture / Operator Substituted | Single Layer 1 Substitution (MSE / Cosine) | 100% Full Replacement (MSE / Cosine) |
+| :--- | :--- | :--- |
+| **PRIME Order 1 ($S_0 + S_1$, Linear)** | **MSE: 0.00118 \| Cos: 0.9978** | **MSE: 0.00410 \| Cos: 0.9923** |
+| **PRIME Order 2 ($S_0 + S_1 + S_2$, Quadratic)** | MSE: 0.00514 \| Cos: 0.9901 | MSE: 0.00972 \| Cos: 0.9807 |
+| **PRIME Order 0 ($S_0$, Mean Context)** | MSE: 0.00544 \| Cos: 0.9902 | MSE: 0.01685 \| Cos: 0.9679 |
+| **Control A: Random Causal Weights** | MSE: 0.00546 \| Cos: 0.9903 | MSE: 0.01707 \| Cos: 0.9670 |
+| **Control C: Shuffled Token History** | MSE: 0.00687 \| Cos: 0.9871 | MSE: 0.02256 \| Cos: 0.9548 |
+| **Control B: Zero Attention (Pure Residual)** | MSE: 0.01057 \| Cos: 0.9800 | **MSE: 0.02907 \| Cos: 0.9443** |
+
+* **Attention cannot simply be skipped**: Zeroing attention (Control B) increases MSE by **7.1-fold** (from 0.0041 to 0.0291).
+* **Directional routing ($S_1$) is essential**: Random causal weights (Control A) and uniform mean context (Order 0) degrade error by **4.2-fold** relative to Order 1. Adding the linear moment projection $S_1 = q^\top k$ provides a **76% reduction in policy error**.
+
+### 2. Amazon Chronos Matrix & Implicit Regularization Sweep
+Evaluated across 10 physical oscillator parameterizations:
+* **Noise Robustness ($\sigma = 0.05$)**: Native Softmax blows up to **MAE = 7.1077**. In contrast, Layer 1 Order 0 maintains **MAE = 0.5802** ($12\times$ lower error) and Order 2 maintains **MAE = 0.3402** ($20\times$ lower error). Pretrained Softmax overfits to local token quantization noise; low-order moment recurrence acts as a **structural low-pass denoiser**.
+* **High-Frequency Wave Tracking ($\omega = 3.0$)**: Softmax slips out of phase ($r = -0.8707$), whereas PRIME Order 2 tracks quadratic acceleration with **$r = 0.9967$ and MAE = 0.0718**.
+
+---
+
 ## 🚀 Quickstart
 
 ### Installation

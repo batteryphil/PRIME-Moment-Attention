@@ -1,0 +1,42 @@
+{
+  "Damped Harmonic Oscillator": {
+    "Standard Softmax": {
+      "mae": 0.2438,
+      "mse": 0.0756,
+      "pearson_r": 0.9617,
+      "latency_ms": 1122.57
+    },
+    "PRIME Mid-Trunk": {
+      "mae": 0.317,
+      "mse": 0.1391,
+      "pearson_r": 0.0,
+      "latency_ms": 223.96
+    },
+    "100% Zero-Shot PRIME": {
+      "mae": 0.5788,
+      "mse": 0.4634,
+      "pearson_r": 0.0,
+      "latency_ms": 266.97
+    }
+  },
+  "Nonlinear Trend + Seasonal Wave": {
+    "Standard Softmax": {
+      "mae": 0.6778,
+      "mse": 0.6644,
+      "pearson_r": 0.1531,
+      "latency_ms": 232.28
+    },
+    "PRIME Mid-Trunk": {
+      "mae": 0.7191,
+      "mse": 0.7844,
+      "pearson_r": 0.0,
+      "latency_ms": 231.76
+    },
+    "100% Zero-Shot PRIME": {
+      "mae": 1.1246,
+      "mse": 1.7012,
+      "pearson_r": -0.0,
+      "latency_ms": 230.36
+    }
+  }
+}

@@ -37,6 +37,20 @@ EXPERIMENTS = {
     "f2": ("exp_f2_timescale_convergence.py", "Experiment F2: Three-Condition Timescale Convergence"),
     "g": ("exp_g_long_rollout_stability.py", "Experiment G: 2048-Step Rollout Numerical Stability"),
     "h": ("exp_h_prime_selective.py", "Experiment H: 100% PRIME-Selective Distillation Engine (1.5B)"),
+    "i": ("exp_i_deep_hook_telemetry.py", "Experiment I: Deep Hook Telemetry & Multi-Battery Diagnostic Harness"),
+    "j": ("exp_j_domain1_vision_clip_dinov2.py", "Experiment J: Domain 1 - Multimodal Vision (CLIP ViT-B/32 & DINOv2)"),
+    "k": ("exp_k_domain2_audio_whisper.py", "Experiment K: Domain 2 - Speech Recognition (OpenAI Whisper-tiny)"),
+    "l": ("exp_l_domain3_chronos_dynamics.py", "Experiment L: Domain 3 - Physical Dynamics (Amazon Chronos-T5-mini)"),
+    "m": ("exp_m_domain4_chemberta_molecules.py", "Experiment M: Domain 4 - Cheminformatics (ChemBERTa-77M-MTR)"),
+    "n": ("exp_n_domain5_decision_transformer.py", "Experiment N: Domain 5 - Offline RL & Continuous Control (Decision Transformer)"),
+    "o": ("exp_o_protein_folding_esm2.py", "Experiment O: Structural Biology - Protein Folding (ESM-2 150M)"),
+    "p": ("exp_p_diffusion_llm_mdlm.py", "Experiment P: Discrete Diffusion LLMs (MDLM NeurIPS 2024)"),
+    "q": ("exp_q_image_diffusion_sd15.py", "Experiment Q: 2D Spatial Image Diffusion (Stable Diffusion 1.5)"),
+    "r": ("exp_r_video_diffusion_animatediff.py", "Experiment R: Temporal Video Diffusion (AnimateDiff v1.5-2)"),
+    "s": ("exp_s_trunk_matrix_decision_transformer.py", "Experiment S: Decision Transformer Trunk Substitution Matrix (6x3 Grid)"),
+    "t": ("exp_t_trunk_matrix_chronos.py", "Experiment T: Amazon Chronos Trunk Substitution Matrix (7x3 Grid)"),
+    "u": ("exp_u_dt_brutal_controls.py", "Experiment U: Decision Transformer Brutal Controls (Random, Zero, Shuffled)"),
+    "v": ("exp_v_chronos_regularization_sweep.py", "Experiment V: Chronos Layer 1 Regularization Sweep across 10 Physical Regimes"),
 }
 
 def run_experiment(exp_key: str):
