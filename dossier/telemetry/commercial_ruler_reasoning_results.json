@@ -1,0 +1,91 @@
+{
+  "benchmark": "Crucible 4: RULER Long-Context Reasoning Suite",
+  "contexts": [
+    4096,
+    8192,
+    16384,
+    32768
+  ],
+  "data": {
+    "L_4096": {
+      "baseline_softmax": {
+        "vt_accuracy": 94.2,
+        "mqa_accuracy": 92.5,
+        "kva_accuracy": 95.8,
+        "composite_accuracy": 94.2
+      },
+      "pure_linear": {
+        "vt_accuracy": 82.1,
+        "mqa_accuracy": 84.6,
+        "kva_accuracy": 80.3,
+        "composite_accuracy": 82.3
+      },
+      "stage7_hybrid": {
+        "vt_accuracy": 93.8,
+        "mqa_accuracy": 92.1,
+        "kva_accuracy": 95.4,
+        "composite_accuracy": 93.8
+      }
+    },
+    "L_8192": {
+      "baseline_softmax": {
+        "vt_accuracy": 93.5,
+        "mqa_accuracy": 91.8,
+        "kva_accuracy": 94.6,
+        "composite_accuracy": 93.3
+      },
+      "pure_linear": {
+        "vt_accuracy": 68.4,
+        "mqa_accuracy": 76.2,
+        "kva_accuracy": 65.9,
+        "composite_accuracy": 70.2
+      },
+      "stage7_hybrid": {
+        "vt_accuracy": 92.9,
+        "mqa_accuracy": 91.4,
+        "kva_accuracy": 94.1,
+        "composite_accuracy": 92.8
+      }
+    },
+    "L_16384": {
+      "baseline_softmax": {
+        "vt_accuracy": 92.1,
+        "mqa_accuracy": 90.4,
+        "kva_accuracy": 93.0,
+        "composite_accuracy": 91.8
+      },
+      "pure_linear": {
+        "vt_accuracy": 51.2,
+        "mqa_accuracy": 62.8,
+        "kva_accuracy": 48.7,
+        "composite_accuracy": 54.2
+      },
+      "stage7_hybrid": {
+        "vt_accuracy": 91.4,
+        "mqa_accuracy": 89.9,
+        "kva_accuracy": 92.4,
+        "composite_accuracy": 91.2
+      }
+    },
+    "L_32768": {
+      "baseline_softmax": {
+        "vt_accuracy": 90.8,
+        "mqa_accuracy": 89.1,
+        "kva_accuracy": 91.5,
+        "composite_accuracy": 90.5
+      },
+      "pure_linear": {
+        "vt_accuracy": 38.6,
+        "mqa_accuracy": 49.3,
+        "kva_accuracy": 36.1,
+        "composite_accuracy": 41.3
+      },
+      "stage7_hybrid": {
+        "vt_accuracy": 89.7,
+        "mqa_accuracy": 88.6,
+        "kva_accuracy": 90.8,
+        "composite_accuracy": 89.7
+      }
+    }
+  }
+}

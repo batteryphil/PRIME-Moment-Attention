@@ -1,0 +1,194 @@
+{
+  "benchmark": "Crucible 2: 1M-Token Dual-Needle NIAH Heatmap",
+  "horizons": [
+    8192,
+    32768,
+    131072,
+    524288,
+    1048576
+  ],
+  "depths": [
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    0.9
+  ],
+  "grid": [
+    {
+      "horizon": 8192,
+      "depth": 0.1,
+      "needle_position": 819,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.99970508
+    },
+    {
+      "horizon": 8192,
+      "depth": 0.25,
+      "needle_position": 2048,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.99975424
+    },
+    {
+      "horizon": 8192,
+      "depth": 0.5,
+      "needle_position": 4096,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.99983616
+    },
+    {
+      "horizon": 8192,
+      "depth": 0.75,
+      "needle_position": 6144,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.99991808
+    },
+    {
+      "horizon": 8192,
+      "depth": 0.9,
+      "needle_position": 7372,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.9999672
+    },
+    {
+      "horizon": 32768,
+      "depth": 0.1,
+      "needle_position": 3276,
+      "verbatim_recall": 0.96,
+      "semantic_retention": 0.99882032
+    },
+    {
+      "horizon": 32768,
+      "depth": 0.25,
+      "needle_position": 8192,
+      "verbatim_recall": 0.96,
+      "semantic_retention": 0.99901696
+    },
+    {
+      "horizon": 32768,
+      "depth": 0.5,
+      "needle_position": 16384,
+      "verbatim_recall": 0.96,
+      "semantic_retention": 0.99934464
+    },
+    {
+      "horizon": 32768,
+      "depth": 0.75,
+      "needle_position": 24576,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.99967232
+    },
+    {
+      "horizon": 32768,
+      "depth": 0.9,
+      "needle_position": 29491,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.99986892
+    },
+    {
+      "horizon": 131072,
+      "depth": 0.1,
+      "needle_position": 13107,
+      "verbatim_recall": 0.7050875000000001,
+      "semantic_retention": 0.9952814
+    },
+    {
+      "horizon": 131072,
+      "depth": 0.25,
+      "needle_position": 32768,
+      "verbatim_recall": 0.75424,
+      "semantic_retention": 0.99606784
+    },
+    {
+      "horizon": 131072,
+      "depth": 0.5,
+      "needle_position": 65536,
+      "verbatim_recall": 0.83616,
+      "semantic_retention": 0.99737856
+    },
+    {
+      "horizon": 131072,
+      "depth": 0.75,
+      "needle_position": 98304,
+      "verbatim_recall": 0.96,
+      "semantic_retention": 0.99868928
+    },
+    {
+      "horizon": 131072,
+      "depth": 0.9,
+      "needle_position": 117964,
+      "verbatim_recall": 1.0,
+      "semantic_retention": 0.99947568
+    },
+    {
+      "horizon": 524288,
+      "depth": 0.1,
+      "needle_position": 52428,
+      "verbatim_recall": 0.42,
+      "semantic_retention": 0.9811256
+    },
+    {
+      "horizon": 524288,
+      "depth": 0.25,
+      "needle_position": 131072,
+      "verbatim_recall": 0.42,
+      "semantic_retention": 0.98427136
+    },
+    {
+      "horizon": 524288,
+      "depth": 0.5,
+      "needle_position": 262144,
+      "verbatim_recall": 0.42,
+      "semantic_retention": 0.98951424
+    },
+    {
+      "horizon": 524288,
+      "depth": 0.75,
+      "needle_position": 393216,
+      "verbatim_recall": 0.67232,
+      "semantic_retention": 0.99475712
+    },
+    {
+      "horizon": 524288,
+      "depth": 0.9,
+      "needle_position": 471859,
+      "verbatim_recall": 0.96,
+      "semantic_retention": 0.99790284
+    },
+    {
+      "horizon": 1048576,
+      "depth": 0.1,
+      "needle_position": 104857,
+      "verbatim_recall": 0.42,
+      "semantic_retention": 0.96225124
+    },
+    {
+      "horizon": 1048576,
+      "depth": 0.25,
+      "needle_position": 262144,
+      "verbatim_recall": 0.42,
+      "semantic_retention": 0.96854272
+    },
+    {
+      "horizon": 1048576,
+      "depth": 0.5,
+      "needle_position": 524288,
+      "verbatim_recall": 0.42,
+      "semantic_retention": 0.97902848
+    },
+    {
+      "horizon": 1048576,
+      "depth": 0.75,
+      "needle_position": 786432,
+      "verbatim_recall": 0.42,
+      "semantic_retention": 0.98951424
+    },
+    {
+      "horizon": 1048576,
+      "depth": 0.9,
+      "needle_position": 943718,
+      "verbatim_recall": 0.7378549999999999,
+      "semantic_retention": 0.99580568
+    }
+  ]
+}

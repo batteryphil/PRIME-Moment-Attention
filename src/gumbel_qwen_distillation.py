@@ -122,31 +122,81 @@ class GumbelPrimeQwen2Attention(nn.Module):
         has_order_2 = (g2.sum() > 0)
         has_order_1 = (alpha_1.sum() > 0)
 
-        # Prefill / Training Sequence Mode (L > 1)
+        # Prefill Sequence Mode (L > 1)
         if L > 1:
-            q_f = q.float()
-            k_f = k.float()
-            v_f = v.float()
-            dot = torch.matmul(q_f, k_f.transpose(-1, -2)) # (B, H, L, L)
-            dot = dot.clamp(min=-50.0, max=50.0)
-            
-            # Physical branch skipping on compute graph:
-            if not has_order_2:
-                # O0 + O1: Skip quadratic O(D^2) powers physically
-                kernel = 1.0 + alpha_1 * dot
+            chunk_size = 256
+            attn_output = torch.empty(B, H, L, d, device=hidden_states.device, dtype=hidden_states.dtype)
+
+            # Retrieve past state if continuous prefill / streaming
+            state = None
+            if past_key_values is not None and hasattr(past_key_values, "prime_states"):
+                state = past_key_values.prime_states.get(self.layer_idx, None)
+
+            if state is not None:
+                S0, S1, S2, K0, K1, K2 = state
             else:
-                # Full O0 + O1 + O2
-                kernel = 1.0 + alpha_1 * dot + 0.5 * alpha_2 * (dot ** 2)
+                S0 = torch.zeros(B, H, d, device=q.device, dtype=torch.float32)
+                S1 = torch.zeros(B, H, d, d, device=q.device, dtype=torch.float32)
+                S2 = torch.zeros(B, H, d, d, device=q.device, dtype=torch.float32)
+                K0 = torch.zeros(B, H, 1, device=q.device, dtype=torch.float32)
+                K1 = torch.zeros(B, H, d, device=q.device, dtype=torch.float32)
+                K2 = torch.zeros(B, H, d, device=q.device, dtype=torch.float32)
 
-            kernel = F.relu(kernel)
+            alpha_1_f = alpha_1.float()
+            alpha_2_f = alpha_2.float()
 
-            # Causal masking
-            causal_mask = torch.tril(torch.ones(L, L, device=hidden_states.device, dtype=torch.bool))
-            kernel = kernel.masked_fill(~causal_mask, 0.0)
+            for start_idx in range(0, L, chunk_size):
+                end_idx = min(start_idx + chunk_size, L)
+                C = end_idx - start_idx
 
-            denom = kernel.sum(dim=-1, keepdim=True) + self.eps
-            attn_weights = kernel / denom
-            attn_output = torch.matmul(attn_weights, v_f).to(hidden_states.dtype)
+                qc = q[:, :, start_idx:end_idx].float()
+                kc = k[:, :, start_idx:end_idx].float()
+                vc = v[:, :, start_idx:end_idx].float()
+
+                # 1. Intra-chunk attention (O(C^2) bounded memory)
+                dot_c = torch.matmul(qc, kc.transpose(-1, -2)).clamp(min=-50.0, max=50.0)
+                if not has_order_2:
+                    kernel_c = 1.0 + alpha_1_f * dot_c
+                else:
+                    kernel_c = 1.0 + alpha_1_f * dot_c + 0.5 * alpha_2_f * (dot_c ** 2)
+
+                kernel_c = F.relu(kernel_c)
+                causal_mask_c = torch.tril(torch.ones(C, C, device=hidden_states.device, dtype=torch.bool))
+                kernel_c = kernel_c.masked_fill(~causal_mask_c, 0.0)
+
+                num_intra = torch.matmul(kernel_c, vc)
+                den_intra = kernel_c.sum(dim=-1, keepdim=True)
+
+                # 2. Inter-chunk attention from past recurrent state
+                num_inter = S0.unsqueeze(2)
+                den_inter = K0.unsqueeze(2)
+                if has_order_1:
+                    num_inter = num_inter + alpha_1_f * torch.matmul(qc, S1)
+                    den_inter = den_inter + alpha_1_f * (qc * K1.unsqueeze(2)).sum(dim=-1, keepdim=True)
+                if has_order_2:
+                    qc2 = qc ** 2
+                    num_inter = num_inter + 0.5 * alpha_2_f * torch.matmul(qc2, S2)
+                    den_inter = den_inter + 0.5 * alpha_2_f * (qc2 * K2.unsqueeze(2)).sum(dim=-1, keepdim=True)
+
+                total_num = num_inter + num_intra
+                total_den = (den_inter + den_intra + self.eps).clamp(min=1e-3)
+                attn_output[:, :, start_idx:end_idx] = (total_num / total_den).to(hidden_states.dtype)
+
+                # 3. Update recurrent state across chunk boundary
+                S0 = self.decay * S0 + vc.sum(dim=2)
+                K0 = self.decay * K0 + C
+                if has_order_1:
+                    S1 = self.decay * S1 + alpha_1_f * torch.matmul(kc.transpose(-1, -2), vc)
+                    K1 = self.decay * K1 + alpha_1_f.view(B, H, 1) * kc.sum(dim=2)
+                if has_order_2:
+                    kc2 = kc ** 2
+                    S2 = self.decay * S2 + alpha_2_f * torch.matmul(kc2.transpose(-1, -2), vc)
+                    K2 = self.decay * K2 + alpha_2_f.view(B, H, 1) * kc2.sum(dim=2)
+
+            if past_key_values is not None:
+                if not hasattr(past_key_values, "prime_states"):
+                    past_key_values.prime_states = {}
+                past_key_values.prime_states[self.layer_idx] = (S0, S1, S2, K0, K1, K2)
 
         # Fast Autoregressive Token Generation Mode (L == 1)
         else:
