@@ -1,0 +1,145 @@
+{
+  "model": "Qwen2.5-Coder-1.5B-Instruct",
+  "hybrid_architecture": "25% Softmax (7 boundary), 75% PRIME (21 trunk)",
+  "pre_distillation_indent_score": 1.0,
+  "post_distillation_indent_score": 0.3333333333333333,
+  "training_telemetry": [
+    {
+      "step": 10,
+      "total_loss": 3.1625,
+      "loss_kd": 3.2607,
+      "loss_lm": 2.9334,
+      "tau": 0.9851,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.3,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 20,
+      "total_loss": 3.4447,
+      "loss_kd": 3.8079,
+      "loss_lm": 2.5971,
+      "tau": 0.9705,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.3,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 30,
+      "total_loss": 3.2348,
+      "loss_kd": 3.502,
+      "loss_lm": 2.6113,
+      "tau": 0.9561,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.3,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 40,
+      "total_loss": 2.6787,
+      "loss_kd": 2.5515,
+      "loss_lm": 2.9757,
+      "tau": 0.9418,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.3,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 50,
+      "total_loss": 3.1474,
+      "loss_kd": 3.4361,
+      "loss_lm": 2.474,
+      "tau": 0.9278,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.3,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 60,
+      "total_loss": 3.0756,
+      "loss_kd": 3.2574,
+      "loss_lm": 2.6515,
+      "tau": 0.914,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.3,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 70,
+      "total_loss": 2.4265,
+      "loss_kd": 2.4825,
+      "loss_lm": 2.2958,
+      "tau": 0.9005,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.4,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 80,
+      "total_loss": 2.7261,
+      "loss_kd": 2.6145,
+      "loss_lm": 2.9865,
+      "tau": 0.8871,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.4,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 90,
+      "total_loss": 2.6208,
+      "loss_kd": 2.4059,
+      "loss_lm": 3.122,
+      "tau": 0.8739,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.4,
+        "O2_percent": 33.3
+      }
+    },
+    {
+      "step": 100,
+      "total_loss": 2.796,
+      "loss_kd": 2.969,
+      "loss_lm": 2.3923,
+      "tau": 0.8609,
+      "routing_distribution": {
+        "O0_percent": 33.3,
+        "O1_percent": 33.4,
+        "O2_percent": 33.3
+      }
+    }
+  ],
+  "indentation_eval_details": [
+    {
+      "test_name": "nested_conditionals_and_loops",
+      "indent_score": 0.0,
+      "generated_snippet": "           ThanOr unix!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    },
+    {
+      "test_name": "class_definition_with_methods",
+      "indent_score": 1.0,
+      "generated_snippet": "        fkk!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    },
+    {
+      "test_name": "try_except_with_context_manager",
+      "indent_score": 0.0,
+      "generated_snippet": "           strate\u8a72\u4f7f\u7528\u8005!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    }
+  ]
+}

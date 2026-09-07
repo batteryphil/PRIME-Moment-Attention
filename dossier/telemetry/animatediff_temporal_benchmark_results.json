@@ -1,0 +1,44 @@
+{
+  "baseline_softmax": {
+    "description": "Standard Softmax Temporal Attention (16 frames)",
+    "num_frames": 16,
+    "inference_steps": 16,
+    "time_sec": 27.83,
+    "sec_per_step": 1.74,
+    "peak_vram_gb": 5.84,
+    "mean_consecutive_cosine": 0.9915,
+    "min_consecutive_cosine": 0.9882,
+    "f0_to_end_cosine": 0.9415,
+    "mean_drift_from_f0": 0.97,
+    "gif_path": "/home/phil/.gemini/antigravity/scratch/media/animatediff_baseline_softmax_16f.gif",
+    "strip_path": "/home/phil/.gemini/antigravity/scratch/media/animatediff_baseline_softmax_strip_16f.png"
+  },
+  "prime_mid_trunk": {
+    "description": "PRIME Mid-Block Trunk Anchor (16 frames)",
+    "num_frames": 16,
+    "inference_steps": 16,
+    "time_sec": 26.03,
+    "sec_per_step": 1.627,
+    "peak_vram_gb": 5.84,
+    "mean_consecutive_cosine": 0.9912,
+    "min_consecutive_cosine": 0.9874,
+    "f0_to_end_cosine": 0.9443,
+    "mean_drift_from_f0": 0.9709,
+    "gif_path": "/home/phil/.gemini/antigravity/scratch/media/animatediff_prime_mid_trunk_16f.gif",
+    "strip_path": "/home/phil/.gemini/antigravity/scratch/media/animatediff_prime_mid_trunk_strip_16f.png"
+  },
+  "prime_hybrid": {
+    "description": "Hybrid Temporal Attention (Local W=8 Softmax + Global PRIME) (16 frames)",
+    "num_frames": 16,
+    "inference_steps": 16,
+    "time_sec": 29.67,
+    "sec_per_step": 1.854,
+    "peak_vram_gb": 5.91,
+    "mean_consecutive_cosine": 0.9969,
+    "min_consecutive_cosine": 0.9967,
+    "f0_to_end_cosine": 0.9947,
+    "mean_drift_from_f0": 0.9965,
+    "gif_path": "/home/phil/.gemini/antigravity/scratch/media/animatediff_prime_hybrid_16f.gif",
+    "strip_path": "/home/phil/.gemini/antigravity/scratch/media/animatediff_prime_hybrid_strip_16f.png"
+  }
+}
