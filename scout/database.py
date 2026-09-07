@@ -102,6 +102,62 @@ def init_db():
         FOREIGN KEY (repo_id) REFERENCES repositories(id) ON DELETE CASCADE
     );
     """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS theories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        hypothesis TEXT NOT NULL,
+        target_repo_name TEXT,
+        target_repo_url TEXT,
+        motivation TEXT,
+        synthesized_code TEXT,
+        status TEXT DEFAULT "PENDING",
+        telemetry TEXT,
+        empirical_conclusion TEXT,
+        synergy_notes TEXT,
+        discovered_equation TEXT,
+        equation_r2 REAL,
+        parent_theory_id INTEGER,
+        branch_type TEXT DEFAULT "FRONTIER_SEED",
+        variables_json TEXT DEFAULT '["X1"]',
+        created_at TEXT NOT NULL,
+        completed_at TEXT
+    );
+    """)
+
+    # Dynamic schema migration for theories table
+    cur.execute("PRAGMA table_info(theories);")
+    existing_cols = [r[1] for r in cur.fetchall()]
+    if "parent_theory_id" not in existing_cols:
+        cur.execute("ALTER TABLE theories ADD COLUMN parent_theory_id INTEGER;")
+    if "branch_type" not in existing_cols:
+        cur.execute("ALTER TABLE theories ADD COLUMN branch_type TEXT DEFAULT 'FRONTIER_SEED';")
+    if "variables_json" not in existing_cols:
+        cur.execute("ALTER TABLE theories ADD COLUMN variables_json TEXT DEFAULT '[\"X1\"]';")
+    if "domain" not in existing_cols:
+        cur.execute("ALTER TABLE theories ADD COLUMN domain TEXT DEFAULT 'ARCHITECTURE';")
+
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS autonomous_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        is_active INTEGER DEFAULT 1,
+        current_action TEXT DEFAULT 'IDLE',
+        current_target TEXT DEFAULT 'None',
+        cycles_completed INTEGER DEFAULT 0,
+        theories_generated INTEGER DEFAULT 0,
+        tests_executed INTEGER DEFAULT 0,
+        last_pulse TEXT
+    );
+    """)
+
+    # Ensure singleton autonomous_state row exists
+    now_str = datetime.now(timezone.utc).isoformat()
+    cur.execute("""
+    INSERT OR IGNORE INTO autonomous_state (id, is_active, current_action, current_target, cycles_completed, theories_generated, tests_executed, last_pulse)
+    VALUES (1, 1, 'INITIALIZING', 'Starting up autonomous lab...', 0, 0, 0, ?);
+    """, (now_str,))
     
     conn.commit()
     conn.close()
@@ -333,6 +389,28 @@ def answer_agent_question(question_id: int, answer: str) -> bool:
     conn.close()
     return rows_affected > 0
 
+def get_answered_questions(limit: int = 15) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+    SELECT id, repo_id, repo_name, question, user_answer, asked_at, answered_at
+    FROM agent_questions
+    WHERE status = 'ANSWERED'
+    ORDER BY id DESC
+    LIMIT ?
+    """, (limit,))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_evaluated_repo_urls() -> set:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT repo_url FROM repositories WHERE status = 'EVALUATED'")
+    rows = cur.fetchall()
+    conn.close()
+    return {r[0] for r in rows}
+
 # ==============================================================================
 # ACTIVE EXPERIMENTATION TELEMETRY
 # ==============================================================================
@@ -381,6 +459,193 @@ def get_repo_experiments(repo_id: int) -> List[Dict[str, Any]]:
         res.append(d)
     return res
 
+# ==============================================================================
+# AUTONOMOUS LAB: THEORIES & CONJECTURES VAULT
+# ==============================================================================
+
+def record_theory(
+    title: str,
+    hypothesis: str,
+    target_repo_name: str,
+    target_repo_url: str,
+    motivation: str,
+    synthesized_code: str,
+    synergy_notes: str = "",
+    parent_theory_id: Optional[int] = None,
+    branch_type: str = "FRONTIER_SEED",
+    variables: Optional[List[str]] = None,
+    domain: str = "BATTERY_PHYSICS"
+) -> int:
+    conn = get_connection()
+    cur = conn.cursor()
+    now_str = datetime.now(timezone.utc).isoformat()
+    vars_json = json.dumps(variables or ["X1"])
+    cur.execute("""
+    INSERT INTO theories (
+        title, hypothesis, target_repo_name, target_repo_url, motivation,
+        synthesized_code, status, synergy_notes, parent_theory_id, branch_type,
+        variables_json, domain, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?)
+    RETURNING id;
+    """, (title, hypothesis, target_repo_name, target_repo_url, motivation, synthesized_code, synergy_notes, parent_theory_id, branch_type, vars_json, domain, now_str))
+    theory_id = cur.fetchone()[0]
+    conn.commit()
+    conn.close()
+    return theory_id
+
+def update_theory_result(
+    theory_id: int,
+    status: str,
+    telemetry: Dict[str, Any],
+    empirical_conclusion: str,
+    discovered_equation: Optional[str] = None,
+    equation_r2: Optional[float] = None
+) -> bool:
+    conn = get_connection()
+    cur = conn.cursor()
+    now_str = datetime.now(timezone.utc).isoformat()
+    telemetry_json = json.dumps(telemetry)
+    cur.execute("""
+    UPDATE theories
+    SET status = ?, telemetry = ?, empirical_conclusion = ?, discovered_equation = ?, equation_r2 = ?, completed_at = ?
+    WHERE id = ?
+    """, (status, telemetry_json, empirical_conclusion, discovered_equation, equation_r2, now_str, theory_id))
+    affected = cur.rowcount
+    conn.commit()
+    conn.close()
+    return affected > 0
+
+def get_theories_count() -> int:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM theories")
+    count = cur.fetchone()[0]
+    conn.close()
+    return count
+
+def get_recent_theories(limit: int = 50) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+    SELECT id, title, hypothesis, target_repo_name, target_repo_url, motivation,
+           synthesized_code, status, telemetry, empirical_conclusion, synergy_notes,
+           discovered_equation, equation_r2, parent_theory_id, branch_type,
+           variables_json, domain, created_at, completed_at
+    FROM theories
+    ORDER BY id DESC
+    LIMIT ?
+    """, (limit,))
+    rows = cur.fetchall()
+    conn.close()
+    res = []
+    for r in rows:
+        d = dict(r)
+        if d.get("telemetry"):
+            try:
+                d["telemetry"] = json.loads(d["telemetry"])
+            except Exception:
+                pass
+        if d.get("variables_json"):
+            try:
+                d["variables"] = json.loads(d["variables_json"])
+            except Exception:
+                d["variables"] = ["X1"]
+        else:
+            d["variables"] = ["X1"]
+        if not d.get("domain"):
+            d["domain"] = "ARCHITECTURE"
+        res.append(d)
+    return res
+
+def get_theory_by_id(theory_id: int) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+    SELECT id, title, hypothesis, target_repo_name, target_repo_url, motivation,
+           synthesized_code, status, telemetry, empirical_conclusion, synergy_notes,
+           discovered_equation, equation_r2, parent_theory_id, branch_type,
+           variables_json, domain, created_at, completed_at
+    FROM theories
+    WHERE id = ?
+    """, (theory_id,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    d = dict(row)
+    if d.get("telemetry"):
+        try:
+            d["telemetry"] = json.loads(d["telemetry"])
+        except Exception:
+            pass
+    if d.get("variables_json"):
+        try:
+            d["variables"] = json.loads(d["variables_json"])
+        except Exception:
+            d["variables"] = ["X1"]
+    else:
+        d["variables"] = ["X1"]
+    if not d.get("domain"):
+        d["domain"] = "ARCHITECTURE"
+    return d
+
+def get_autonomous_state() -> Dict[str, Any]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, is_active, current_action, current_target, cycles_completed, theories_generated, tests_executed, last_pulse FROM autonomous_state WHERE id = 1")
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return {
+            "is_active": 1,
+            "current_action": "IDLE",
+            "current_target": "None",
+            "cycles_completed": 0,
+            "theories_generated": 0,
+            "tests_executed": 0,
+            "last_pulse": datetime.now(timezone.utc).isoformat()
+        }
+    return dict(row)
+
+def update_autonomous_state(
+    is_active: Optional[int] = None,
+    current_action: Optional[str] = None,
+    current_target: Optional[str] = None,
+    increment_cycles: bool = False,
+    increment_theories: bool = False,
+    increment_tests: bool = False
+):
+    conn = get_connection()
+    cur = conn.cursor()
+    now_str = datetime.now(timezone.utc).isoformat()
+    
+    updates = ["last_pulse = ?"]
+    params = [now_str]
+    
+    if is_active is not None:
+        updates.append("is_active = ?")
+        params.append(is_active)
+    if current_action is not None:
+        updates.append("current_action = ?")
+        params.append(current_action)
+    if current_target is not None:
+        updates.append("current_target = ?")
+        params.append(current_target)
+    if increment_cycles:
+        updates.append("cycles_completed = cycles_completed + 1")
+    if increment_theories:
+        updates.append("theories_generated = theories_generated + 1")
+    if increment_tests:
+        updates.append("tests_executed = tests_executed + 1")
+        
+    query = f"UPDATE autonomous_state SET {', '.join(updates)} WHERE id = 1"
+    cur.execute(query, tuple(params))
+    conn.commit()
+    conn.close()
+
+# Initialize database schema automatically on module load
+init_db()
+
 if __name__ == "__main__":
-    init_db()
     print("[+] Enhanced database schema initialized successfully at:", DB_PATH)
+

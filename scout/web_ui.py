@@ -27,13 +27,15 @@ from scout.database import (
     get_briefings, upsert_repository, record_evaluation,
     save_chat_message, get_chat_history,
     save_agent_question, get_pending_questions, answer_agent_question,
-    get_repo_experiments
+    get_repo_experiments, get_recent_theories, get_theory_by_id,
+    get_autonomous_state, update_autonomous_state
 )
 from scout.sandbox import SandboxRunner
 from scout.evaluator import PrimeScoutEvaluator
 from scout.experimenter import RepoExperimenter
 from scout.github_client import GitHubClient
 from scout.reporter import BriefingReporter
+from scout.scientist import AutonomousScientist
 
 app = FastAPI(title=UI_CONFIG["title"])
 
@@ -424,6 +426,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <div class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab(this, 'tab-briefing')">📰 Daily Briefing</button>
+        <button class="tab-btn" onclick="switchTab(this, 'tab-theories')">🔬 Autonomous Lab & Theories (<span id="theory-count">0</span>)</button>
         <button class="tab-btn" onclick="switchTab(this, 'tab-chat')">💬 Talk to PRIME-Scout</button>
         <button class="tab-btn" onclick="switchTab(this, 'tab-sandbox')">🧪 Sandbox & Experiments</button>
         <button class="tab-btn" onclick="switchTab(this, 'tab-vault')">🏛️ Memory Vault (<span id="vault-count">0</span>)</button>
@@ -543,6 +546,52 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 </div>
             </div>
         </div>
+
+        <!-- Tab 6: Autonomous Lab & Theories -->
+        <div id="tab-theories" class="tab-content">
+            <div class="card" style="border-color: #818cf8; margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title" style="color: #818cf8;">🔬 Autonomous Hypothesis & Empirical Lab</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                            PRIME-Scout continuously mines architectures, formulates novel mathematical conjectures, writes PyTorch tests, executes benchmarks on GPU, and records empirical laws.
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary" id="btn-toggle-engine" onclick="toggleAutonomousEngine()">⏸️ Pause Daemon</button>
+                        <button class="btn" id="btn-trigger-theory" onclick="triggerTheoryCycle()">⚡ Formulate Theory Now</button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--border);">
+                    <div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Engine State</div>
+                        <div id="stat-auto-state" style="font-weight: 700; color: #34d399; font-size: 1.1rem; margin-top: 0.25rem;">ACTIVE</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Current Action</div>
+                        <div id="stat-auto-action" style="font-weight: 600; color: #e5e7eb; font-size: 0.85rem; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">IDLE</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Cycles Completed</div>
+                        <div id="stat-auto-cycles" style="font-weight: 700; color: #38bdf8; font-size: 1.1rem; margin-top: 0.25rem;">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Theories Formulated</div>
+                        <div id="stat-auto-theories" style="font-weight: 700; color: #a78bfa; font-size: 1.1rem; margin-top: 0.25rem;">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Tests Executed</div>
+                        <div id="stat-auto-tests" style="font-weight: 700; color: #fbbf24; font-size: 1.1rem; margin-top: 0.25rem;">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of Theories -->
+            <div id="theories-container">
+                <p style="color: var(--text-muted);">Loading formulated theories & test telemetry...</p>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -558,6 +607,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             if (btn) btn.classList.add('active');
+            if (tabId === 'tab-theories') { loadTheories(); loadAutonomousStatus(); }
             if (tabId === 'tab-vault') loadVault();
             if (tabId === 'tab-fs') loadFs();
             if (tabId === 'tab-chat') loadChatHistory();
@@ -800,16 +850,177 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             }
         }
 
-        async function cleanSandboxActive() {
-            showToast('🧹 Cleaning active sandboxes...');
-            await fetch('/api/sandbox/clean', { method: 'DELETE' });
-            showToast('✅ All sandbox checkouts cleaned.');
-            loadFs();
+        async function loadAutonomousStatus() {
+            try {
+                const res = await fetch('/api/autonomous/status');
+                const data = await res.json();
+                const stateEl = document.getElementById('stat-auto-state');
+                const actionEl = document.getElementById('stat-auto-action');
+                const cyclesEl = document.getElementById('stat-auto-cycles');
+                const theoriesEl = document.getElementById('stat-auto-theories');
+                const testsEl = document.getElementById('stat-auto-tests');
+                const toggleBtn = document.getElementById('btn-toggle-engine');
+
+                if (stateEl) {
+                    stateEl.innerText = data.is_active ? 'ACTIVE' : 'PAUSED';
+                    stateEl.style.color = data.is_active ? '#34d399' : '#f87171';
+                }
+                if (actionEl) actionEl.innerText = `${data.current_action}: ${data.current_target}`;
+                if (cyclesEl) cyclesEl.innerText = data.cycles_completed || 0;
+                if (theoriesEl) theoriesEl.innerText = data.theories_generated || 0;
+                if (testsEl) testsEl.innerText = data.tests_executed || 0;
+                if (toggleBtn) {
+                    toggleBtn.innerText = data.is_active ? '⏸️ Pause Daemon' : '▶️ Resume Daemon';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadTheories() {
+            try {
+                const res = await fetch('/api/theories');
+                const data = await res.json();
+                const list = document.getElementById('theories-container');
+                const countBadge = document.getElementById('theory-count');
+                if (countBadge) countBadge.innerText = data.theories ? data.theories.length : 0;
+
+                if (!data.theories || data.theories.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-muted);">No theories formulated yet. Click <b>⚡ Formulate Theory Now</b> to launch a scientific inquiry cycle.</p>';
+                    return;
+                }
+
+                list.innerHTML = data.theories.map(th => {
+                    let badgeColor = '#9ca3af';
+                    let badgeBg = 'rgba(156, 163, 175, 0.1)';
+                    if (th.status === 'VALIDATED') {
+                        badgeColor = '#34d399';
+                        badgeBg = 'rgba(52, 211, 153, 0.15)';
+                    } else if (th.status === 'FALSIFIED') {
+                        badgeColor = '#f59e0b';
+                        badgeBg = 'rgba(245, 158, 11, 0.15)';
+                    } else if (th.status === 'RUNTIME_ERROR' || th.status === 'ERROR') {
+                        badgeColor = '#f87171';
+                        badgeBg = 'rgba(248, 113, 113, 0.15)';
+                    }
+
+                    const telemetryStr = th.telemetry ? JSON.stringify(th.telemetry, null, 2) : 'No telemetry';
+
+                    let domainBadge = '';
+                    if (th.domain === 'BATTERY_PHYSICS') {
+                        domainBadge = `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 700; margin-right: 0.5rem;">🔋 NASA Battery Physics</span>`;
+                    } else if (th.domain === 'THEORETICAL_MATHEMATICS') {
+                        domainBadge = `<span class="badge" style="background: rgba(147, 51, 234, 0.2); color: #c084fc; border: 1px solid rgba(147, 51, 234, 0.4); font-weight: 700; margin-right: 0.5rem;">📐 Pure Mathematics</span>`;
+                    } else {
+                        domainBadge = `<span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700; margin-right: 0.5rem;">⚡ Architecture</span>`;
+                    }
+
+                    let branchBadge = '';
+                    if (th.branch_type === 'ADAPTIVE_REFINEMENT') {
+                        branchBadge = `<span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); font-weight: 700; margin-right: 0.5rem;">🧬 Refinement of #${th.parent_theory_id}</span>`;
+                    } else if (th.branch_type === 'DEEPENING_ADVANCE') {
+                        branchBadge = `<span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-weight: 700; margin-right: 0.5rem;">🚀 Advance from #${th.parent_theory_id}</span>`;
+                    } else if (th.branch_type === 'FRONTIER_SEED') {
+                        branchBadge = `<span class="badge" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); font-weight: 700; margin-right: 0.5rem;">🌱 Frontier Seed</span>`;
+                    }
+
+                    const isMultiVar = th.variables && th.variables.length > 1;
+                    const varDesc = isMultiVar ? `&nbsp;<span style="color: #94a3b8; font-size: 0.78rem;">(2D Surface: ${th.variables.join(' &times; ')})</span>` : '';
+
+                    return `
+                        <div class="card" style="margin-bottom: 1.25rem; border-left: 4px solid ${badgeColor};">
+                            <div class="card-header" style="align-items: flex-start;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 1.05rem; color: #f3f4f6; margin-bottom: 0.25rem;">${th.title}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                        Target: <span style="color: #38bdf8;">${th.target_repo_name || 'PRIME Ecosystem'}</span>
+                                        ${th.target_repo_url ? ` &middot; <a href="${th.target_repo_url}" target="_blank" style="color: #38bdf8; text-decoration: underline;">GitHub</a>` : ''}
+                                        &middot; Formulated: ${th.created_at ? th.created_at.substring(0, 19).replace('T', ' ') : ''}
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem;">
+                                    ${domainBadge}
+                                    ${branchBadge}
+                                    <span class="badge" style="background: ${badgeBg}; color: ${badgeColor}; font-weight: 700;">${th.status}</span>
+                                </div>
+                            </div>
+
+                            <div style="margin: 0.75rem 0; font-size: 0.88rem; line-height: 1.6;">
+                                <div style="margin-bottom: 0.5rem;"><b style="color: #a78bfa;">Hypothesis:</b> ${th.hypothesis}</div>
+                                <div style="color: var(--text-muted); margin-bottom: 0.5rem;"><b style="color: #9ca3af;">Motivation:</b> ${th.motivation}</div>
+                                ${th.empirical_conclusion ? `<div style="background: rgba(0,0,0,0.3); padding: 0.6rem 0.8rem; border-radius: 6px; border-left: 3px solid ${badgeColor}; margin-bottom: 0.5rem;"><b>Empirical Conclusion:</b> ${th.empirical_conclusion}</div>` : ''}
+                                ${th.discovered_equation ? `
+                                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.4); border-left: 4px solid #10b981; padding: 0.6rem 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div>
+                                        <span style="color: #34d399; font-weight: 700; font-size: 0.85rem; margin-right: 0.5rem;">📐 PRIME-Net Invariant:</span>
+                                        <code style="background: #022c22; color: #6ee7b7; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.95rem; font-weight: bold; border: 1px solid #059669;">y = ${th.discovered_equation}</code>
+                                        ${varDesc}
+                                    </div>
+                                    <span style="background: rgba(52, 211, 153, 0.15); color: #34d399; font-size: 0.78rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px;">Fit R² = ${th.equation_r2 !== null && th.equation_r2 !== undefined ? th.equation_r2 : '1.000'}</span>
+                                </div>` : ''}
+                                ${th.synergy_notes ? `<div style="font-size: 0.82rem; color: #38bdf8;"><b>PRIME Synergy:</b> ${th.synergy_notes}</div>` : ''}
+                            </div>
+
+                            <details style="margin-top: 0.75rem; background: #060911; border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem;">
+                                <summary style="cursor: pointer; font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">View Synthesized PyTorch Test Code & Telemetry</summary>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">SYNTHESIZED PYTORCH TEST:</div>
+                                    <pre style="background: rgba(0,0,0,0.5); padding: 0.75rem; border-radius: 4px; overflow-x: auto; font-size: 0.78rem; color: #93c5fd; max-height: 250px;"><code>${th.synthesized_code || 'No code recorded.'}</code></pre>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin: 0.5rem 0 0.25rem;">EMPIRICAL TELEMETRY:</div>
+                                    <pre style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.75rem; color: #a7f3d0;"><code>${telemetryStr}</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function triggerTheoryCycle() {
+            const btn = document.getElementById('btn-trigger-theory');
+            btn.disabled = true;
+            btn.innerText = '⚡ Synthesizing Theory...';
+            showToast('🔬 Scientific cycle launched! Formulating hypothesis & synthesizing test...');
+
+            try {
+                await fetch('/api/autonomous/trigger_cycle', { method: 'POST' });
+                setTimeout(() => {
+                    loadTheories();
+                    loadAutonomousStatus();
+                    btn.disabled = false;
+                    btn.innerText = '⚡ Formulate Theory Now';
+                    showToast('✅ New theory & experiment logged in vault!');
+                }, 7000);
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerText = '⚡ Formulate Theory Now';
+                showToast('❌ Error: ' + err.message);
+            }
+        }
+
+        async function toggleAutonomousEngine() {
+            try {
+                const res = await fetch('/api/autonomous/toggle', { method: 'POST' });
+                const data = await res.json();
+                showToast(data.is_active ? '▶️ Autonomous Engine Resumed' : '⏸️ Autonomous Engine Paused');
+                loadAutonomousStatus();
+            } catch (err) {
+                showToast('❌ Failed to toggle engine: ' + err.message);
+            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             loadLatestBriefing();
             loadVault();
+            loadTheories();
+            loadAutonomousStatus();
+
+            // Periodic live pulse
+            setInterval(() => {
+                loadAutonomousStatus();
+            }, 6000);
         });
     </script>
 </body>
@@ -912,6 +1123,36 @@ def get_questions_endpoint():
 def answer_question_endpoint(req: AnswerQuestionRequest):
     success = answer_agent_question(req.question_id, req.answer)
     return {"success": success}
+
+# ==============================================================================
+# AUTONOMOUS THEORIES & LAB API ROUTES
+# ==============================================================================
+
+@app.get("/api/theories")
+def get_theories_endpoint(limit: int = 50):
+    theories = get_recent_theories(limit=limit)
+    return {"theories": theories}
+
+@app.get("/api/autonomous/status")
+def get_autonomous_status_endpoint():
+    state = get_autonomous_state()
+    return state
+
+@app.post("/api/autonomous/toggle")
+def toggle_autonomous_engine():
+    state = get_autonomous_state()
+    new_active = 0 if state.get("is_active", 1) else 1
+    update_autonomous_state(is_active=new_active, current_action="PAUSED" if new_active == 0 else "RESUMED")
+    return {"is_active": new_active}
+
+@app.post("/api/autonomous/trigger_cycle")
+def trigger_theory_cycle_endpoint(background_tasks: BackgroundTasks):
+    def _run_theory_bg():
+        scientist = AutonomousScientist()
+        scientist.run_full_discovery_and_theorize_cycle()
+        
+    background_tasks.add_task(_run_theory_bg)
+    return {"status": "CYCLE_INITIATED", "message": "Autonomous scientific inquiry cycle launched."}
 
 @app.post("/api/scan")
 def trigger_scan_endpoint(background_tasks: BackgroundTasks):

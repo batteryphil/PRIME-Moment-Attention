@@ -9,7 +9,10 @@ import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 from scout.config import UI_CONFIG, REPORTS_DIR, SAFETY_POLICY
-from scout.database import init_db, upsert_repository, record_evaluation, get_recent_evaluations, get_pending_questions, answer_agent_question
+from scout.database import (
+    init_db, upsert_repository, record_evaluation, get_recent_evaluations,
+    get_pending_questions, answer_agent_question, get_evaluated_repo_urls
+)
 from scout.github_client import GitHubClient
 from scout.sandbox import SandboxRunner
 from scout.evaluator import PrimeScoutEvaluator
@@ -27,9 +30,15 @@ def cmd_run(args):
     evaluator = PrimeScoutEvaluator(mode="heuristic" if args.heuristic else "auto")
     reporter = BriefingReporter()
 
-    print(f"[*] Discovering candidates (limit: {args.limit})...")
-    candidates = client.discover_candidates(max_per_query=args.limit_per_query)[:args.limit]
-    print(f"[+] Found {len(candidates)} candidates for evaluation.")
+    evaluated_urls = set() if getattr(args, "force", False) else get_evaluated_repo_urls()
+    print(f"[*] Discovering fresh candidates (excluding {len(evaluated_urls)} already-evaluated repos, limit: {args.limit})...")
+    candidates = client.discover_candidates(max_per_query=args.limit_per_query, exclude_urls=evaluated_urls)[:args.limit]
+    if not candidates:
+        print("[!] All candidate repositories in current query pool have already been evaluated.")
+        print("    Use `--force` to re-evaluate or add new search topics in scout/config.py.")
+        return
+
+    print(f"[+] Found {len(candidates)} new candidate(s) for evaluation.")
 
     evaluations = []
     for i, c in enumerate(candidates, 1):
@@ -164,16 +173,70 @@ def cmd_report(args):
         return
     print(latest.read_text(errors="replace"))
 
+def cmd_daemon(args):
+    import time
+    print("="*80)
+    print("🤖 PRIME-Scout: Continuous 24/7 Autonomous Research Daemon")
+    print(f"🔒 Safety Policy: ALLOW_GIT_COMMIT={SAFETY_POLICY['ALLOW_GIT_COMMIT']} (Commits Blocked)")
+    print(f"⏱️  Scan Frequency: Every {args.interval_hours} hour(s)")
+    print("="*80)
+    
+    cycle_num = 1
+    while True:
+        try:
+            print(f"\n[+] [{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}] Initiating Cycle #{cycle_num}...")
+            cmd_run(args)
+        except Exception as e:
+            print(f"[!] Cycle #{cycle_num} encountered error: {e}")
+            
+        cycle_num += 1
+        sleep_sec = max(60, int(args.interval_hours * 3600))
+        print(f"\n[*] Cycle complete. Next discovery pass in {args.interval_hours} hour(s) ({sleep_sec}s). Sleeping...")
+        try:
+            time.sleep(sleep_sec)
+        except (KeyboardInterrupt, SystemExit):
+            print("\n[*] PRIME-Scout daemon gracefully stopped.")
+            break
+
+def cmd_lab(args):
+    from scout.scientist import AutonomousScientist
+    scientist = AutonomousScientist()
+    if args.once:
+        print("[*] Running single autonomous scientific inquiry cycle...")
+        res = scientist.run_full_discovery_and_theorize_cycle()
+        print(f"\n[+] Completed: {res['title']}")
+        print(f"    Verdict: {res['status']}")
+        print(f"    Conclusion: {res['conclusion']}")
+    else:
+        from scout.autonomous_daemon import run_autonomous_daemon
+        run_autonomous_daemon(interval_sec=args.interval)
+
 def main():
     parser = argparse.ArgumentParser(description="PRIME-Scout: Autonomous Local Repository Intelligence Agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Lab / Scientist
+    p_lab = subparsers.add_parser("lab", help="Autonomous theory formulation and test synthesis engine")
+    p_lab.add_argument("--once", action="store_true", help="Run a single scientific cycle and exit")
+    p_lab.add_argument("--interval", type=float, default=60.0, help="Seconds between cycles in daemon mode (default 60s)")
+    p_lab.set_defaults(func=cmd_lab)
 
     # Run
     p_run = subparsers.add_parser("run", help="Run full discovery, sandbox experimentation, and daily briefing")
     p_run.add_argument("--limit", type=int, default=4, help="Maximum candidates to evaluate")
     p_run.add_argument("--limit-per-query", type=int, default=2, help="Candidates per search query")
     p_run.add_argument("--heuristic", action="store_true", help="Use fast heuristic evaluation without loading LLM weights")
+    p_run.add_argument("--force", action="store_true", help="Force re-evaluation of previously audited repositories")
     p_run.set_defaults(func=cmd_run)
+
+    # Daemon
+    p_daemon = subparsers.add_parser("daemon", help="Run continuously in background, discovering new repos every N hours")
+    p_daemon.add_argument("--interval-hours", type=float, default=6.0, help="Hours between discovery passes (e.g. 6.0)")
+    p_daemon.add_argument("--limit", type=int, default=4, help="Maximum candidates to evaluate per cycle")
+    p_daemon.add_argument("--limit-per-query", type=int, default=2, help="Candidates per search query")
+    p_daemon.add_argument("--heuristic", action="store_true", help="Use fast heuristic evaluation")
+    p_daemon.add_argument("--force", action="store_true", help="Force re-evaluation")
+    p_daemon.set_defaults(func=cmd_daemon)
 
     # Test
     p_test = subparsers.add_parser("test", help="Test and experiment on a single repository in the sandbox")

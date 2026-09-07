@@ -70,6 +70,50 @@ SEED_REPOSITORIES = [
         "language": "C++",
         "topics": ["rocm", "hip", "triton-compiler", "gpu-kernels"]
     },
+    {
+        "repo_url": "https://github.com/BlinkDL/RWKV-LM",
+        "name": "RWKV-LM",
+        "full_name": "BlinkDL/RWKV-LM",
+        "owner": "BlinkDL",
+        "description": "RWKV is an RNN with Transformer-level LLM performance, constant-memory inference, and linear attention.",
+        "stars": 15400,
+        "forks": 1200,
+        "language": "Python",
+        "topics": ["linear-attention", "recurrent-neural-networks", "llm", "rnn"]
+    },
+    {
+        "repo_url": "https://github.com/kzl/decision-transformer",
+        "name": "decision-transformer",
+        "full_name": "kzl/decision-transformer",
+        "owner": "kzl",
+        "description": "Official code for Decision Transformer: Reinforcement Learning via Sequence Modeling.",
+        "stars": 2300,
+        "forks": 380,
+        "language": "Python",
+        "topics": ["decision-transformer", "reinforcement-learning", "sequence-modeling", "pytorch"]
+    },
+    {
+        "repo_url": "https://github.com/state-spaces/mamba2",
+        "name": "mamba2",
+        "full_name": "state-spaces/mamba2",
+        "owner": "state-spaces",
+        "description": "Mamba-2 State Space Duality (SSD): Connecting State Space Models and Attention via Structured State Space Layers.",
+        "stars": 2800,
+        "forks": 290,
+        "language": "Python",
+        "topics": ["state-space-models", "linear-attention", "ssd", "triton"]
+    },
+    {
+        "repo_url": "https://github.com/nikhilbarhate99/min-decision-transformer",
+        "name": "min-decision-transformer",
+        "full_name": "nikhilbarhate99/min-decision-transformer",
+        "owner": "nikhilbarhate99",
+        "description": "Minimal, clean PyTorch implementation of Decision Transformer for offline continuous control tasks.",
+        "stars": 420,
+        "forks": 75,
+        "language": "Python",
+        "topics": ["decision-transformer", "continuous-control", "reinforcement-learning", "gym"]
+    },
 ]
 
 class GitHubClient:
@@ -142,24 +186,31 @@ class GitHubClient:
                 pass
         return "No README available."
 
-    def discover_candidates(self, max_per_query: int = 3) -> List[Dict[str, Any]]:
+    def discover_candidates(self, max_per_query: int = 3, exclude_urls: Optional[set] = None) -> List[Dict[str, Any]]:
         """
         Discovers candidate repositories matching the user research profile.
         Combines live GitHub search with high-relevance seed repositories.
+        Filters out already-evaluated repositories to continuously find new projects.
         """
+        exclude = exclude_urls or set()
         candidates = {}
         
-        # Add seeds first
+        # Add seeds first (skip if already evaluated)
         for seed in SEED_REPOSITORIES:
-            candidates[seed["repo_url"]] = seed
+            if seed["repo_url"] not in exclude:
+                candidates[seed["repo_url"]] = seed
 
-        # Query GitHub API for top queries
-        for query in RESEARCH_PROFILE["search_queries"][:4]:
+        # Query GitHub API across all configured search queries
+        for query in RESEARCH_PROFILE["search_queries"]:
             try:
-                found = self.search_repositories(query, limit=max_per_query)
-                for r in found:
-                    candidates[r["repo_url"]] = r
-                time.sleep(0.5) # Gentle rate limiting
+                # Search by stars (popular) and updated (fresh/recent developments)
+                for sort_mode in ["stars", "updated"]:
+                    found = self.search_repositories(query, sort=sort_mode, limit=max_per_query)
+                    for r in found:
+                        url = r["repo_url"]
+                        if url not in exclude and url not in candidates:
+                            candidates[url] = r
+                    time.sleep(0.3)  # Gentle rate limiting
             except Exception as e:
                 print(f"[!] Query failed for {query}: {e}")
                 

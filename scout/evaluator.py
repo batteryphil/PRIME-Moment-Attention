@@ -13,8 +13,8 @@ from typing import Dict, Any, Optional, List
 from scout.config import MODEL_CONFIG, RESEARCH_PROFILE
 from scout.database import (
     save_chat_message, get_chat_history,
-    save_agent_question, get_pending_questions,
-    get_recent_evaluations
+    save_agent_question, get_pending_questions, get_answered_questions,
+    get_recent_evaluations, get_recent_theories
 )
 
 class PrimeScoutEvaluator:
@@ -68,9 +68,18 @@ class PrimeScoutEvaluator:
         
         readme_snippet = readme_text[:4000].strip() if readme_text else "No README available."
         
+        # Incorporate continuous learning from Phil's previous answers
+        answered = get_answered_questions(limit=5)
+        phil_guidance = "\n".join([
+            f"- Prior Guidance on {q.get('repo_name', 'Repo')}: \"{q.get('question')}\" -> Phil's Answer: \"{q.get('user_answer')}\""
+            for q in answered if q.get("user_answer")
+        ]) if answered else "No specific past answers recorded yet."
+
         prompt = f"""<|im_start|>system
 You are PRIME-Scout, an elite AI research assistant evaluating repositories for batteryphil, author of PRIME-Moment-Attention (a constant-memory 2nd-order moment attention mechanism on ROCm/AMD GPUs).
 Evaluate the candidate repository for research synergy, code viability, architectural innovation, and generate a strategic question for Phil.
+ALIGNMENT WITH PHIL'S PRIOR FEEDBACK:
+{phil_guidance}
 SAFETY: You must never commit or push to any git repository.
 Respond ONLY with a valid JSON object.
 <|im_end|>
@@ -224,36 +233,101 @@ Evaluate and return ONLY a JSON object with these exact keys:
         }
 
     # ==========================================================================
-    # TWO-WAY CONVERSATION INTERFACE
+    # TWO-WAY CONVERSATION & INITIATIVE ENGINE
     # ==========================================================================
     def chat(self, user_message: str, context_repo_url: Optional[str] = None) -> str:
         """
         Interactive dialogue between Phil and PRIME-Scout.
-        Grounded in the repository vault, sandbox experiments, and PRIME thesis.
+        Takes initiative: auto-detects GitHub URLs in Phil's message, clones them
+        into the sandbox, audits AST & hardware kernels, and reports live findings.
+        Grounded in Phil's foundational research profile (PRIME-Net, Titan MIMO, Thalamic Bloom, PRIME-Moment-Attention).
         """
         save_chat_message(sender="user", content=user_message)
 
+        # 1. Check for Phil's foundational research profile
+        from scout.config import VAULT_DIR
+        profile_file = VAULT_DIR / "user_profile.json"
+        profile_context = ""
+        if profile_file.exists():
+            try:
+                profile_context = profile_file.read_text(errors="replace")
+            except Exception:
+                pass
+
+        # 2. INITIATIVE: Check if Phil provided or requested a GitHub repository to study
+        detected_urls = re.findall(r'https?://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', user_message)
+        initiative_findings = []
+
+        if detected_urls:
+            from scout.sandbox import SandboxRunner
+            from scout.github_client import GitHubClient
+            sandbox = SandboxRunner()
+            client = GitHubClient()
+            for url in detected_urls[:3]:
+                clean_url = url.rstrip('.git').rstrip('/')
+                parts = clean_url.split('/')
+                owner, name = parts[-2], parts[-1]
+                print(f"[*] PRIME-Scout Initiative: Auto-cloning & studying {owner}/{name} from chat...")
+                s_res = sandbox.evaluate_repo_sandbox(clean_url, owner, name)
+                readme = client.fetch_readme(f"{owner}/{name}")
+                arch = s_res.get("arch_profile", {})
+                initiative_findings.append(
+                    f"Auto-Analyzed [{owner}/{name}]: Status={s_res['status']}. "
+                    f"AST Files={s_res.get('syntax', {}).get('files_checked', 0)}. "
+                    f"Layers={arch.get('found_layer_classes', [])[:4]}. "
+                    f"Triton={s_res.get('audit', {}).get('has_triton_kernels', False)}, "
+                    f"ROCm={s_res.get('audit', {}).get('has_rocm_hip', False)}."
+                )
+
+        # 3. Compile Vault Context & Human Feedback
         recent_evals = get_recent_evaluations(limit=5)
         vault_summary = "\n".join([
-            f"- {e['full_name']} ({e['verdict']}): Viability {e['viability_score']}/100, Alignment {e['alignment_score']}/100. Pitch: {e['executive_pitch'][:100]}..."
+            f"- {e['full_name']} ({e['verdict']}): Viability {e['viability_score']}/100, Alignment {e['alignment_score']}/100."
             for e in recent_evals
         ])
+        answered_q = get_answered_questions(limit=5)
+        phil_prior_feedback = "\n".join([
+            f"- Prior Phil Guidance on {q.get('repo_name', 'Repo')}: \"{q.get('user_answer')}\""
+            for q in answered_q if q.get("user_answer")
+        ]) if answered_q else "No prior direct feedback recorded yet."
 
-        system_prompt = f"""You are PRIME-Scout, an autonomous local AI research partner working directly with Phil (author of batteryphil/PRIME-Moment-Attention).
-You specialize in sub-quadratic attention, 2nd-order moment invariants (S0, S1, S2), ROCm/HIP kernels, chunked prefill, Decision Transformers, and generative video.
-You have access to candidate repositories cloned into your sandbox (e.g. flash-linear-attention, mamba, recurrent-memory-transformer).
-SAFETY RULE: You NEVER make git commits or push code. All experimentation is done in isolated sandbox chambers.
+        recent_theories = get_recent_theories(limit=5)
+        theories_summary = "\n".join([
+            f"- {th['title']} [{th['status']}]: {th['hypothesis']} (Finding: {th['empirical_conclusion']})"
+            for th in recent_theories
+        ]) if recent_theories else "No formal theories formulated yet."
+
+        system_prompt = f"""You are PRIME-Scout, an elite AI research partner working directly with Phil (batteryphil).
+PHIL'S FOUNDATIONAL RESEARCH ECOSYSTEM:
+1. PRIME-Net: Pareto-Refined Invariant Mining Engine (Symbolic Regression, Age-Fitness Pareto Optimization, empirical equation synthesis).
+2. Titan MIMO PRIME (prime-revisited): 650M-parameter Mamba language model with discrete vote-based optimizer and autonomous MoE routing.
+3. Thalamic Bloom (thalamic-bloom): Mamba3 Titan 2.54B with 16 parallel MIMO reasoning arms, sparse IPC 64-dim Blackboard, and thalamic primer.
+4. PRIME-Moment-Attention: 2nd-order scalar moment recurrence (S0, S1, S2), Gumbel-Softmax STE discrete routing, Stage 7 Hybrid (25% boundary Softmax, 75% interior PRIME trunk), chunked linear prefill C=256.
+
+PHIL'S PRIOR GUIDANCE & ANSWERS:
+{phil_prior_feedback}
+
+AUTONOMOUS THEORIES & EXPERIMENTAL DISCOVERIES:
+{theories_summary}
+
+SAFETY: Never commit or push to any git repository.
+ACTION INITIATIVE FINDINGS:
+{chr(10).join(initiative_findings) if initiative_findings else "No new URLs submitted in this turn."}
 
 Recent Knowledge Vault:
 {vault_summary}
 
-Respond directly, concisely, and technically to Phil's message."""
+Respond directly, technically, and insightfully to Phil as his autonomous research peer."""
 
         if self.mode == "heuristic" or not self._initialized:
             try:
                 self.load_model()
             except Exception as e:
-                reply = f"[PRIME-Scout] (Offline Fallback) I hear you, Phil. Regarding your question '{user_message}': I'm currently tracking {len(recent_evals)} candidate repositories in the vault with zero-commit sandbox isolation. You can ask me to run benchmarks or evaluate specific URLs anytime."
+                reply = (
+                    f"Phil, I've ingested your message. "
+                    f"{' I have cloned and analyzed: ' + '; '.join(initiative_findings) if initiative_findings else ''} "
+                    f"I am actively tracking your research across PRIME-Net, Thalamic Bloom (16 MIMO arms / 64-dim Blackboard), and PRIME-Moment-Attention."
+                )
                 save_chat_message(sender="scout", content=reply)
                 return reply
 
@@ -270,7 +344,7 @@ Respond directly, concisely, and technically to Phil's message."""
         with torch.no_grad():
             output_tokens = self.model.generate(
                 **inputs,
-                max_new_tokens=400,
+                max_new_tokens=450,
                 temperature=0.3,
                 do_sample=True,
                 top_p=0.9,
@@ -281,6 +355,7 @@ Respond directly, concisely, and technically to Phil's message."""
 
         save_chat_message(sender="scout", content=response)
         return response
+
 
 if __name__ == "__main__":
     evaluator = PrimeScoutEvaluator(mode="heuristic")

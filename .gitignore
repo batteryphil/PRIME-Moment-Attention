@@ -47,7 +47,8 @@ checkpoints/
 .env
 ghp_*
 
-# PRIME-Scout Sandboxes and Database
-scout/sandbox/active/
-scout/vault/*.db
+# PRIME-Scout Sandboxes, Scratch, Data, and Database
+scout/sandbox/
+scout/vault/
+scout/data/
 
