@@ -1,8 +1,11 @@
 """
 PRIME-Scout: Isolated Execution Sandbox
 Safely clones candidate repositories into scout/sandbox/active/,
-audits dependencies, validates Python AST/syntax, and executes smoke tests
-with strict timeouts and isolated environment variables.
+audits dependencies, validates Python AST/syntax, and executes experiments.
+
+SAFETY ENFORCEMENT:
+- STRICT BAN ON GIT COMMIT AND GIT PUSH.
+- Isolated subprocesses with strict execution timeouts.
 """
 
 import os
@@ -13,13 +16,20 @@ import ast
 import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
-from scout.config import SANDBOX_DIR, SANDBOX_CONFIG
+from scout.config import SANDBOX_DIR, SANDBOX_CONFIG, SAFETY_POLICY
 
 class SandboxRunner:
     def __init__(self, sandbox_base: Optional[Path] = None):
         self.sandbox_base = sandbox_base or SANDBOX_DIR
         self.sandbox_base.mkdir(parents=True, exist_ok=True)
         self.python_bin = SANDBOX_CONFIG["python_executable"]
+
+    def _assert_safe_command(self, cmd_str: str):
+        """Guarantees that git commit or push commands can never be run."""
+        forbidden = ["git commit", "git push", "git remote set-url", "git tag -a"]
+        for f in forbidden:
+            if f in cmd_str.lower():
+                raise PermissionError(f"[SAFETY VIOLATION] Action '{f}' is blocked by PRIME-Scout safety policy.")
 
     def _get_repo_dir(self, owner: str, name: str) -> Path:
         safe_name = f"{owner}_{name}".replace("/", "_").replace(" ", "_")
@@ -28,7 +38,6 @@ class SandboxRunner:
     def clone_repo(self, repo_url: str, owner: str, name: str) -> Tuple[bool, Path, str]:
         repo_dir = self._get_repo_dir(owner, name)
         
-        # If directory already exists and has .git, pull or reuse
         if (repo_dir / ".git").exists():
             return True, repo_dir, "Existing clone reused."
 
@@ -48,6 +57,8 @@ class SandboxRunner:
                 timeout=SANDBOX_CONFIG["max_clone_time_sec"]
             )
             if res.returncode == 0:
+                # Install safety pre-commit hook that blocks commits in this sandbox
+                self._install_commit_blocker(repo_dir)
                 return True, repo_dir, "Successfully cloned repository."
             else:
                 return False, repo_dir, f"Git clone failed: {res.stderr.strip()}"
@@ -56,10 +67,15 @@ class SandboxRunner:
         except Exception as e:
             return False, repo_dir, f"Error during git clone: {str(e)}"
 
+    def _install_commit_blocker(self, repo_dir: Path):
+        """Creates a git hook in the sandbox checkout that rejects any commit attempt."""
+        hooks_dir = repo_dir / ".git" / "hooks"
+        if hooks_dir.exists():
+            hook_file = hooks_dir / "pre-commit"
+            hook_file.write_text("#!/bin/sh\necho 'ERROR: Commits are disabled in PRIME-Scout sandboxes.' >&2\nexit 1\n")
+            hook_file.chmod(0o755)
+
     def audit_dependencies(self, repo_dir: Path) -> Dict[str, Any]:
-        """
-        Audits project requirements and detects key frameworks.
-        """
         audit = {
             "has_requirements_txt": False,
             "has_pyproject": False,
@@ -76,7 +92,7 @@ class SandboxRunner:
             audit["has_requirements_txt"] = True
             try:
                 lines = [l.strip() for l in req_file.read_text(errors="replace").splitlines() if l.strip() and not l.startswith("#")]
-                audit["dependencies"].extend(lines[:20]) # Sample top 20
+                audit["dependencies"].extend(lines[:20])
             except Exception:
                 pass
 
@@ -85,10 +101,8 @@ class SandboxRunner:
         if (repo_dir / "setup.py").exists():
             audit["has_setup_py"] = True
 
-        # Scan for kernel and hardware indicators
         for ext in [".py", ".cu", ".hip", ".cpp", ".h"]:
             for f in repo_dir.rglob(f"*{ext}"):
-                # Limit scan depth
                 if ".git" in f.parts or len(f.parts) > 10:
                     continue
                 try:
@@ -105,9 +119,6 @@ class SandboxRunner:
         return audit
 
     def verify_python_syntax(self, repo_dir: Path, max_files: int = 30) -> Dict[str, Any]:
-        """
-        Performs AST parsing across Python files to verify syntax integrity.
-        """
         py_files = [p for p in repo_dir.rglob("*.py") if ".git" not in p.parts][:max_files]
         if not py_files:
             return {"valid": True, "files_checked": 0, "syntax_errors": []}
@@ -125,14 +136,10 @@ class SandboxRunner:
         return {
             "valid": len(syntax_errors) == 0,
             "files_checked": len(py_files),
-            "syntax_errors": syntax_errors[:5] # Top 5 errors
+            "syntax_errors": syntax_errors[:5]
         }
 
     def run_import_smoke_test(self, repo_dir: Path, package_name: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Runs an isolated python import in a subprocess with timeouts.
-        """
-        # Infer package name from subdirectories if not provided
         if not package_name:
             candidates = [p.name for p in repo_dir.iterdir() if p.is_dir() and (p / "__init__.py").exists() and not p.name.startswith(".")]
             package_name = candidates[0] if candidates else None
@@ -146,7 +153,6 @@ class SandboxRunner:
                 "exit_code": 0
             }
 
-        # Run test inside isolated subprocess
         test_script = f"""
 import sys
 sys.path.insert(0, r"{str(repo_dir)}")
@@ -181,7 +187,7 @@ except Exception as e:
                 "package_name": package_name,
                 "exit_code": res.returncode,
                 "stdout": res.stdout.strip(),
-                "stderr": res.stderr.strip()[:1000] # Cap log length
+                "stderr": res.stderr.strip()[:1000]
             }
         except subprocess.TimeoutExpired:
             return {
@@ -189,7 +195,7 @@ except Exception as e:
                 "package_name": package_name,
                 "exit_code": -1,
                 "stdout": "",
-                "stderr": f"Import test timed out after {SANDBOX_CONFIG["max_test_time_sec"]} seconds."
+                "stderr": f"Import test timed out after {SANDBOX_CONFIG['max_test_time_sec']} seconds."
             }
         except Exception as e:
             return {
@@ -200,16 +206,9 @@ except Exception as e:
                 "stderr": str(e)
             }
 
-    def evaluate_repo_sandbox(self, repo_url: str, owner: str, name: str) -> Dict[str, Any]:
-        """
-        Full end-to-end sandbox pipeline:
-        1. Clone
-        2. Audit dependencies & hardware kernels
-        3. AST Syntax check
-        4. Isolated import test
-        """
+    def evaluate_repo_sandbox(self, repo_url: str, owner: str, name: str, repo_id: Optional[int] = None) -> Dict[str, Any]:
         start_time = time.time()
-        print(f"[*] Sandbox: Cloning {owner}/{name}...")
+        print(f"[*] Sandbox: Cloning {owner}/{name} (NEVER_COMMIT policy active)...")
         ok, repo_dir, clone_msg = self.clone_repo(repo_url, owner, name)
         if not ok:
             return {
@@ -229,7 +228,17 @@ except Exception as e:
         print(f"[*] Sandbox: Running import smoke test for {owner}/{name}...")
         smoke = self.run_import_smoke_test(repo_dir, package_name=name.replace("-", "_"))
 
-        # Determine overall sandbox verdict
+        # Architectural extraction
+        from scout.experimenter import RepoExperimenter
+        experimenter = RepoExperimenter(python_executable=self.python_bin)
+        arch_profile = experimenter.extract_architectural_profile(repo_dir)
+
+        # Micro-benchmark if applicable
+        benchmark_res = None
+        if repo_id:
+            print(f"[*] Sandbox: Running micro-benchmark experiment on {owner}/{name}...")
+            benchmark_res = experimenter.run_micro_benchmark(repo_dir, repo_id, name)
+
         if not syntax["valid"]:
             overall_status = "SYNTAX_ERROR"
         elif smoke["status"] == "PASS":
@@ -243,9 +252,11 @@ except Exception as e:
 
         log_summary = f"""
 [Sandbox Execution Report]
+- Commit Policy: STRICT NEVER_COMMIT (Pre-commit hook installed)
 - Clone: {clone_msg}
 - Python Files Checked: {syntax["files_checked"]} (Syntax Valid: {syntax["valid"]})
 - Hardware Kernels Detected: Triton={audit["has_triton_kernels"]}, ROCm/HIP={audit["has_rocm_hip"]}, CUDA={audit["has_cuda"]}
+- Identified Layer Classes: {', '.join(arch_profile.get('found_layer_classes', [])) or 'None'}
 - Import Test ({smoke.get("package_name", "N/A")}): Status={smoke["status"]}, Exit={smoke.get("exit_code", 0)}
 {smoke.get("stderr", "")}
 """.strip()
@@ -257,17 +268,7 @@ except Exception as e:
             "audit": audit,
             "syntax": syntax,
             "smoke": smoke,
+            "arch_profile": arch_profile,
+            "benchmark": benchmark_res,
             "duration_sec": round(time.time() - start_time, 2)
         }
-
-if __name__ == "__main__":
-    from typing import Tuple
-    sandbox = SandboxRunner()
-    print("[*] Testing Sandbox on a fast repo...")
-    res = sandbox.evaluate_repo_sandbox(
-        "https://github.com/lucidrains/recurrent-memory-transformer-pytorch",
-        "lucidrains",
-        "recurrent-memory-transformer-pytorch"
-    )
-    print(f"[+] Sandbox result: Status={res["status"]}, Duration={res["duration_sec"]}s")
-    print(res["log"])

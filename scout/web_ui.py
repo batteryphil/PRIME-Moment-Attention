@@ -1,8 +1,11 @@
 """
-PRIME-Scout: Modern Local Web Dashboard
-FastAPI + Standalone Dark-Mode UI for reviewing daily briefings,
-inspecting the memory vault, and running on-demand repository sandbox tests.
-100% Self-Contained with ZERO external CDN dependencies.
+PRIME-Scout: Modern Local Web Dashboard with Two-Way Chat & Experimentation
+FastAPI + Standalone Dark-Mode UI:
+- 100% Self-Contained, ZERO external CDN dependencies
+- Two-way conversation interface (Phil <-> PRIME-Scout)
+- Agent Inquiries / Questions Queue with one-click reply
+- Micro-benchmark experiment executor
+- STRICT COMMIT BAN enforced.
 """
 
 import os
@@ -11,21 +14,24 @@ import html
 import shutil
 import json
 import time
-import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from scout.config import UI_CONFIG, REPORTS_DIR, VAULT_DIR, SANDBOX_DIR, DB_PATH, MODEL_CONFIG
+from scout.config import UI_CONFIG, REPORTS_DIR, VAULT_DIR, SANDBOX_DIR, DB_PATH, MODEL_CONFIG, SAFETY_POLICY
 from scout.database import (
     get_connection, get_recent_evaluations, get_evaluation_by_url,
-    get_briefings, upsert_repository, record_evaluation
+    get_briefings, upsert_repository, record_evaluation,
+    save_chat_message, get_chat_history,
+    save_agent_question, get_pending_questions, answer_agent_question,
+    get_repo_experiments
 )
 from scout.sandbox import SandboxRunner
 from scout.evaluator import PrimeScoutEvaluator
+from scout.experimenter import RepoExperimenter
 from scout.github_client import GitHubClient
 from scout.reporter import BriefingReporter
 
@@ -34,6 +40,7 @@ app = FastAPI(title=UI_CONFIG["title"])
 # Global singletons
 sandbox_runner = SandboxRunner()
 evaluator = PrimeScoutEvaluator(mode="auto")
+experimenter = RepoExperimenter()
 github_client = GitHubClient()
 reporter = BriefingReporter()
 
@@ -41,18 +48,21 @@ class RepoTestRequest(BaseModel):
     repo_url: str
     run_llm: bool = True
 
-class ScanRequest(BaseModel):
-    max_repos: int = 4
+class ChatRequest(BaseModel):
+    message: str
+    context_repo_url: Optional[str] = None
+
+class AnswerQuestionRequest(BaseModel):
+    question_id: int
+    answer: str
+
+class ExperimentRequest(BaseModel):
+    repo_url: str
 
 def render_markdown_to_html(md_text: str) -> str:
-    """
-    Robust, zero-dependency Python markdown-to-HTML converter.
-    Handles tables, headers, blockquotes, lists, links, code blocks, details tags.
-    """
     if not md_text:
         return "<p style='color: #9ca3af;'>No content available.</p>"
 
-    # 1. Code blocks
     code_blocks = []
     def save_code_block(match):
         idx = len(code_blocks)
@@ -62,22 +72,13 @@ def render_markdown_to_html(md_text: str) -> str:
         return f"__CODE_BLOCK_{idx}__"
     
     text = re.sub(r'```([a-zA-Z0-9_-]*)\n(.*?)```', save_code_block, md_text, flags=re.DOTALL)
-
-    # 2. Inline code
     text = re.sub(r'`([^`]+)`', lambda m: f'<code>{html.escape(m.group(1))}</code>', text)
-
-    # 3. Details/Summary tags preservation
     text = text.replace("<details>", "___DETAILS_START___").replace("</details>", "___DETAILS_END___")
     text = re.sub(r'<summary>(.*?)</summary>', r'___SUMMARY_START___\1___SUMMARY_END___', text)
-
-    # 4. Links: [text](url)
     text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" target="_blank" style="color: #38bdf8; text-decoration: underline;">\1</a>', text)
-
-    # 5. Bold & Italic
     text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
     text = re.sub(r'\*([^*]+)\*', r'<i>\1</i>', text)
 
-    # Process line by line
     lines = text.split("\n")
     out_lines = []
     in_table = False
@@ -85,18 +86,14 @@ def render_markdown_to_html(md_text: str) -> str:
 
     for line in lines:
         s = line.strip()
-        
-        # Table row
         if s.startswith("|") and s.endswith("|"):
             parts = [p.strip() for p in s[1:-1].split("|")]
-            # Check if separator row
             if all(set(p).issubset({'-', ':', ' '}) for p in parts if p):
                 continue
             table_rows.append(parts)
             in_table = True
             continue
         elif in_table:
-            # End of table
             out_lines.append("<div style='overflow-x: auto;'><table style='width: 100%; border-collapse: collapse; margin: 1rem 0;'>")
             for i, row in enumerate(table_rows):
                 out_lines.append("<tr>")
@@ -144,13 +141,10 @@ def render_markdown_to_html(md_text: str) -> str:
         out_lines.append("</table></div>")
 
     rendered = "\n".join(out_lines)
-
-    # Restore details/summary
     rendered = rendered.replace("___DETAILS_START___", "<details style='margin: 0.75rem 0; background: rgba(0,0,0,0.3); border: 1px solid #24324a; border-radius: 6px; padding: 0.75rem;'>")
     rendered = rendered.replace("___DETAILS_END___", "</details>")
     rendered = re.sub(r'___SUMMARY_START___(.*?)___SUMMARY_END___', r'<summary style="cursor: pointer; font-weight: 600; color: #38bdf8;">\1</summary>', rendered)
 
-    # Restore code blocks
     for idx, cb in enumerate(code_blocks):
         rendered = rendered.replace(f"__CODE_BLOCK_{idx}__", cb)
 
@@ -214,13 +208,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             font-size: 0.78rem;
             font-family: monospace;
         }
-        .dot-pulse {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
-        }
+        .dot-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
         .btn {
             background: linear-gradient(135deg, #0284c7, #2563eb);
             color: white;
@@ -235,20 +223,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             align-items: center;
             gap: 0.5rem;
         }
-        .btn:hover {
-            opacity: 0.95;
-            box-shadow: 0 0 15px var(--accent-glow);
-            transform: translateY(-1px);
-        }
+        .btn:hover { opacity: 0.95; box-shadow: 0 0 15px var(--accent-glow); transform: translateY(-1px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-secondary {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
+        .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
         .btn-secondary:hover { background: var(--surface-hover); }
 
-        /* Tabs */
         .tabs-nav {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
@@ -268,10 +247,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             transition: all 0.15s ease;
         }
         .tab-btn:hover { color: var(--text); }
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-        }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
         main {
             flex: 1;
@@ -299,15 +275,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--border);
         }
-        .card-title {
-            font-size: 1.15rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        .card-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
 
-        /* Toast Banner */
         #toast {
             display: none;
             position: fixed;
@@ -324,7 +293,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             max-width: 400px;
         }
 
-        /* Badges */
         .badge {
             display: inline-block;
             padding: 0.2rem 0.55rem;
@@ -374,24 +342,64 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             white-space: pre-wrap;
         }
 
-        .repo-item {
-            background: rgba(24, 33, 50, 0.6);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1.2rem;
-            margin-bottom: 1rem;
-        }
+        .repo-item { background: rgba(24, 33, 50, 0.6); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; margin-bottom: 1rem; }
         .repo-name { font-size: 1.1rem; font-weight: 600; color: var(--accent); text-decoration: none; }
         
-        pre {
-            background: #060911;
+        /* Chat UI */
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            height: 480px;
+            background: #050811;
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.75rem;
-            overflow-x: auto;
-            font-family: monospace;
-            font-size: 0.82rem;
+            border-radius: 8px;
+            overflow: hidden;
         }
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .msg {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .msg-user {
+            align-self: flex-end;
+            background: #1d4ed8;
+            color: #eff6ff;
+            border-bottom-right-radius: 2px;
+        }
+        .msg-scout {
+            align-self: flex-start;
+            background: #1e293b;
+            color: #f1f5f9;
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 2px;
+        }
+        .chat-input-row {
+            display: flex;
+            padding: 0.75rem;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            gap: 0.5rem;
+        }
+
+        /* Questions Box */
+        .question-item {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #38bdf8;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        pre { background: #060911; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; overflow-x: auto; font-family: monospace; font-size: 0.82rem; }
         code { font-family: monospace; background: rgba(36, 50, 74, 0.6); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
     </style>
 </head>
@@ -407,15 +415,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             </div>
         </div>
         <div class="header-pills">
-            <div class="pill"><span class="dot-pulse"></span> AMD ROCm 7.2 Active</div>
-            <div class="pill">🧠 Qwen2.5-Coder-1.5B (2.87 GB VRAM)</div>
+            <div class="pill" style="color: #34d399;"><span class="dot-pulse"></span> AMD ROCm 7.2 Active</div>
+            <div class="pill">🧠 Qwen2.5-Coder-1.5B</div>
+            <div class="pill" style="color: #f87171;">🔒 Commit Ban: Active</div>
             <button class="btn" id="btn-scan" onclick="triggerScan()">⚡ Run Discovery Now</button>
         </div>
     </header>
 
     <div class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab(this, 'tab-briefing')">📰 Daily Briefing</button>
-        <button class="tab-btn" onclick="switchTab(this, 'tab-sandbox')">🧪 Sandbox & Deep-Dive</button>
+        <button class="tab-btn" onclick="switchTab(this, 'tab-chat')">💬 Talk to PRIME-Scout</button>
+        <button class="tab-btn" onclick="switchTab(this, 'tab-sandbox')">🧪 Sandbox & Experiments</button>
         <button class="tab-btn" onclick="switchTab(this, 'tab-vault')">🏛️ Memory Vault (<span id="vault-count">0</span>)</button>
         <button class="tab-btn" onclick="switchTab(this, 'tab-fs')">📁 Easy File System</button>
     </div>
@@ -423,6 +433,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <main>
         <!-- Tab 1: Daily Briefing -->
         <div id="tab-briefing" class="tab-content active">
+            <!-- Questions Queue for Phil -->
+            <div id="questions-container" style="display: none; margin-bottom: 1.5rem;">
+                <div class="card" style="border-color: #38bdf8;">
+                    <div class="card-header">
+                        <div class="card-title" style="color: #38bdf8;">❓ Strategic Inquiries from PRIME-Scout for You</div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                        PRIME-Scout identified decisions or trade-offs during candidate repository analysis that require your technical direction:
+                    </p>
+                    <div id="questions-list"></div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">📅 Today's Intelligence Digest</div>
@@ -434,37 +457,62 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- Tab 2: Interactive Sandbox & Deep-Dive -->
+        <!-- Tab 2: Talk to PRIME-Scout (Chat) -->
+        <div id="tab-chat" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">💬 Direct Dialogue with PRIME-Scout</div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">Local LLM on ROCm • Zero-Commit Sandbox Partner</span>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
+                    Ask questions about any discovered repository, ask the agent to explain architectural details, or direct it to run specific experiments.
+                </p>
+
+                <div class="chat-box">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="msg msg-scout">
+                            Hello Phil! I am PRIME-Scout, running locally on your workstation GPU. I'm actively studying candidate repositories for linear attention, Triton/ROCm kernels, and sub-quadratic sequence models. How can I help you today?
+                        </div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" class="text-input" placeholder="Ask PRIME-Scout a question or give research direction..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+                        <button class="btn" id="btn-chat-send" onclick="sendChatMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Sandbox & Experiments -->
         <div id="tab-sandbox" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">🧪 On-Demand Sandbox Clone & Evaluation</div>
+                    <div class="card-title">🧪 Isolated Sandbox & Benchmark Chambers</div>
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444;">🔒 Git Commits Blocked</span>
                 </div>
                 <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">
-                    Paste any GitHub repository URL below. PRIME-Scout will shallow-clone it into <code>scout/sandbox/active/</code>,
-                    audit dependencies for Triton/ROCm/CUDA, run an AST syntax check and isolated import smoke test, and stream a comprehensive evaluation via the local model.
+                    Paste any GitHub URL to clone, AST-audit, smoke-test, and run a micro-benchmark experiment. All candidate code executes in strictly isolated chambers.
                 </p>
                 <div class="input-group">
                     <input type="text" id="repo-url-input" class="text-input" placeholder="https://github.com/owner/repository" value="https://github.com/sustcsonglin/flash-linear-attention">
-                    <button class="btn" id="btn-test" onclick="runSandboxTest()">🚀 Execute Sandbox & Evaluate</button>
+                    <button class="btn" id="btn-test" onclick="runSandboxTest()">🚀 Execute Sandbox & Benchmark</button>
                 </div>
 
                 <div class="grid-2">
                     <div>
-                        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Sandbox Terminal Output:</h4>
+                        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Execution Terminal:</h4>
                         <div id="sandbox-term" class="terminal">[Ready] Awaiting repository URL...</div>
                     </div>
                     <div>
-                        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Evaluation Result:</h4>
+                        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Telemetry & Evaluation Result:</h4>
                         <div id="eval-result-card" style="background: #050811; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; min-height: 280px;">
-                            <p style="color: var(--text-muted); font-size: 0.85rem;">Evaluation metrics and critique will appear here once the sandbox test finishes.</p>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">Evaluation metrics and benchmark numbers will appear here.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tab 3: Memory Vault -->
+        <!-- Tab 4: Memory Vault -->
         <div id="tab-vault" class="tab-content">
             <div class="card">
                 <div class="card-header">
@@ -477,7 +525,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- Tab 4: File System Explorer -->
+        <!-- Tab 5: File System Explorer -->
         <div id="tab-fs" class="tab-content">
             <div class="card">
                 <div class="card-header">
@@ -512,6 +560,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             if (btn) btn.classList.add('active');
             if (tabId === 'tab-vault') loadVault();
             if (tabId === 'tab-fs') loadFs();
+            if (tabId === 'tab-chat') loadChatHistory();
         }
 
         async function loadLatestBriefing() {
@@ -523,9 +572,102 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 } else {
                     document.getElementById('briefing-container').innerHTML = '<p style="color: var(--text-muted);">No briefing found. Click <b>⚡ Run Discovery Now</b> to run the agent.</p>';
                 }
+                loadQuestions();
             } catch (err) {
                 console.error(err);
                 document.getElementById('briefing-container').innerHTML = '<p style="color: var(--danger);">Failed to load briefing.</p>';
+            }
+        }
+
+        async function loadQuestions() {
+            try {
+                const res = await fetch('/api/questions');
+                const data = await res.json();
+                const container = document.getElementById('questions-container');
+                const list = document.getElementById('questions-list');
+                if (data.questions && data.questions.length > 0) {
+                    container.style.display = 'block';
+                    list.innerHTML = data.questions.map(q => `
+                        <div class="question-item">
+                            <div style="font-weight: 600; color: #38bdf8; margin-bottom: 0.25rem;">${q.repo_name || 'Candidate Repository'}</div>
+                            <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">${q.question}</div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="ans-${q.id}" class="text-input" placeholder="Type your instruction or preference..." style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">
+                                <button class="btn" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;" onclick="submitAnswer(${q.id})">Reply</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.style.display = 'none';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function submitAnswer(qid) {
+            const input = document.getElementById(`ans-${qid}`);
+            const text = input.value.trim();
+            if (!text) return;
+            try {
+                await fetch('/api/questions/answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question_id: qid, answer: text })
+                });
+                showToast('✅ Direction recorded in agent memory vault!');
+                loadQuestions();
+            } catch (err) {
+                showToast('❌ Error: ' + err.message);
+            }
+        }
+
+        async function loadChatHistory() {
+            try {
+                const res = await fetch('/api/chat/history');
+                const data = await res.json();
+                const container = document.getElementById('chat-messages');
+                if (data.history && data.history.length > 0) {
+                    container.innerHTML = data.history.map(m => `
+                        <div class="msg ${m.sender === 'user' ? 'msg-user' : 'msg-scout'}">
+                            ${m.content}
+                        </div>
+                    `).join('');
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const container = document.getElementById('chat-messages');
+            container.innerHTML += `<div class="msg msg-user">${msg}</div>`;
+            container.scrollTop = container.scrollHeight;
+            input.value = '';
+
+            const btn = document.getElementById('btn-chat-send');
+            btn.disabled = true;
+            btn.innerText = 'Thinking...';
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                container.innerHTML += `<div class="msg msg-scout">${data.response}</div>`;
+                container.scrollTop = container.scrollHeight;
+            } catch (err) {
+                container.innerHTML += `<div class="msg msg-scout" style="color: var(--danger);">Error communicating with agent: ${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Send';
             }
         }
 
@@ -580,8 +722,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             const resultCard = document.getElementById('eval-result-card');
 
             btn.disabled = true;
-            btn.innerText = '⏳ Testing in Sandbox...';
-            term.innerText = `[*] Initiating sandbox test for ${url}...\n[*] Cloning candidate into scout/sandbox/active/...\n[*] Auditing hardware kernels and Python AST...\n`;
+            btn.innerText = '⏳ Testing & Benchmarking...';
+            term.innerText = `[*] Initiating sandbox chamber for ${url}...\n[*] Git Commit Policy: STRICT BAN (Read-Only Clone)\n[*] Auditing hardware kernels and Python AST...\n`;
             resultCard.innerHTML = '<p style="color: var(--accent);">Processing in isolated sandbox chamber (git clone -> dependency scan -> AST check -> import test -> LLM reasoning)...</p>';
 
             try {
@@ -606,7 +748,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                         </div>
                         <div style="font-size: 0.88rem; margin-bottom: 0.5rem;"><b>Executive Pitch:</b> ${e.executive_pitch}</div>
                         <div style="font-size: 0.85rem; color: #93c5fd; margin-bottom: 0.5rem;"><b>PRIME Synergy:</b> ${e.synergy_notes}</div>
-                        <div style="font-size: 0.82rem; color: var(--text-muted);"><b>Technical Critique:</b> ${e.technical_critique}</div>
+                        <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;"><b>Technical Critique:</b> ${e.technical_critique}</div>
+                        ${e.question_for_phil ? `<div style="font-size: 0.85rem; color: #fde047; padding: 0.5rem; background: rgba(253, 224, 71, 0.1); border-radius: 4px;"><b>Agent Question:</b> ${e.question_for_phil}</div>` : ''}
                     `;
                 }
                 showToast('✅ Sandbox test & evaluation completed!');
@@ -617,7 +760,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 showToast('❌ Test failed: ' + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = '🚀 Execute Sandbox & Evaluate';
+                btn.innerText = '🚀 Execute Sandbox & Benchmark';
             }
         }
 
@@ -664,7 +807,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             loadFs();
         }
 
-        // Init on DOM ready
         window.addEventListener('DOMContentLoaded', () => {
             loadLatestBriefing();
             loadVault();
@@ -688,6 +830,7 @@ def get_status():
         "device": MODEL_CONFIG["device"],
         "vram_allocated_mb": round(vram_mb, 1),
         "model_id": MODEL_CONFIG["model_id"],
+        "safety_commit_ban": not SAFETY_POLICY["ALLOW_GIT_COMMIT"],
         "db_path": str(DB_PATH),
         "active_sandboxes": active_sandboxes
     }
@@ -722,9 +865,6 @@ def test_repo_endpoint(req: RepoTestRequest):
     name = parts[-1]
     full_name = f"{owner}/{name}"
 
-    sandbox_res = sandbox_runner.evaluate_repo_sandbox(url, owner, name)
-    readme_text = github_client.fetch_readme(full_name)
-    
     repo_meta = {
         "repo_url": url,
         "name": name,
@@ -738,6 +878,9 @@ def test_repo_endpoint(req: RepoTestRequest):
     }
     repo_id = upsert_repository(repo_meta)
 
+    sandbox_res = sandbox_runner.evaluate_repo_sandbox(url, owner, name, repo_id=repo_id)
+    readme_text = github_client.fetch_readme(full_name)
+
     eval_res = evaluator.evaluate(repo_meta, readme_text, sandbox_res)
     eval_id = record_evaluation(repo_id, eval_res)
     eval_res["id"] = eval_id
@@ -749,6 +892,26 @@ def test_repo_endpoint(req: RepoTestRequest):
         "sandbox_log": sandbox_res["log"],
         "evaluation": eval_res
     }
+
+@app.post("/api/chat")
+def chat_endpoint(req: ChatRequest):
+    reply = evaluator.chat(req.message, context_repo_url=req.context_repo_url)
+    return {"response": reply}
+
+@app.get("/api/chat/history")
+def chat_history_endpoint():
+    history = get_chat_history(limit=50)
+    return {"history": history}
+
+@app.get("/api/questions")
+def get_questions_endpoint():
+    questions = get_pending_questions()
+    return {"questions": questions}
+
+@app.post("/api/questions/answer")
+def answer_question_endpoint(req: AnswerQuestionRequest):
+    success = answer_agent_question(req.question_id, req.answer)
+    return {"success": success}
 
 @app.post("/api/scan")
 def trigger_scan_endpoint(background_tasks: BackgroundTasks):
@@ -775,7 +938,7 @@ def _execute_full_discovery_pipeline(limit: int = 4):
         full_name = c["full_name"]
         
         repo_id = upsert_repository(c)
-        sandbox_res = sandbox_runner.evaluate_repo_sandbox(url, owner, name)
+        sandbox_res = sandbox_runner.evaluate_repo_sandbox(url, owner, name, repo_id=repo_id)
         readme = github_client.fetch_readme(full_name)
         eval_res = evaluator.evaluate(c, readme, sandbox_res)
         record_evaluation(repo_id, eval_res)
@@ -783,7 +946,7 @@ def _execute_full_discovery_pipeline(limit: int = 4):
         merged = {**c, **eval_res}
         evaluations.append(merged)
 
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     reporter.generate_daily_briefing(evaluations, date_str=today_str)
     print(f"[+] Automated discovery pipeline complete. Briefing written for {today_str}.")
 

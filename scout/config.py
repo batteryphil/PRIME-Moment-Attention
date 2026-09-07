@@ -1,6 +1,7 @@
 """
 PRIME-Scout: Configuration and Research Profile
-Defines research interests, search queries, sandbox limits, and directory paths.
+Defines research interests, search queries, sandbox limits, directory paths,
+and safety constraints (STRICT: NEVER COMMIT OR PUSH TO GIT).
 """
 
 import os
@@ -18,6 +19,18 @@ DB_PATH = VAULT_DIR / "scout_vault.db"
 # Ensure directories exist
 for p in [REPORTS_DIR, VAULT_DIR, SANDBOX_DIR, STATIC_DIR]:
     p.mkdir(parents=True, exist_ok=True)
+
+# ==============================================================================
+# SAFETY POLICY: ABSOLUTE COMMIT BAN
+# ==============================================================================
+# PRIME-Scout is an analysis, experiment, and discovery agent.
+# It is STRICTLY FORBIDDEN from committing or pushing to any git repository.
+SAFETY_POLICY = {
+    "ALLOW_GIT_COMMIT": False,
+    "ALLOW_GIT_PUSH": False,
+    "ISOLATE_SANDBOX_ENV": True,
+    "BLOCK_GIT_MUTATIONS": True,
+}
 
 # User Research Profile (batteryphil / PRIME-Moment-Attention)
 RESEARCH_PROFILE = {
@@ -54,13 +67,15 @@ RESEARCH_PROFILE = {
     ]
 }
 
-# Sandbox Execution Limits
+# Sandbox Execution & Experimentation Limits
 SANDBOX_CONFIG = {
     "clone_depth": 1,
-    "max_clone_time_sec": 30,
+    "max_clone_time_sec": 45,
     "max_test_time_sec": 45,
-    "max_repo_size_mb": 150,
+    "max_experiment_time_sec": 60,
+    "max_repo_size_mb": 250,
     "python_executable": str(Path(os.environ.get("VIRTUAL_ENV", "/home/phil/.gemini/antigravity/scratch/venv")) / "bin" / "python"),
+    "allow_benchmarks": True,
 }
 
 # LLM Inference Configuration

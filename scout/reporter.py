@@ -1,16 +1,17 @@
 """
 PRIME-Scout: Daily Briefing Reporter
 Generates high-signal Markdown daily briefings with score badges,
-telemetry tables, sandbox results, and actionable research synergies.
+telemetry tables, sandbox results, actionable research synergies,
+and pending questions from the agent for Phil.
 """
 
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from scout.config import REPORTS_DIR
-from scout.database import record_briefing
+from scout.database import record_briefing, get_pending_questions
 
 class BriefingReporter:
     def __init__(self, reports_dir: Optional[Path] = None):
@@ -18,11 +19,10 @@ class BriefingReporter:
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_daily_briefing(self, evaluations: List[Dict[str, Any]], date_str: Optional[str] = None) -> Path:
-        date_str = date_str or datetime.utcnow().strftime("%Y-%m-%d")
+        date_str = date_str or datetime.now(timezone.utc).strftime("%Y-%m-%d")
         file_path = self.reports_dir / f"briefing_{date_str}.md"
         latest_path = self.reports_dir / "briefing_latest.md"
 
-        # Sort evaluations by Alignment Score descending, then Viability Score
         sorted_evals = sorted(evaluations, key=lambda x: (x.get("alignment_score", 0) * 1.2 + x.get("viability_score", 0)), reverse=True)
         
         must_read = [e for e in sorted_evals if e.get("verdict") == "MUST_READ" or e.get("alignment_score", 0) >= 80]
@@ -33,7 +33,8 @@ class BriefingReporter:
             f"# 🔭 PRIME-Scout Daily Intelligence Briefing: {date_str}",
             "",
             "> **Autonomous Local Research Briefing for batteryphil / PRIME-Moment-Attention**",
-            f"> Generated at {datetime.utcnow().strftime('%H:%M:%S UTC')} using Stage 7 Hybrid local evaluation & sandbox testing.",
+            f"> Generated at {datetime.now(timezone.utc).strftime('%H:%M:%S UTC')} using Stage 7 Hybrid local evaluation & sandbox testing.",
+            "> **Safety Policy Active**: Git commits and pushes strictly blocked. Read-only experimentation.",
             "",
             "## 📊 Daily Summary Telemetry",
             f"- **Repositories Scanned Today**: {len(sorted_evals)}",
@@ -63,6 +64,20 @@ class BriefingReporter:
         lines.append("---")
         lines.append("")
 
+        # Section: Questions from PRIME-Scout for Phil
+        pending_q = get_pending_questions()
+        if pending_q:
+            lines.append("## ❓ Strategic Inquiries from PRIME-Scout for Phil")
+            lines.append("PRIME-Scout identified decisions and trade-offs that need your direction:")
+            lines.append("")
+            for q in pending_q[:5]:
+                lines.append(f"- **{q.get('repo_name', 'Research')}**: {q['question']}")
+            lines.append("")
+            lines.append("*(You can answer these questions directly in the Web UI Chat tab or run `python -m scout.scout_cli chat`)*")
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+
         if must_read:
             lines.append("## 🌟 Priority Must-Read Repositories")
             lines.append("")
@@ -82,15 +97,12 @@ class BriefingReporter:
                 lines.extend(self._format_deep_dive(e, compact=True))
 
         lines.append("---")
-        lines.append("*Report generated autonomously by PRIME-Scout. To launch the interactive dashboard, run `python -m scout.scout_cli ui` or visit `http://localhost:7860`.*")
+        lines.append("*Report generated autonomously by PRIME-Scout. To converse with the agent, launch the dashboard or run `python -m scout.scout_cli chat`.*")
 
         content = "\n".join(lines)
         file_path.write_text(content)
-        
-        # Also update briefing_latest.md
         shutil.copyfile(file_path, latest_path)
 
-        # Record in database
         summary_text = f"Scanned {len(sorted_evals)} repos. Top matches: {len(must_read)} must-read, {len(worth_exploring)} worth exploring."
         record_briefing(date_str, str(file_path), summary_text, len(sorted_evals))
 
@@ -117,6 +129,12 @@ class BriefingReporter:
             "",
         ]
 
+        if e.get("question_for_phil"):
+            blocks.extend([
+                f"**Agent Question for Phil**:\n*{e['question_for_phil']}*",
+                "",
+            ])
+
         if not compact:
             blocks.extend([
                 f"**Technical Critique & Code Health**:\n{e.get('technical_critique', 'No critique available.')}",
@@ -132,22 +150,3 @@ class BriefingReporter:
 
         blocks.append("")
         return blocks
-
-if __name__ == "__main__":
-    reporter = BriefingReporter()
-    sample_eval = [{
-        "full_name": "sustcsonglin/flash-linear-attention",
-        "name": "flash-linear-attention",
-        "repo_url": "https://github.com/sustcsonglin/flash-linear-attention",
-        "stars": 2450,
-        "viability_score": 92,
-        "alignment_score": 95,
-        "verdict": "MUST_READ",
-        "sandbox_status": "PASS",
-        "executive_pitch": "Hardware-accelerated linear attention implementations in Triton across RetNet, GLA, and Mamba.",
-        "technical_critique": "Extremely clean Triton kernels with optimized SRAM tiling and causal mask handling.",
-        "synergy_notes": "We can port their chunked recurrent Triton kernel template directly to PRIME 2nd-order moment attention on ROCm.",
-        "sandbox_log": "All 12 AST checks passed. Triton detected. Import clean."
-    }]
-    path = reporter.generate_daily_briefing(sample_eval)
-    print("Report sample generated at:", path)
