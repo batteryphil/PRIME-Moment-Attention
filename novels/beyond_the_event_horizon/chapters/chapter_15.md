@@ -1,0 +1,91 @@
+# Chapter 15: A Kiss Before the Jump
+
+The warm fug of Leo's body heat clung to Astrid like a second skin as she pulled him in for a kiss that rocked them both off balance. Metal groaned softly beneath their knees as they fell together onto the polished floor of her quarters, the brief jolt forgotten amidst the tidal wave of sensation.
+
+Astrid's fingers tunneled beneath Leo's jacket to splay across the rigid planes of his back while her lips mapped the firm contours of his mouth. She tasted smoky spice and pure male intensity, the intoxicating essence of a man forged in fire. Her tongue delved to dance with his, craving the familiar tangle, the heated promise underlying every touch—these stolen moments being all they had before the abyss of war swallowed them whole once more.
+
+Leo retaliated fiercely, plunging his hands into the silky fall of her hair to tilt her head back for a deeper conquest, stoking the primal hunger burning within them like fusion in a star's core. Time ceased to exist; seconds elongated into eons as the world narrowed down to two hearts pounding in unison and skin pressed urgently seeking more contact.
+
+With a low growl, Astrid rolled atop Leo, pinning him beneath her lithe form, the coolness of her flightsuit stark contrast to the fever pitch of their intertwining flesh. She straddled his hips, sinking into the desperate pleasure, letting out a choked moan as his strong thigh muscle flexed between hers, pressing exactly where they both needed it most.
+
+Leaden gravity seemed to shift away as if the entire ship had lifted free from any anchor—only to plummet relentlessly onward into the waiting jaws of chaos, a fate neither of them could escape, yet each sought solace and meaning in this fleeting sanctuary, this stolen glimpse of love in the face of annihilation.
+
+Their mouths broke apart only for ragged breaths, lungs laboring as they chased the last dregs of oxygen amidst the wild throb of passion. Leo's hands roamed astride Astrid's waist, tracing the defined curves with a reverence born of shared struggles and the indissoluble bond forged in those crucibles of adversity.
+
+But even as they reveled in the savage beauty of their raw attraction, a harsh reminder echoed through the quiet chamber—they were running out of time. Already, the impending battle's shadow loomed, casting an ominous silhouette over this rare moment of blissful respite.
+
+With a final, lingering brush of Astrid's lips against Leo's jawline, she drew herself up to sit astride his thighs, gazing down at him with an expression of grim determination etched upon her finely chiseled features—the storm raging in her eyes echoing the turmoil brewing outside their cocoon of comfort.
+
+"We don't have much longer," she admitted reluctantly, her voice husky with emotion.
+
+Leo nodded solemnly, fingertips feathering along the small of her back, offering silent support and understanding. Their hands intertwined as they prepared to face whatever abyss awaited them next, the weight of their fate settled like a mantle upon their shoulders—yet not entirely oppressive, for despite the bleak future looming, there was precious comfort found in the tangible proof of their love, woven from the threads of mutual respect, trust, and the unbreakable will to survive, no matter the cost.
+
+✦ ✦ ✦
+
+Chaos beckoned from beyond the sanctum of their entwined limbs, but for this fleeting instant, Captain Astrid Ross and Commander Leo Mercer found refuge in each other's embrace. The pulsing rhythm of their hearts intertwined, a steady cadence of life in a war-torn galaxy.
+
+Astrid's gaze roved Leo's face, committing every detail to memory—a testament to the indomitable spark within him that drew her like a moth to flame. His cheekbone's sharp angle, the way his hair curled slightly at the nape of his neck, and that intense, almost feral glint in his hazel eyes—all spoke to a resilience that mirrored her own.
+
+As their lips met once more, it was less a tender exchange than a declaration of defiance against the cruel whims of fate. The kiss deepened, tongues twining in a sensual dance fueled by desperate longing. Each pressure of her body against his reiterated the harsh realities of their existence: a pirated starship hurtling toward oblivion, surrounded by merciless adversaries intent on claiming both vessel and crew.
+
+Yet even amidst such dire circumstances, their passionate embrace transcended mere physical release, becoming a profound act of solidarity and unity. In Astrid's arms, Leo felt the weight of centuries lift, granting him a fragile respite from the unrelenting pressures of leadership and survival. For a brief eternity, they simply were, adrift in a haze of pleasure and connection.
+
+Bare skin pressed against fabric and the subtle abrasion of stubble heightened every sensation, rendering the coarse texture of space suits and worn leather seats trivialities compared to the scorching intensity building between them. Despite the cacophony of urgency outside, their environment narrowed to the space that separated them, a microscopic world defined only by breath, touch, and the frantic pounding of hearts.
+
+Eventually, Astrid broke away, her chest heaving as she struggled to regain composure. The faintest smudge of lip gloss marred her otherwise flawless complexion, and the flushed hue of her cheeks seemed to glow even in the dim light. As she leaned back, settling astride his lap, the gravity-defying sway of herhips sent a provocative shiver through Leo, and he couldn't help but admire the fluid grace with which she moved.
+
+Their gazes locked, a mixture of emotion swirling between them—the fierce loyalty Astrid had sworn to him, the protectiveness he harbored for this fiercely independent woman, and the overwhelming desire that threatened to consume them whole. It was a volatile cocktail, brimming with potent ingredients certain to create a combustible union.
+
+"We don't have much longer," Astrid murmured, her tone low and strained, like the thrumming strings of a bow pulled taut around a waiting arrowhead. There was a wealth of unspoken meaning behind those five simple words, a subtext woven from the dark tapestry of their pasts and the uncertain forecast shaping their futures.
+
+Leo nodded solemnly, fingers dancing along the ridges of Astrid's spine, a gentle touch underscoring his commitment. He knew her thinking—the same calculations that constantly filtered through his mind: the dwindling supply of critical resources, the deteriorating state of their ship, and most pressing, their dwindling chances of escape.
+
+But even as dread threatened to suffocate them, there was solace to be found in each other. The fragile balance of their relationship, built upon trust, courage, and a desperate hunger for life itself, served as a beacon in the darkest corners of a war-haunted cosmos.
+
+Hand in hand, they rose from the tangled embrace, preparing to confront the tempest that awaited them.
+
+✦ ✦ ✦
+
+Looming before them, the swirling storm of Corvus III belied its tranquil name. A maelstrom of crimson clouds churned in perpetual turmoil, fueled by the seething volcanic heart at its core.
+
+"We're entering atmospheric interface now," Astrid called over the steady thrum of the vessel's engines, her crystalline eyes fixed intently on the forward viewscreen.
+
+Leo tensed beside her, his knuckles whitening against the armrests of the command chair as the Starlight Marauder jolted, compensating for turbulent air currents buffeting the hull. Alarms flashed amber, then red, warning systems straining under the assault.
+
+"Hold steady, girl!" Leo clipped into the comms. Despite years out of active service, his seasoned instincts kicked into high gear. The stresses of re-entry demanded precision flying, every maneuver deliberate and calculated.
+
+Astrid banked the battered frigate sharply, riding an eddy of calm above churning dust storms and towering electrostatic discharges. Lightning crackled across the horizon—fleeting glimpses of plasma energy, the raw power of a planet still birthing itself.
+
+"This close in is nasty, even for your piloting skills," Leo commented, admiration lacing his voice.
+
+"Piss off, hotshot." Astrid flashed him a wicked grin despite the gravity of their situation, a flicker of defiance in her gaze—"Your ego's getting as bloated as the ionosphere up there."
+
+But beneath the banter lay a thread of concern—a shared feeling of the precariousness of their position. Corvus III offered respite and potential salvage, but also presented unknown dangers, hidden pitfalls within its violent womb.
+
+The ship canted, responding to Astrid's deft manipulations as she coaxed it through convective updrafts. Outside, shadowy mountains loomed, shrouded in sullen smog. Debris fields—remnants of previous expeditions ill-fated—riddled the sky like skeletal remains scattered across some macabre altar.
+
+"Approaching our designated landing zone," Astrid announced, her attention divided between navigating the treacherous environment and scanning telemetry feeds. Critical systems were already pushing past optimal tolerances, heat and stress indicators escalating towards perilously red zones.
+
+Leo leaned forward, studying holographic maps projected by the shipboard AI. "Alright, Vex, you've got this. Once we set down, work fast—get us online, see what salvage we can scavenge. And keep an eye out for any sign of hostiles."
+
+"You know me," Astrid smiled, a cold glint in her eyes. She trusted no one else, not truly—not until she'd reclaimed her own past, forged it anew in the fiery crucible of revenge and survival.
+
+Beneath the relentless din of re-entry, a sense of anticipation hung heavy in the cramped bridge, mingling with fear and urgency. Not just for landing safely, but for whatever awaited them beyond...and on which side of the universe would come the true reckoning?
+
+✦ ✦ ✦
+
+As the scorched hide of the Starlight Marauder shuddered against the blistering caress of atmosphere, a symphony of stress cracks and groans rippled through every joint and seam. In the bridge, Leo held fast to his seat, fingers white-knuckled as he grappled with the flickering helm controls. Astrid worked alongside him, her hands a blur of precision as she expertly realigned thrusters and repurposed defensive shields to offset the extreme yawing forces threatening to send them tumbling sideways to their deaths.
+
+The engines roared in protest even as they struggled mightily to bleed off velocity, consuming precious fuel reserves like water down a bottomless chasm. Heat built up in relentless waves, suffusing the bridge with the acrid stench of scorched composites and ozone. Pivotal temperatures in key engine nodes crept ever closer to catastrophic failure as the ship tore through denser strata, each jolt and shudder shaking the core of Astrid's defiant vessel.
+
+Just seconds before impact, at the limit of Astrid's extraordinary skills, she brought the Marauder thundering onto the battered surface of Khyron Prime with brutal force that obliterated the final meters of momentum in a blazing pyrotechnic display against the jagged ravine wall. The shock wave threw both pilots head over heels back into their seats, knocking the wind—and several loose items—from their bodies.
+
+For long moments, nothing moved but drifting globs of molten metal and debris kicked up from the still-smoking impact site. Searing dust and smoke swirled in the screaming vacuum, the only sounds the agonized sigh of stressed metals and the wet rasp of escaping fluid from rents torn through critical systems. Through bleary eyes, Leo watched Astrid haul herself upright from her crash-web, features grim-set beneath a coating of sweat and soot. Her blackened leather jacket hung askew, half-shredded, tattered banner proclaiming their arrival amidst the unforgiving ruins of whatever ancient star port once called this desolate world home.
+
+Astrid stalked to the viewport, cranked open a panel, and slapped open a hatch emblazoned with faded squadron markings. With no hesitation, she vented the bridge to vacuum, then planted boot studs firmly over the edge, leaning precariously out to gaze upon the hellish panorama spread before the Marauder. Leo joined her moments later, fighting vertigo and static electricity that made every movement feel leaden as he edged up beside his crewmate.
+
+Outside, a surreal landscape unfolded on scales impossible for mortal minds to comprehend. Khyron Prime hung shrouded in perpetual dusk, the bruised purple haze thick with noxious emissions from the planet-wide volcanic upheavals that had choked its once-thriving atmosphere. Jagged, serrated silhouettes of towering peaks clawed skyward across leagues of cracked crust, pockmarked with calderas and fault fissures glowing hot enough to sear the retina. And below, sprawling ruins huddling against the base of these gargantuan monoliths—the eerie skeletal shadows of an ancient city shattered by untold cataclysms that left behind monuments of twisted steel and concrete spires forever frozen in disintegration.
+
+Leo squinted through the blinding glare of solar reflection off snow-capped peaks, searching desperately for telltale signs of active excavation pits, salvage operations, signs of life...anything. But save for the moldering husks of rust and decay dotting the blasted terrain, there was nothing, not even the hint of false promise on the horizon.
+
+"What did I tell you?"

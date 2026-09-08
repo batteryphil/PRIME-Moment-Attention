@@ -1,6 +1,6 @@
 ================================================================================
 BEYOND THE EVENT HORIZON (BOOK 1) — 6-CHAPTER QUALITY SAMPLER
-First 2 Chapters | Middle 2 Chapters | Last 2 Chapters
+First 2 Chapters | Middle 2 Chapters | Last 2 Chapters (Cleaned & Corrected)
 Generated from PRIME-Moment-Attention Sovereign Novelist Engine
 ================================================================================
 
@@ -54,7 +54,7 @@ Outside his battered ship, swirling relativistic Doppler shifted the cosmos into
 
 Leo shook his pounding head, forcing himself upright again as the copilot fed a new burst of torquing maneuvers into the struggling ship's core. Tiny tremors rippled through the stressed alloy framing as the gyroscopic stabilization fight dragged on, a desperate bid to carve out a fleeting margin of safety within the ergosphere's lethal electromagnetic grasp. Even if this worked - even if sheer willpower pushed them past this deadly threshold - there would be no respite, only another unending march towards those cosmic scales where quantum mechanics gave way completely to Einstein's unsparing equations governing relativity...assuming any of them survived long enough to observe such esoteric curiosities.
 
-Bellowing over the deluge of noise so only Vex could hear, Leo improvised a crude plan born of panic-fueled desperation. If they couldn't outrun this behemoth in normal spacetime, maybe - just maybe - they could lever its own incredible rotational energy in their favor, aiming not for escape but for a wild gamble that might let them slip through its jaws unscathed.
+Bellowing over the deluge of noise into the cockpit microphone, Leo improvised a crude plan born of panic-fueled desperation. If they couldn't outrun this behemoth in normal spacetime, maybe - just maybe - they could lever its own incredible rotational energy in their favor, aiming not for escape but for a wild gamble that might let them slip through its jaws unscathed.
 
 "I need precise data on the projected ergosphere boundary," he barked without easing up on the joystick, fighting to compensate for the planet-sized pinwheel twisting around him with every passing moment. "Plot a hyperbolic slingshot curve dead center along the horizon at the lowest possible velocity! And if you're still operational, hack open an external view from outside the ship."
 
@@ -494,8 +494,6 @@ She punctuated the biting indictment by jabbing at a console with reckless force
 
 ✦ ✦ ✦
 
-Scene 3: Tactical Fallout
-
 The Marauder shuddered violently around them, decks creaking, status lights flickering madly. In the sudden dimness, Astrid's features twisted into a grimace - eyes widened with shock as another explosion erupted outside the hull, a muffled crash signaling an unmanned drone slamming against their weak defenses.
 
 Leo's mind reeled, scrambling to reconcile the sudden turn of events against Astrid's stinging rebuke. He clung to the control seat, fingers digging into cold metal as his senses sharpened, drinking in every detail of disintegrating decorum and escalating peril.
@@ -602,7 +600,7 @@ The clatter of hastily fastened tools and supplies filled the holds as the engin
 
 "...all engines dead in five," Nova intoned coldly once again, pulling Vex back from the edge of sentimentality and plunging her fully back into the maelstrom of impending doom. She shot a bitter glance at Mercer, then down at the crippled control deck, and laughed – short, jagged bursts that sent a flicker of fear skating down Mercy's spine even as an odd sense of kinship twisted in the pit of his stomach.
 
-"We're outgunned, underskilled, running on blind guesswork and duct-taped miracles..." Vex growled, "."
+"We're outgunned, underskilled, running on blind guesswork and duct-taped miracles..." Vex growled.
 
 ✦ ✦ ✦
 
