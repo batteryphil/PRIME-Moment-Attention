@@ -72,13 +72,23 @@ Behind this initial volley, a second squad pressed forward, shields up as they m
 
 Leo waited until she cleared a gap in the advancing formation. Timing had to be perfect here—a microsecond off would mean catastrophe. He fired three consecutive bursts from his flare gun that exploded simultaneously into a blinding flash and searing cloud of noxious smoke just behind the enemy frontline, temporarily blinding and disrupting their aim.
 
-In the heartbeat's pause while stunned soldiers clawed at burning vision, Leo sprinted across intervening meters and leapt to grab Astrid's outstretched hand, hauling himself aboard as they spun together in a tango of trust and coordination to dodge return fire streaking by mere centimeters from frantically waving arms.
+In the heartbeat's pause while stunned soldiers clawed at burning vision, Leo sprinted across intervening deckplates to where Astrid had overridden the blast doors of the auxiliary docking slip.
+
+"The escape cutter—move!" Astrid barked over the suit link, seizing his harness and dragging him through the emergency pressure collar. 
+
+Dominion pulse fire scorched the bulkhead as Leo hammered the emergency lockdown. Astrid hurled herself into the cutter's flight bucket, her fingers flying across the auxiliary controls to prime the cold-gas thrusters.
+
+"Brace for hard separation!" she yelled.
+
+She punched the emergency decouple squibs. Concussive vibrations slammed through the cutter's hull as the docking clamps blew, violently severing the small vessel from the overrun *Marauder* and pitching them headlong into the black void.
 
 ✦ ✦ ✦
 
-The cutter careened wildly, spiraling from Astrid's desperate evasive maneuvers. Shattered viewports spewed starlight, debris, and screams into the void as mercs tumbled, entangled, or vanished entirely, unceremoniously deprioritized by circumstance. With a surge of superhuman effort, Leo clung grimly to Astrid as the Marauder bucked and groaned, responding to her frantic inputs as she fought to regain control and outrun the onslaught.
+The cutter careened wildly, spiraling through the void from Astrid's desperate evasive maneuvers. Behind them, the *Marauder's* primary hull flashed with secondary detonations as the Dominion patrol cruiser raked it with kinetic fire, but Astrid had already punched the auxiliary burn, throwing their small craft into the churning shadow of the asteroid field.
 
-Asteroids crunched and sparks flew as they clipped boulders at high velocity. The proximity alarm shrieked its dire warning—and Leo watched helplessly as it painted the approaching hull a blazing red as the patrol vessel loomed, an armored behemoth plowing through wreckage-strewn orbit. There was nowhere to run.
+With a surge of effort against crushing G-forces, Leo braced himself against the copilot's console as the cutter bucked and groaned under Astrid's furious helm inputs. 
+
+Asteroids crunched and sparks flew as they clipped tumbling iron boulders at high velocity. The proximity alarm shrieked its dire warning—and Leo watched helplessly as the sensor net painted the approaching patrol cruiser a blazing red, an armored behemoth plowing through the wreckage-strewn orbit to cut off their escape vector. There was nowhere to run.
 
 For one heart-stopping instant, hope flickered. An irregular shape detached from the warship's flank—a escape pod, small enough for a single occupant. Astrid hesitated not a moment. With reflexes honed by countless threats, she snagged the pod in mid-air, latching onto the tiny vessel with a magnetic grip that set it spinning end over end, leaving the pursuing patrols in the dust.
 

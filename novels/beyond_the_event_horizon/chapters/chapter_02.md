@@ -28,83 +28,57 @@ Leo's thumb moved restlessly over the service pistol's safety catch. Finally, he
 
 ✦ ✦ ✦
 
-The instant Leo conceded, a palpable shift permeated the airlock's tinny confines. Astrid's scowl relaxed minutely, creases smoothing from her sharp features. No longer was she an adversary, but a pragmatist considering trade advantages.
+The instant Leo conceded, a palpable shift permeated the airlock's tinny confines. Captain Astrid Ross—known across the lawless outer rim simply as Vex—felt her scowl relax minutely. No longer was she facing an immediate threat, but a living enigma and an unexpected tactical asset.
 
-With practiced ease, she flipped two mechanical catches and the outer hatch cycled open with a sigh of hydraulics. The Marauder loomed before them, skeletal lights casting eerie shadows across the launch pod's crumpled fuselage beneath.
+With practiced ease, she flipped the secondary mechanical catches. The pressurized umbilical sighed against the docking collar, linking the shattered cockpit of *Chronos-1* to the ventral gantry of the *Starlight Marauder*. The corsair frigate loomed before them, its blackened hull plates casting jagged shadows across the wreckage.
 
-"Hold tight," Astrid suggested through gritted teeth, extending a gloved hand. Her grip was firm as Leo grasped it, fingers interlocking in a secure bond despite their vastly different worlds and purposes.
+"Hold tight," Astrid ordered through her suit comms, extending a magnetized tether lead. "First rule of passage on my deck: nobody carries live ordnance."
 
-As they pulled themselves toward the airlock's threshold, something brushed Astrid's awareness - an anomaly dancing at the fringes of perception, whisper-thin against the backdrop of starfire and engine hum that constantly enveloped the Marauder.
+Before Leo could fully process the command, his gloved fingers moved instinctively toward his survival harness, reaching to secure his flight recorder and sidearm. Astrid countered in a blur of motion honed by a decade of ruthless boarding actions. She seized his wrist with iron leverage, pivoting to press him firmly against the gantry bulkhead and stripping the antique UNE sidearm from his hip holster with practiced efficiency.
 
-Frowning, Astrid released Leo just long enough to tap a sequence into her wrist-mounted console. The ship's main display flickered to life inside the cockpit, bathing them in harsh blues and whites.
+Leo raised his gloved hands in reluctant surrender, breathing heavily in his helmet. "Force of habit."
 
-Her eyes widened, pupils constricting in shock. Alarmed chatter bubbled up within her, but Astrid ruthlessly quashed it, refocusing on Leo. His expression mirrored her own as he registered the information displayed before them:
+"Break the habit," Astrid countered, slotting his weapon into her own tactical harness alongside a multi-tool she unclipped from his vest. "Trust is earned out here, relic. You keep your hands where my helmet cams can see them."
 
-A ship older than anything conceived by humanity in recorded history. A relic from an era defied explanation.
+Silence fell between them, save for the steady thrum of the *Marauder's* distant drive core conducted through the gantry framing. They hovered in close proximity—a 21st-century test pilot and a deep-space corsair, suspended between ancient history and hostile stars.
 
-"Astrid...?" Leo's voice grated like sandpaper, uncertainty coloring every syllable. He glanced around uneasily, hands curling into fists at his sides.
-
-"What the hell do you reckon this means?" she murmured, gaze still locked on the impossible data scrolling across the viewscreen.
-
-Leo's helmet swooped down, angling toward hers until the visor's slight curvature formed a taut ellipse with her own. He spoke low, urgency threaded into each word. "Could this be the key we're looking for? Some hidden historical marker pointing the way home?"
-
-"I don't know, damnit!" Astrid hissed back, frustration seeping into her tone. A stray lock of silver-brown hair crept past her chinstrap, drawing attention to the fine wrinkles around her eyes—a testament to countless battles waged and weathered.
-
-Leo's attempt at evasion, some desperate feint to escape the pressing strangeness enveloping them, was swift but clumsy. Astrid countered without hesitation, lunging forward with precision-enhanced reflexes honed across eons of pirating glory days on distant battlefields.
-
-Metallic snaps echoed through the cramped space as she seized his shoulder and hip, leveraging her momentum to toss him off balance. Even as he stumbled, Astrid advanced, grabbing for the utility belt slung over his combat armor.
-
-She yanked free a multi-tool, wielding the small blade with lethal finesse. Leo raised his arms in surrender, the sight of her standing inches away, faceplate glinting like obsidian beneath the harsh light, sent a shiver coursing through him.
-
-Silence fell, save for the steady thrum of the Marauder's engines and an almost imperceptible hum emanating from Leo's armor as its systems engaged defensively. They hovered in close proximity—astral warriors facing off amidst a maelstrom of ancient mysteries and modern threats.  
-
-Vex felt an unfamiliar flutter beneath her ribs. It wasn't fear—neither danger nor any semblance of uncertainty could penetrate the hardened walls guarding her heart—but something akin to intrigue.
+Vex felt an unfamiliar flutter beneath her ribs. It wasn't fear—neither danger nor sentiment could easily penetrate the armor guarding her instincts—but genuine intrigue.
 
 ✦ ✦ ✦
 
-The hiss of depressurizing air filled her ears even before Astrid physically shoved Leo back into the ship's docking tube. A split second later, the segmented inner hatch slid shut behind them with a soft thump, sealing the intruders out in the cold void. 
+The hiss of pressurizing atmosphere echoed through their helmets as Astrid guided Leo through the narrow transfer collar into the *Marauder's* primary airlock. The heavy blast hatch slammed home behind them with a solid hydraulic thud, sealing the cold void out.
 
-"Well isn't this just fucking delightful," Astrid purred, voice echoing through the cramped confines. Gripping Leo by the utility belt, she dragged him toward the nearest airlock. His boots kicked up floating debris with each stumbling step, a stark reminder that they had only a limited window to maneuver before emergency containment protocols relocked them out permanently.
+"Now let's get you across to the staging bay," Astrid muttered, snapping magnetic guide clamps around Leo's belt and tethering him to the transit rail as standard protocol for securing unverified personnel.
 
-Her prize captive squirmed futilely as she forced him into magnetic restraints lashed to the airlock wall. Clad in black leather and metal, Astrid towered over him, obsidian mask revealing only a hint of predatory amusement in every angular line.
+Leo tested the magnetic tension with a slight tug, his jaw tight beneath his visor. "Truce feel a little one-sided to you?"
 
-"Now be a good little relic and hold still, won't you?" she mocked, trailing a gloved finger along the curve of his jawline below the chin strap of his helmet. His skin, she noted, was warm to the touch—and surprisingly smooth, unlike the rugged calluses she expected from someone accustomed to operating high-performance vehicles under extreme stress.
+"It feels like staying alive," Astrid retorted, stepping in close to inspect his suit seals. Up close, through the scratched polarized faceplates, the tension between them crackled like static. She saw the haggard exhaustion etched into the lines of his face—the hollow shock of a soldier who had closed his eyes in his own century and opened them in an alien graveyard. Her gloved fingers brushed the collar of his suit, lingering for a fraction of a second over the rapid flutter of his pulse at his throat.
 
-Leo trembled subtly, struggling in vain against Astrid's unyielding grip as it tightened the restraints until the metal creaked in protest. Panic welled up within him as he confronted reality, realizing his precarious position—he would have been incinerated on impact if not for the Marauder's shields gobbling up the majority of the explosion's force.
+An unsettling jolt twitched in Astrid's chest. This man was completely adrift, a ghost thrown forward across a thousand years of slaughter and expansion. Whatever cynical mercenary instinct urged her to treat him as scrap salvage, something deeper warned her that this 'relic' held the missing link to how they were going to survive what was coming.
 
-Astrid watched, almost hypnotically, as the fear started to bleed into Leo's expression—the desperation, the resignation, the helpless exposure to alien circumstances. He looked so woefully adrift in this starry tomb, alone except for her presence looming like a dark enigma. The faint gleam reflected off his visor seemed somehow dulled now, as though the light inside him had dimmed along with his spirits.
+Steeling herself, Astrid stepped back, disengaging the airlock seal.
 
-She stepped closer till she heard the rasp of his rapid breathing echoing wetly in his suit's life support cab. Then—ever so delicately—her fingers traced upward, tracing the hollow of his throat, pausing at the seam of his jacket where muscle met collarbone. Just above his racing pulse point. Her own heartbeat slowed, rhythm synchronizing with his.
+"When we reach the bridge," she stated crisply, "I expect full cooperation regarding your flight telemetry. Tell me what kind of experimental drive your bird was testing, and maybe I don't trade you to the first Dominion scrap-broker we cross."
 
-In that intimate moment, suspended between hostile worlds and bristling with distrust, something jolted alive inside Astrid. Something sharp and unsettling in the pit of her stomach, akin to the thrill preceding a well-executed boarding action against an unsuspecting tanker freighter... or the headrush riding the curve of a hyperdrive jump.
-
-No. Her mind snapped the thought short. This man was her enemy—the same who'd tried to gut her own vessel mere minutes prior. Whatever fleeting sensations churned within, they meant nothing compared to the stakes involved. 
-
-With effort, Astrid extracted herself from the charged aura surrounding them. Retreating several hesitant steps put much-needed distance back between capture and captor.
-
-"When we reach the bridge," she stated crisply, "I expect full cooperation regarding your origins. Lies might buy time, relic, but trust me when I say you will far prefer the honesty route." Steeling herself, Astrid spun on a heel and pulled the inner airlock controls into her view:
-
-Time to end this awkward standoff and get back to business. Leo still needed processing; details still needed extracting; and Vex needed answers about this mysterious passenger that threatened to unravel centuries of carefully constructed lies.
-
-She'd let the relic savor his confinement further, since curiosity plainly ate at his nerves.
+She released the guide tether and keyed the interior hatch, motioning him through.
 
 ✦ ✦ ✦
 
-Astrid prodded the captive forward toward the common area adjacent to the docking tunnel. Flickering lumens illuminated worn decor—stained, metal-dented tables scabbing with old holographic advertisements. Scents reminiscent of recycled ozone and sweat caked beneath layers of vacuum gear wafted across the compartment, tangling with the faint metallic afterburn of spent propulsion. 
+Astrid directed Leo forward into the common area adjacent to the docking tunnel. Flickering lumens illuminated the *Marauder's* lived-in interior—dented bulkheads scarred by kinetic ricochets, exposed conduit bundles, and the faint, unmistakable tang of recycled ozone and machine oil that defined long-haul corsair life.
 
-Each step carried lingering traces of battle-scarred chaos—a haunting reminder where these two travelers crossed paths mere hours before amidst stars-spanning voids. Yet, Astrid's intent focus stayed trained upon her unexpected prisoner as he stumbled into the dimly lit room with a stumble before regaining balance.
+Leo glanced around apprehensively, his eyes taking in the unfamiliar holographic interfaces, the jury-rigged components, and the flickering main viewscreen displaying ship schematics interspersed with flashing patrol warnings.
 
-Leo glanced around apprehensively, eyes settling upon faded holodisplays touting everything from contraband cybernetics to illicit black market goods. His gaze jerked to the flickering main viewscreen displaying schematics of their ship interspersed with flashing alerts—seemingly unrelated to his confinement or their violent clash just beyond.
+Astrid approached the central navigation station, her hand resting easily near the butt of her sidearm. "Let's see that antique data slate," she instructed, pointing toward an illuminated diagnostic cradle built into the console. "Over there—under the scanner. Let's see what your flight recorder and retinal data have to say about how you got here."
 
-Astrid approached him, movements deliberate yet economical—her hands never straying far from the grip of her blaster. "Let's have those biocredits handy again," she murmured almost to herself while extending a palm in expectation. As he relinquished the data tablet, she gestured toward the nearest console lined with built-in scanning equipment. "Over there—under the alcove light, please. It seems your optic implant has some story to tell."
+Leo complied without argument, reaching up to unseal his helmet. The pressurized collar broke with a sharp hiss of escaping atmosphere. For the first time, Astrid saw his face unobstructed—the sharp jaw, the silver-streaked hair, and hazel eyes that held the haunted clarity of a man who had watched his entire world vanish in a relativistic blink.
 
-Leo complied without argument, if with a certain reluctance casting shadows across his features. The act required removing his pilot's visor, permitting Astrid unfiltered exposure to his chiseled angular face and piercing hazel eyes—though any hint of vulnerability was promptly eclipsed by determination when their gazes met over the scope of the retinal scanner. A palpable charge hung between them, more frisson than outright hostility, but none could mistake the tension for anything less than precarious.
+The retinal scanner flared cyan, humming as it mapped his ocular signature and the archaic UNE military encryption on his flight recorder.
 
-Within mere moments, the scanners completed their sweep, transmitting their findings through the Starlight Marauder's secure network to waiting systems manned by eager crew members. Astrid watched closely, maintaining her composure despite the unfamiliar flutter beating behind her stern facade. 
+Astrid watched closely, maintaining her composure even as the telemetry began scrolling across the terminal.
 
-The results proved unsurprising: an extremely unusual DNA signature, unlike any human known—including samples collected from centuries past for genotypical comparison. However, Astrid's primary concern revolved around answering the central question plaguing her—how did this person traverse such unfathomable distances on his own? His lack of identification or discernible technology beyond his helmet suggested not only he'd managed to survive outside known civilization for millennia but navigated unforgiving spacetime using methods incompatible with current understanding and technology.
+The results confirmed the impossible: a genetic profile carrying pre-Diaspora baselines, untouched by centuries of gene-tailoring or radiation therapy. But more staggering was the chronometric analysis:
 
-"It suggests individuals caught in extreme relativistic frame-dragging—crossing centuries in what feels to them like minutes. A living relic from the dawn of spaceflight." Her tone turned speculative, bordering on genuine awe. "Theoretically, someone emerging from that kind of slingshot still has the instincts of the pioneers. Raw, analog reflexes. In a sector where everyone relies on automated target locks, that makes you either completely useless... or worth more than a freighter full of refined helium-3."
+"Extreme relativistic frame-dragging," Astrid whispered, genuine awe softening her hard edges. "Crossing nearly a thousand years while your cellular clock barely registered hours. A living relic from the dawn of spaceflight." Her tone turned speculative. "Theoretically, someone emerging from that kind of slingshot still has the instincts of the pioneers. Raw, analog reflexes. In a sector where everyone relies on automated target locks, that makes you either completely useless... or worth more than a freighter full of refined helium-3."
 
 Astrid tapped the central console, bringing up the galactic navigation grid. A sprawling holographic projection of the Orion Arm flared to life between them, constellations mapped in cold cyan light.
 
