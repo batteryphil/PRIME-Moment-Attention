@@ -307,7 +307,7 @@ def narrate_chapter_file(
     chapter_num: int,
     device: str = "cpu"
 ) -> Dict[str, Any]:
-    """Top-level pipeline entry for narrating a chapter file."""
+    """Top-level pipeline entry for narrating a single chapter file."""
     ch_file = NOVELS_ROOT / novel_slug / "chapters" / f"chapter_{chapter_num:02d}.md"
     if not ch_file.exists():
         raise FileNotFoundError(f"Manuscript not found: {ch_file}")
@@ -345,7 +345,155 @@ def narrate_chapter_file(
     }
 
 
+def narrate_novel_full(
+    novel_slug: str = "beyond_the_event_horizon",
+    device: str = "cpu",
+    bitrate: str = "128k"
+) -> Dict[str, Any]:
+    """
+    Narrates all chapters of a novel and concatenates them into a single master audiobook file.
+    Generates embedded chapter markers for MP3 and M4B audiobook players.
+    """
+    ch_dir = NOVELS_ROOT / novel_slug / "chapters"
+    if not ch_dir.exists():
+        raise FileNotFoundError(f"Chapters directory not found: {ch_dir}")
+
+    ch_files = sorted(ch_dir.glob("chapter_*.md"))
+    if not ch_files:
+        raise FileNotFoundError(f"No chapters found in: {ch_dir}")
+
+    audio_dir = NOVELS_ROOT / novel_slug / "audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    export_dir = NOVELS_ROOT / novel_slug / "export"
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    print("=" * 80)
+    print(f"🎙️ [PRIME Sovereign Audio Studio] Narrating Full Novel: '{novel_slug}'")
+    print(f"   Chapters to process: {len(ch_files)}")
+    print("=" * 80)
+
+    narrator = SovereignAudioNarrator(device=device)
+
+    chapter_entries = []
+    current_offset_ms = 0
+    concat_list_file = audio_dir / "concat_list.txt"
+    concat_lines = []
+
+    for idx, ch_path in enumerate(ch_files, 1):
+        ch_num = int(ch_path.stem.split("_")[-1])
+        wav_path = audio_dir / f"chapter_{ch_num:02d}.wav"
+        
+        # Read title from first line of markdown
+        text = ch_path.read_text(encoding="utf-8")
+        first_line = text.strip().split('\n')[0]
+        if first_line.startswith("#"):
+            ch_title = first_line.lstrip("#").strip()
+        else:
+            ch_title = f"Chapter {ch_num}"
+
+        print(f"\n[{idx}/{len(ch_files)}] --- {ch_title} ---")
+
+        # Reuse existing WAV if it exists and has content
+        if wav_path.exists() and wav_path.stat().st_size > 1000:
+            print(f"  [✓] Found existing WAV: {wav_path.name} ({wav_path.stat().st_size / (1024*1024):.1f} MB)")
+            info = sf.info(str(wav_path))
+            ch_duration_sec = info.duration
+        else:
+            ch_duration_sec = narrator.narrate_chapter(text, wav_path)
+
+        duration_ms = int(ch_duration_sec * 1000)
+        start_ms = current_offset_ms
+        end_ms = current_offset_ms + duration_ms
+        current_offset_ms = end_ms
+
+        chapter_entries.append({
+            "num": ch_num,
+            "title": ch_title,
+            "start_ms": start_ms,
+            "end_ms": end_ms,
+            "duration_sec": ch_duration_sec,
+            "wav_path": str(wav_path)
+        })
+
+        concat_lines.append(f"file '{wav_path.resolve()}'")
+
+    concat_list_file.write_text("\n".join(concat_lines), encoding="utf-8")
+
+    # Generate FFMPEG chapter metadata
+    novel_title = novel_slug.replace("_", " ").title()
+    meta_file = audio_dir / "ffmetadata.txt"
+    meta_content = [
+        ";FFMETADATA1",
+        f"title={novel_title} (Unabridged)",
+        f"album={novel_title}",
+        "artist=PRIME Sovereign Studio",
+        "genre=Audiobook",
+        ""
+    ]
+    for ch in chapter_entries:
+        meta_content.append("[CHAPTER]")
+        meta_content.append("TIMEBASE=1/1000")
+        meta_content.append(f"START={ch['start_ms']}")
+        meta_content.append(f"END={ch['end_ms']}")
+        meta_content.append(f"title={ch['title']}")
+        meta_content.append("")
+
+    meta_file.write_text("\n".join(meta_content), encoding="utf-8")
+
+    total_duration_sec = current_offset_ms / 1000.0
+    total_duration_hours = total_duration_sec / 3600.0
+    print("\n" + "=" * 80)
+    print(f"[*] All {len(ch_files)} chapters synthesized!")
+    print(f"    Total Runtime: {total_duration_hours:.2f} hours ({total_duration_sec:.1f}s)")
+    print("[*] Concatenating and mastering single full-novel audiobook...")
+
+    master_mp3 = export_dir / f"{novel_slug}_Full_Audiobook.mp3"
+    master_m4b = export_dir / f"{novel_slug}_Full_Audiobook.m4b"
+
+    # Master to MP3 with chapter metadata and ACX loudness
+    cmd_mp3 = [
+        "ffmpeg", "-y",
+        "-f", "concat", "-safe", "0", "-i", str(concat_list_file),
+        "-i", str(meta_file),
+        "-map_metadata", "1",
+        "-af", "loudnorm=I=-23:LRA=7:TP=-3.0",
+        "-c:a", "libmp3lame",
+        "-b:a", bitrate,
+        str(master_mp3)
+    ]
+    print(f"[*] Encoding Master MP3 ({bitrate})...")
+    subprocess.run(cmd_mp3, check=True)
+    print(f"[✓] Master MP3 created: {master_mp3} ({master_mp3.stat().st_size / (1024*1024):.1f} MB)")
+
+    # Master to M4B (AAC with native chapter markers)
+    cmd_m4b = [
+        "ffmpeg", "-y",
+        "-f", "concat", "-safe", "0", "-i", str(concat_list_file),
+        "-i", str(meta_file),
+        "-map_metadata", "1",
+        "-c:a", "aac",
+        "-b:a", bitrate,
+        str(master_m4b)
+    ]
+    print(f"[*] Encoding Master M4B Audiobook...")
+    subprocess.run(cmd_m4b, check=True)
+    print(f"[✓] Master M4B created: {master_m4b} ({master_m4b.stat().st_size / (1024*1024):.1f} MB)")
+
+    return {
+        "slug": novel_slug,
+        "chapters_count": len(ch_files),
+        "total_duration_sec": total_duration_sec,
+        "total_duration_hours": total_duration_hours,
+        "master_mp3": str(master_mp3),
+        "master_m4b": str(master_m4b)
+    }
+
+
 if __name__ == "__main__":
     slug = sys.argv[1] if len(sys.argv) > 1 else "beyond_the_event_horizon"
-    ch = int(sys.argv[2]) if len(sys.argv) > 2 else 1
-    narrate_chapter_file(slug, ch)
+    if len(sys.argv) > 2 and sys.argv[2] == "--full":
+        narrate_novel_full(slug)
+    else:
+        ch = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+        narrate_chapter_file(slug, ch)
+

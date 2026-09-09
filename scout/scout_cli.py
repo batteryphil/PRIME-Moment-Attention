@@ -212,25 +212,112 @@ def cmd_lab(args):
         run_autonomous_daemon(interval_sec=args.interval)
 
 def cmd_narrate(args):
-    from scout.audio_narrator import narrate_chapter_file
+    from scout.audio_narrator import narrate_chapter_file, narrate_novel_full
+    if args.full:
+        res = narrate_novel_full(novel_slug=args.slug, device=args.device, bitrate=args.bitrate)
+        print("\n" + "=" * 80)
+        print(f"🎉 Full Novel Audiobook Complete!")
+        print(f"    Chapters: {res['chapters_count']}")
+        print(f"    Total Runtime: {res['total_duration_hours']:.2f} hours ({res['total_duration_sec']:.1f}s)")
+        print(f"    Master MP3: {res['master_mp3']}")
+        print(f"    Master M4B: {res['master_m4b']}")
+        print("=" * 80)
+    else:
+        print("=" * 80)
+        print(f"🎙️ PRIME Sovereign Audio Narrator: '{args.slug}' (Chapter {args.chapter})")
+        print("=" * 80)
+        res = narrate_chapter_file(novel_slug=args.slug, chapter_num=args.chapter, device=args.device)
+        print("\n" + "=" * 80)
+        print(f"🎉 Chapter Narration Complete!")
+        print(f"    Duration: {res['duration_min']:.2f} min ({res['duration_sec']:.1f}s)")
+        print(f"    Master MP3: {res['mp3_path']}")
+        print("=" * 80)
+
+def cmd_video(args):
+    """Combine cover art and audiobook audio into a 1080p YouTube video."""
+    import subprocess
+    novel_dir = Path("novels") / args.slug
+    export_dir = novel_dir / "export"
+    export_dir.mkdir(parents=True, exist_ok=True)
+    
+    cover_path = novel_dir / "cover.jpg"
+    if not cover_path.exists():
+        cover_path = novel_dir / "cover.png"
+    if not cover_path.exists():
+        print(f"[!] Error: Cover image not found in {novel_dir}")
+        return
+        
+    if args.audio:
+        audio_path = Path(args.audio)
+    else:
+        full_audio = export_dir / f"{args.slug}_Full_Audiobook.mp3"
+        ch1_audio = novel_dir / "audio" / "chapter_01.mp3"
+        if full_audio.exists():
+            audio_path = full_audio
+        elif ch1_audio.exists():
+            audio_path = ch1_audio
+        else:
+            print(f"[!] Error: No audio found in {export_dir} or {novel_dir / 'audio'}")
+            return
+            
+    output_video = export_dir / (args.output or f"{args.slug}_YouTube.mp4")
+    backdrop_img = export_dir / "youtube_cover_1080p.jpg"
+    
     print("=" * 80)
-    print(f"🎙️ PRIME Sovereign Audio Narrator: '{args.slug}' (Chapter {args.chapter})")
+    print(f"🎬 PRIME YouTube Video Generator: '{args.slug}'")
+    print(f"   Cover Art: {cover_path}")
+    print(f"   Audio:     {audio_path}")
+    print(f"   Output:    {output_video}")
     print("=" * 80)
-    res = narrate_chapter_file(novel_slug=args.slug, chapter_num=args.chapter, device=args.device)
+    
+    # Step 1: Generate 1920x1080 composite backdrop
+    print("[*] Generating 1920x1080 composite backdrop (blurred margins + sharp center)...")
+    cmd_backdrop = [
+        "ffmpeg", "-y", "-i", str(cover_path),
+        "-filter_complex",
+        "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,boxblur=25:5[bg];"
+        "[0:v]scale=-1:980[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2",
+        "-vframes", "1", str(backdrop_img)
+    ]
+    subprocess.run(cmd_backdrop, check=True)
+    print(f"[✓] Backdrop ready: {backdrop_img}")
+    
+    # Step 2: Mux audio + image into YouTube MP4
+    print("[*] Encoding YouTube MP4 (1080p, 1 fps, H.264 stillimage, AAC)...")
+    cmd_mux = [
+        "ffmpeg", "-y",
+        "-loop", "1", "-framerate", "1",
+        "-i", str(backdrop_img),
+        "-i", str(audio_path),
+        "-c:v", "libx264", "-preset", "veryfast", "-tune", "stillimage", "-crf", "22",
+        "-c:a", "aac", "-b:a", "192k",
+        "-pix_fmt", "yuv420p",
+        "-shortest",
+        str(output_video)
+    ]
+    subprocess.run(cmd_mux, check=True)
     print("\n" + "=" * 80)
-    print(f"🎉 Narration Complete!")
-    print(f"    Duration: {res['duration_min']:.2f} min ({res['duration_sec']:.1f}s)")
-    print(f"    Master MP3: {res['mp3_path']}")
+    print("🎉 YouTube Video Complete!")
+    print(f"   File: {output_video} ({output_video.stat().st_size / (1024*1024):.1f} MB)")
     print("=" * 80)
 
 def main():
     parser = argparse.ArgumentParser(description="PRIME-Scout: Autonomous Local Repository Intelligence Agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    # Video
+    p_video = subparsers.add_parser("video", help="Combine novel cover art and audiobook into a 1080p YouTube video")
+    p_video.add_argument("--slug", type=str, default="beyond_the_event_horizon", help="Novel slug")
+    p_video.add_argument("--audio", type=str, default=None, help="Path to audio file (defaults to full audiobook)")
+    p_video.add_argument("--output", type=str, default=None, help="Output MP4 filename")
+    p_video.set_defaults(func=cmd_video)
+
     # Narrate
-    p_narrate = subparsers.add_parser("narrate", help="Narrate a novel chapter into an ACX-compliant multi-voice audiobook")
+    p_narrate = subparsers.add_parser("narrate", help="Narrate a novel chapter or full novel into an ACX-compliant audiobook")
     p_narrate.add_argument("--slug", type=str, default="beyond_the_event_horizon", help="Novel directory slug")
     p_narrate.add_argument("--chapter", type=int, default=1, help="Chapter number (default 1)")
+    p_narrate.add_argument("--full", action="store_true", help="Narrate entire novel into a single master audiobook file")
+    p_narrate.add_argument("--bitrate", type=str, default="128k", help="Audio encoding bitrate (default '128k')")
     p_narrate.add_argument("--device", type=str, default="cpu", help="Compute device ('cpu' or 'cuda')")
     p_narrate.set_defaults(func=cmd_narrate)
 

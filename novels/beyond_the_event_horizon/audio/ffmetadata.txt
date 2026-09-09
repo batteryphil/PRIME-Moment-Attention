@@ -1,0 +1,125 @@
+;FFMETADATA1
+title=Beyond The Event Horizon (Unabridged)
+album=Beyond The Event Horizon
+artist=PRIME Sovereign Studio
+genre=Audiobook
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=0
+END=1020750
+title=Chapter 1: The Ergosphere Slingshot
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=1020750
+END=1832125
+title=Chapter 2: Boarding Action
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=1832125
+END=2783650
+title=Chapter 3: A Thousand Years from Home
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=2783650
+END=3778125
+title=Chapter 4: The Scavenger's Code
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=3778125
+END=4693175
+title=Chapter 5: G-Force and Starlight
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=4693175
+END=5746725
+title=Chapter 6: The Corsair Haven of Ostra-9
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=5746725
+END=6783300
+title=Chapter 7: Bounty on the Ghost
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=6783300
+END=7744425
+title=Chapter 8: The Thermal Shadow
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=7744425
+END=8786225
+title=Chapter 9: The Derelict Dyson Array
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=8786225
+END=9796450
+title=Chapter 10: Zero-G Entanglement
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=9796450
+END=10876925
+title=Chapter 11: The Dominion Patrol
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=10876925
+END=11923875
+title=Chapter 12: The Deceleration Burn
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=11923875
+END=12979775
+title=Chapter 13: Secrets of the Chronos Core
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=12979775
+END=13975950
+title=Chapter 14: The Pirate King's Summons
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=13975950
+END=14919525
+title=Chapter 15: A Kiss Before the Jump
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=14919525
+END=15861825
+title=Chapter 16: Ambush at the Oort Cloud
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=15861825
+END=16880775
+title=Chapter 17: Flight of the Ancient Torch
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=16880775
+END=17917075
+title=Chapter 18: The Silent Broadside
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=17917075
+END=18894225
+title=Chapter 19: Awakening the Shipyard
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=18894225
+END=19867400
+title=Chapter 20: Horizon's Edge

@@ -62,3 +62,9 @@ audio_cache/
 *.wav
 novels/**/audio/*.wav
 
+# Master audio/video exports (>100MB exceeds GitHub hard limit)
+novels/**/export/*.mp3
+novels/**/export/*.m4b
+novels/**/export/*.mp4
+
+
