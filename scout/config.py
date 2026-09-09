@@ -80,12 +80,14 @@ SANDBOX_CONFIG = {
 
 # LLM Inference Configuration
 MODEL_CONFIG = {
-    "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "model_id": "NousResearch/Meta-Llama-3-8B",
+    "use_prime_cache": True,
     "use_stage7_hybrid": True,
     "device": "cuda" if os.environ.get("ROCM_PATH") or os.path.exists("/dev/kfd") else "cpu",
-    "max_context_tokens": 8192,
-    "temperature": 0.2,
-    "top_p": 0.9,
+    "local_offline_only": True,
+    "max_context_tokens": 16384,
+    "temperature": 0.75,
+    "top_p": 0.92,
 }
 
 # Web UI Configuration

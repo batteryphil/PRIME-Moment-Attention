@@ -39,7 +39,15 @@ from scout.scientist import AutonomousScientist
 
 app = FastAPI(title=UI_CONFIG["title"])
 
-# Global singletons
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 sandbox_runner = SandboxRunner()
 evaluator = PrimeScoutEvaluator(mode="auto")
 experimenter = RepoExperimenter()
@@ -431,9 +439,50 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button class="tab-btn" onclick="switchTab(this, 'tab-sandbox')">🧪 Sandbox & Experiments</button>
         <button class="tab-btn" onclick="switchTab(this, 'tab-vault')">🏛️ Memory Vault (<span id="vault-count">0</span>)</button>
         <button class="tab-btn" onclick="switchTab(this, 'tab-fs')">📁 Easy File System</button>
+        <button class="tab-btn" onclick="switchTab(this, 'tab-novel')">📖 Novel Reader (50k Words)</button>
     </div>
 
     <main>
+        
+        <!-- Tab 6: Novel Reader -->
+        <div id="tab-novel" class="tab-content">
+            <div class="card" style="border-color: #ec4899;">
+                <div class="card-header">
+                    <div class="card-title" style="color: #f472b6;">
+                        📖 Tethered in Smoke and Sin <span class="badge badge-completed" style="margin-left: 0.75rem;">50,025 Words • 24 Chapters Complete</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="/reader" target="_blank" class="btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); text-decoration: none;">✨ Open Fullscreen E-Reader</a>
+                        <a href="/api/novel/download" class="btn btn-secondary" style="text-decoration: none;">📥 Download Manuscript (.md)</a>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; background: rgba(236, 72, 153, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(236, 72, 153, 0.2);">
+                    <div>
+                        <div style="font-size: 0.85rem; color: #f472b6; font-weight: 600;">GENRE: Spicy Romantasy (Portal Fantasy, Enemies-to-Lovers, Forced Proximity)</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Protagonist: Elena Vance (Antiquities Archivist) • Male Lead: Lord Vaelen Thorne (Shadow Warlord)</div>
+                    </div>
+                    <div style="margin-left: auto; text-align: right;">
+                        <span style="font-size: 1.25rem; font-weight: 700; color: #38bdf8;">50,025</span> / 50,000 words <span style="color: #10b981;">(100%)</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1.5rem; min-height: 500px;">
+                    <!-- Chapter List Sidebar -->
+                    <div style="width: 280px; flex-shrink: 0; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; max-height: 650px; overflow-y: auto;">
+                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase;">Table of Contents</div>
+                        <div id="novel-chapter-list"><p style="color: var(--text-muted); font-size: 0.85rem;">Loading chapters...</p></div>
+                    </div>
+                    <!-- Chapter Content Viewer -->
+                    <div style="flex: 1; background: rgba(17, 24, 39, 0.6); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; max-height: 650px; overflow-y: auto;">
+                        <div id="novel-reader-content" style="line-height: 1.8; font-size: 1.05rem; font-family: Georgia, serif; color: #e2e8f0;">
+                            <h2 style="color: #f472b6; margin-bottom: 1rem;">Select a Chapter to Begin Reading</h2>
+                            <p style="color: var(--text-muted);">All 24 chapters and 50,025 words are generated and stored in SQLite. Click any chapter on the left, or open the Fullscreen E-Reader.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Tab 1: Daily Briefing -->
         <div id="tab-briefing" class="tab-content active">
             <!-- Questions Queue for Phil -->
@@ -1190,6 +1239,1533 @@ def _execute_full_discovery_pipeline(limit: int = 4):
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     reporter.generate_daily_briefing(evaluations, date_str=today_str)
     print(f"[+] Automated discovery pipeline complete. Briefing written for {today_str}.")
+
+
+from fastapi.responses import FileResponse
+
+@app.get("/api/novel/library")
+def get_novel_library():
+    from scout.romantasy_studio import RomantasyStudio
+    studio = RomantasyStudio()
+    return studio.get_library_catalog()
+
+@app.get("/api/novel/progress")
+def get_novel_progress(slug: str = "a_crown_of_gilded_bones"):
+    from scout.romantasy_studio import NOVELS_ROOT, VAULT_DB_PATH
+    import sqlite3
+    
+    conn = sqlite3.connect(VAULT_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM novel_library WHERE slug = ?;", (slug,))
+    book = cur.fetchone()
+    if not book:
+        cur.execute("SELECT * FROM novel_library WHERE slug = 'a_crown_of_gilded_bones';")
+        book = cur.fetchone()
+    if not book:
+        cur.execute("SELECT * FROM novel_library ORDER BY id ASC LIMIT 1;")
+        book = cur.fetchone()
+    conn.close()
+    
+    if not book:
+        return {"error": "No books found", "chapter_details": []}
+        
+    b_dict = dict(book)
+    actual_slug = b_dict["slug"]
+    book_dir = NOVELS_ROOT / actual_slug
+    chapters_dir = book_dir / "chapters"
+    
+    chapter_list = []
+    if chapters_dir.exists():
+        for ch_f in sorted(chapters_dir.glob("chapter_*.md")):
+            text = ch_f.read_text(encoding="utf-8")
+            words = len(text.split())
+            try:
+                num = int(ch_f.stem.split("_")[1])
+            except:
+                num = len(chapter_list) + 1
+            first_line = text.split("\n")[0].replace("# ", "").strip()
+            chapter_list.append({
+                "chapter": num,
+                "title": first_line,
+                "words": words,
+                "path": str(ch_f)
+            })
+            
+    total_words = sum(c["words"] for c in chapter_list)
+    target_words = b_dict.get("target_words", 50000)
+    pct = round((total_words / target_words) * 100, 1) if target_words > 0 else 0
+    
+    return {
+        "title": b_dict.get("title", actual_slug),
+        "slug": actual_slug,
+        "subgenre": b_dict.get("subgenre", "Dark Gothic Romantasy"),
+        "total_words": total_words,
+        "target_words": target_words,
+        "percent_complete": pct,
+        "completed_chapters": len(chapter_list),
+        "total_chapters": b_dict.get("total_chapters", 30),
+        "chapter_details": chapter_list
+    }
+
+
+@app.get("/api/novel/chapter/{chapter_number}")
+def get_novel_chapter(chapter_number: int, slug: str = "tethered_in_smoke_and_sin"):
+    from scout.romantasy_studio import NOVELS_ROOT
+    from scout.novelist import CHAPTERS_DIR
+    if slug and slug != "tethered_in_smoke_and_sin":
+        ch_file = NOVELS_ROOT / slug / "chapters" / f"chapter_{chapter_number:02d}.md"
+    else:
+        ch_file = CHAPTERS_DIR / f"chapter_{chapter_number:02d}.md"
+
+    if not ch_file.exists():
+        raise HTTPException(status_code=404, detail=f"Chapter {chapter_number} not found for {slug}")
+    content = ch_file.read_text(encoding="utf-8")
+    title_line = content.split("\n")[0].replace("# ", "").strip()
+    return {
+        "chapter_number": chapter_number,
+        "title": title_line,
+        "content": content,
+        "word_count": len(content.split()),
+        "slug": slug
+    }
+
+@app.get("/api/novel/manuscript")
+def get_novel_manuscript():
+    from scout.novelist import PrimeNovelist, MANUSCRIPT_PATH
+    if not MANUSCRIPT_PATH.exists():
+        novelist = PrimeNovelist()
+        novelist.assemble_manuscript()
+    content = MANUSCRIPT_PATH.read_text(encoding="utf-8")
+    return {"content": content, "total_words": len(content.split())}
+
+@app.get("/api/novel/download")
+def download_novel_manuscript(format: str = "zip"):
+    from scout.novelist import NOVEL_DIR, MANUSCRIPT_PATH
+    export_dir = NOVEL_DIR / "export"
+    if format == "epub":
+        return FileResponse(path=str(export_dir / "Tethered_in_Smoke_and_Sin.epub"), filename="Tethered_in_Smoke_and_Sin.epub", media_type="application/epub+zip")
+    elif format == "pdf":
+        return FileResponse(path=str(export_dir / "Tethered_in_Smoke_and_Sin.pdf"), filename="Tethered_in_Smoke_and_Sin.pdf", media_type="application/pdf")
+    elif format == "html":
+        return FileResponse(path=str(export_dir / "Tethered_in_Smoke_and_Sin_Offline_Reader.html"), filename="Tethered_in_Smoke_and_Sin_Offline_Reader.html", media_type="text/html")
+    elif format == "txt":
+        return FileResponse(path=str(export_dir / "Tethered_in_Smoke_and_Sin.txt"), filename="Tethered_in_Smoke_and_Sin.txt", media_type="text/plain")
+    elif format == "md":
+        return FileResponse(path=str(MANUSCRIPT_PATH), filename="Tethered_in_Smoke_and_Sin_Manuscript.md", media_type="text/markdown")
+    else:
+        return FileResponse(path=str(export_dir / "Tethered_in_Smoke_and_Sin_Complete_Package.zip"), filename="Tethered_in_Smoke_and_Sin_Complete_Package.zip", media_type="application/zip")
+
+@app.get("/api/novel/sample_pdf")
+def get_sample_pdf():
+    sample_path = Path(__file__).resolve().parents[1] / "novels" / "a_crown_of_gilded_bones" / "export" / "A_Crown_of_Gilded_Bones_Chapter_1_Sample.pdf"
+    if not sample_path.exists():
+        raise HTTPException(status_code=404, detail="Sample PDF not found")
+    return FileResponse(
+        path=str(sample_path),
+        filename="A_Crown_of_Gilded_Bones_Chapter_1_Sample.pdf",
+        media_type="application/pdf"
+    )
+
+_shared_author = None
+
+def get_author():
+    global _shared_author
+    if _shared_author is None:
+        from scout.prime_local_author import PrimeLocalAuthor
+        _shared_author = PrimeLocalAuthor()
+    return _shared_author
+
+class AuthorPromptRequest(BaseModel):
+    prompt: str
+    heat_level: int = 5
+    max_tokens: int = 800
+
+@app.post("/api/author/prompt")
+def direct_author_prompt_endpoint(req: AuthorPromptRequest):
+    import torch
+    author = get_author()
+    t0 = time.time()
+    generated = author.generate_scene(req.prompt, max_new_tokens=req.max_tokens, temperature=0.8, top_p=0.92)
+    gen_time = time.time() - t0
+    vram_gb = torch.cuda.memory_allocated() / 1e9 if torch.cuda.is_available() else 0.0
+    
+    return {
+        "text": generated,
+        "words": len(generated.split()),
+        "time_seconds": round(gen_time, 2),
+        "vram_gb": round(vram_gb, 2)
+    }
+
+class Launch50kRequest(BaseModel):
+    title: str
+    prompt: str
+    target_words: int = 50000
+    total_chapters: int = 20
+    heat_level: int = 5
+    subgenre: str = "Dark Gothic Stalker Romantasy"
+
+@app.post("/api/novel/launch_50k")
+def launch_50k_novel_endpoint(req: Launch50kRequest):
+    import re
+    from scout.romantasy_studio import RomantasyStudio, NOVELS_ROOT, VAULT_DB_PATH
+    
+    slug = re.sub(r'[^a-z0-9]+', '_', req.title.lower()).strip('_')
+    if not slug:
+        slug = f"novel_{int(time.time())}"
+        
+    studio = RomantasyStudio()
+    book_meta = {
+        "slug": slug,
+        "title": req.title,
+        "subgenre": req.subgenre,
+        "target_words": req.target_words,
+        "current_words": 0,
+        "total_chapters": req.total_chapters,
+        "completed_chapters": 0,
+        "status": "WRITING",
+        "heat_level": req.heat_level,
+        "synopsis": req.prompt
+    }
+    studio.register_book_in_library(book_meta)
+    
+    book_dir = NOVELS_ROOT / slug
+    book_dir.mkdir(parents=True, exist_ok=True)
+    chapters_dir = book_dir / "chapters"
+    chapters_dir.mkdir(parents=True, exist_ok=True)
+    
+    bible = {
+        "slug": slug,
+        "title": req.title,
+        "subgenre": req.subgenre,
+        "target_words": req.target_words,
+        "total_chapters": req.total_chapters,
+        "heat_level": req.heat_level,
+        "synopsis": req.prompt,
+        "chapters": [
+            {
+                "chapter": i + 1,
+                "title": f"Chapter {i + 1}",
+                "target_words": round(req.target_words / req.total_chapters),
+                "act": 1 if i < req.total_chapters * 0.25 else (2 if i < req.total_chapters * 0.75 else 3),
+                "status": "QUEUED"
+            }
+            for i in range(req.total_chapters)
+        ]
+    }
+    (book_dir / "BOOK_BIBLE.json").write_text(json.dumps(bible, indent=2), encoding="utf-8")
+    
+    return {
+        "status": "LAUNCHED",
+        "slug": slug,
+        "title": req.title,
+        "target_words": req.target_words,
+        "total_chapters": req.total_chapters
+    }
+
+@app.get("/api/novel/status_detail")
+def get_novel_status_detail(slug: str = "a_crown_of_gilded_bones"):
+    from scout.romantasy_studio import NOVELS_ROOT, VAULT_DB_PATH
+    import sqlite3
+    
+    conn = sqlite3.connect(VAULT_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM novel_library WHERE slug = ?;", (slug,))
+    book = cur.fetchone()
+    if not book:
+        cur.execute("SELECT * FROM novel_library WHERE status = 'WRITING' ORDER BY id ASC LIMIT 1;")
+        book = cur.fetchone()
+    if not book:
+        cur.execute("SELECT * FROM novel_library ORDER BY id ASC LIMIT 1;")
+        book = cur.fetchone()
+    conn.close()
+    
+    if not book:
+        return {"error": "No books found"}
+        
+    b_dict = dict(book)
+    book_dir = NOVELS_ROOT / b_dict["slug"]
+    chapters_dir = book_dir / "chapters"
+    
+    chapter_list = []
+    if chapters_dir.exists():
+        for ch_f in sorted(chapters_dir.glob("chapter_*.md")):
+            text = ch_f.read_text(encoding="utf-8")
+            words = len(text.split())
+            try:
+                num = int(ch_f.stem.split("_")[1])
+            except:
+                num = len(chapter_list) + 1
+            title_line = text.split("\n")[0].replace("# ", "")
+            chapter_list.append({
+                "chapter": num,
+                "title": title_line,
+                "words": words,
+                "path": str(ch_f)
+            })
+            
+    total_words = sum(c["words"] for c in chapter_list)
+    b_dict["current_words"] = total_words
+    b_dict["completed_chapters"] = len(chapter_list)
+    b_dict["chapter_list"] = chapter_list
+    pct = round((total_words / b_dict["target_words"]) * 100, 1) if b_dict["target_words"] > 0 else 0
+    b_dict["percent_complete"] = pct
+    
+    return b_dict
+
+@app.post("/api/novel/draft_chapter_step")
+def draft_chapter_step_endpoint(slug: str = "a_crown_of_gilded_bones"):
+    from scout.romantasy_studio import NOVELS_ROOT, VAULT_DB_PATH
+    from scout.prime_local_author import PrimeLocalAuthor
+    import sqlite3
+    
+    book_dir = NOVELS_ROOT / slug
+    chapters_dir = book_dir / "chapters"
+    chapters_dir.mkdir(parents=True, exist_ok=True)
+    
+    conn = sqlite3.connect(VAULT_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT total_chapters, title, target_words FROM novel_library WHERE slug = ?;", (slug,))
+    row = cur.fetchone()
+    conn.close()
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="Novel not found")
+        
+    total_chapters, title, target_words = row
+    written_files = sorted(chapters_dir.glob("chapter_*.md"))
+    next_ch = len(written_files) + 1
+    
+    if next_ch > total_chapters:
+        return {"status": "ALREADY_COMPLETE", "slug": slug, "completed": total_chapters}
+        
+    author = get_author()
+    res = author.draft_chapter(slug, next_ch)
+    
+    all_chapters = sorted(chapters_dir.glob("chapter_*.md"))
+    total_words = sum(len(cf.read_text(encoding="utf-8").split()) for cf in all_chapters)
+    
+    conn = sqlite3.connect(VAULT_DB_PATH)
+    cur = conn.cursor()
+    now_str = datetime.now(timezone.utc).isoformat()
+    cur.execute("""
+    UPDATE novel_library
+    SET current_words = ?, completed_chapters = ?, status = ?, updated_at = ?
+    WHERE slug = ?;
+    """, (total_words, len(all_chapters), "COMPLETED" if len(all_chapters) >= total_chapters else "WRITING", now_str, slug))
+    conn.commit()
+    conn.close()
+    
+    ch_file = chapters_dir / f"chapter_{next_ch:02d}.md"
+    ch_text = ch_file.read_text(encoding="utf-8") if ch_file.exists() else ""
+
+    return {
+        "status": "SUCCESS",
+        "chapter": next_ch,
+        "title": res["title"],
+        "words": res["words"],
+        "total_words": total_words,
+        "percent": round((total_words / target_words) * 100, 1),
+        "content": ch_text
+    }
+
+@app.get("/api/novel/latest_chapter")
+def get_latest_chapter(slug: str = "a_crown_of_gilded_bones"):
+    from scout.romantasy_studio import NOVELS_ROOT
+    chapters_dir = NOVELS_ROOT / slug / "chapters"
+    if not chapters_dir.exists():
+        raise HTTPException(status_code=404, detail="Novel not found")
+    ch_files = sorted(chapters_dir.glob("chapter_*.md"))
+    if not ch_files:
+        raise HTTPException(status_code=404, detail="No chapters found")
+    latest_file = ch_files[-1]
+    content = latest_file.read_text(encoding="utf-8")
+    title_line = content.split("\n")[0].replace("# ", "").strip()
+    return {
+        "slug": slug,
+        "chapter": len(ch_files),
+        "title": title_line,
+        "content": content,
+        "words": len(content.split())
+    }
+
+STANDALONE_READER_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRIME Reader — Dark Romantasy E-Reader</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --accent: #f472b6;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --font-serif: "Georgia", "Palatino", "Liberation Serif", serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-serif);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.85;
+        }
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .reader-controls { display: flex; align-items: center; gap: 0.8rem; }
+        select, button {
+            background: #21262d;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        select:focus, button:focus { outline: none; border-color: var(--accent); }
+        .container {
+            max-width: 820px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem 6rem;
+            flex: 1;
+        }
+        .chapter-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .chapter-title { font-size: 2.2rem; color: var(--accent); margin-bottom: 0.5rem; font-weight: 700; }
+        .chapter-meta { font-size: 0.92rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        
+        #chapter-body {
+            font-size: 1.15rem;
+            line-height: 1.85;
+            color: var(--text);
+            text-rendering: optimizeLegibility;
+        }
+        #chapter-body p {
+            margin-bottom: 1.35rem;
+            text-indent: 2rem;
+            text-align: justify;
+            text-justify: inter-word;
+            hyphens: auto;
+        }
+        #chapter-body p.no-indent,
+        #chapter-body p:first-of-type {
+            text-indent: 0 !important;
+        }
+        #chapter-body p.lead-dropcap:first-of-type::first-letter {
+            float: left;
+            font-size: 3.6em;
+            line-height: 0.8;
+            padding-top: 4px;
+            padding-right: 10px;
+            padding-bottom: 2px;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            font-weight: bold;
+        }
+        #chapter-body em {
+            font-style: italic;
+            color: #fbcfe8;
+        }
+        #chapter-body strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .scene-break {
+            text-align: center;
+            margin: 2.5rem 0;
+            color: var(--accent);
+            font-size: 1.3rem;
+            letter-spacing: 0.5em;
+            opacity: 0.85;
+            user-select: none;
+        }
+        .nav-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .btn-nav {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-nav:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <a href="/" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">← Dashboard</a>
+            <select id="novel-select" onchange="changeNovel(this.value)" style="font-weight: 700; color: var(--accent); max-width: 280px;"></select>
+            <span id="novel-badge" style="font-size: 0.78rem; background: rgba(236,72,153,0.2); color: #f472b6; padding: 0.2rem 0.6rem; border-radius: 9999px;">Loading...</span>
+        </div>
+        <div class="reader-controls">
+            <select id="chapter-select" onchange="changeChapter(this.value)"></select>
+            <button onclick="toggleFont()">Font: Aa</button>
+            <button onclick="toggleTheme()">Theme</button>
+            <a id="download-pdf-btn" href="/api/novel/sample_pdf" target="_blank" style="text-decoration: none;">
+                <button style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; border: none; font-weight: 600;">📥 Sample PDF</button>
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="chapter-header">
+            <h1 class="chapter-title" id="disp-title">Loading...</h1>
+            <div class="chapter-meta" id="disp-meta">Chapter 1</div>
+        </div>
+        <div id="chapter-body"></div>
+        <div class="nav-footer">
+            <button class="btn-nav" id="btn-prev" onclick="prevChapter()">← Previous Chapter</button>
+            <span id="footer-progress" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+            <button class="btn-nav" id="btn-next" onclick="nextChapter()">Next Chapter →</button>
+        </div>
+    </div>
+
+    <script>
+        let curSlug = 'a_crown_of_gilded_bones';
+        let curChapter = 1;
+        let totalChapters = 1;
+        let chaptersData = [];
+        let isSerif = true;
+        let themeIdx = 0;
+        const themes = [
+            { bg: '#0d1117', text: '#e6edf3', surface: '#161b22', border: '#30363d' },
+            { bg: '#2b2622', text: '#f5e8d8', surface: '#36302b', border: '#4d443c' },
+            { bg: '#fbf0d9', text: '#2d251e', surface: '#ede0c7', border: '#d9caa8' }
+        ];
+
+        function formatManuscriptText(rawText) {
+            if (!rawText) return '';
+            let text = rawText
+                .replace(/<\\|[a-z0-9_]+\\|>/gi, '')
+                .replace(/^(Instruction|Target Heat Level|Novel|Objective|Premise|Chapter \\d+:?):.*$/gmi, '')
+                .replace(/^Story text:?\\s*/gmi, '')
+                .replace(/^#{1,6}\\s+.*$/gm, '')
+                .trim();
+
+            text = text.replace(/^(\\s*(\\*|\\-)\\s*){3,}$/gm, '___SCENE_BREAK___');
+
+            let paragraphs = text.split(/\\n\\s*\\n+/);
+            let htmlParts = [];
+            let isFirstAfterBreak = true;
+            let isFirstInChapter = true;
+
+            for (let p of paragraphs) {
+                let trimmed = p.trim();
+                if (!trimmed) continue;
+
+                if (trimmed === '___SCENE_BREAK___') {
+                    htmlParts.push('<div class="scene-break">✦ ✦ ✦</div>');
+                    isFirstAfterBreak = true;
+                    continue;
+                }
+
+                let escaped = trimmed
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+
+                escaped = escaped.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+                escaped = escaped.replace(/__(.+?)__/g, '<strong>$1</strong>');
+                escaped = escaped.replace(/\\*([^\\*\\n]+?)\\*/g, '<em>$1</em>');
+                escaped = escaped.replace(/_([^\\_\\n]+?)_/g, '<em>$1</em>');
+                escaped = escaped.replace(/\\n\\s*([“"«—\\-])/g, '<br>$1');
+                escaped = escaped.replace(/\\n\\s*/g, ' ');
+
+                let classes = [];
+                if (isFirstAfterBreak) {
+                    classes.push('no-indent');
+                    if (isFirstInChapter) {
+                        classes.push('lead-dropcap');
+                        isFirstInChapter = false;
+                    }
+                    isFirstAfterBreak = false;
+                }
+
+                let classAttr = classes.length > 0 ? ` class="${classes.join(' ')}"` : '';
+                htmlParts.push(`<p${classAttr}>${escaped}</p>`);
+            }
+
+            return htmlParts.join('\\n');
+        }
+
+        function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('slug')) curSlug = urlParams.get('slug');
+
+            fetch('/api/novel/library')
+                .then(r => r.json())
+                .then(books => {
+                    const novelSel = document.getElementById('novel-select');
+                    novelSel.innerHTML = '';
+                    books.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.slug;
+                        opt.textContent = '📖 ' + b.title;
+                        if (b.slug === curSlug) opt.selected = true;
+                        novelSel.appendChild(opt);
+                    });
+                    loadNovel(curSlug);
+                });
+        }
+
+        function changeNovel(slug) {
+            curSlug = slug;
+            loadNovel(slug);
+        }
+
+        function loadNovel(slug) {
+            fetch('/api/novel/progress?slug=' + encodeURIComponent(slug))
+                .then(r => r.json())
+                .then(data => {
+                    totalChapters = data.total_chapters || 1;
+                    chaptersData = data.chapter_details || [];
+                    
+                    const badge = document.getElementById('novel-badge');
+                    badge.textContent = `${(data.total_words || 0).toLocaleString()} Words • ${data.completed_chapters}/${totalChapters} Chs`;
+                    
+                    const chSel = document.getElementById('chapter-select');
+                    chSel.innerHTML = '';
+                    if (chaptersData.length === 0) {
+                        const opt = document.createElement('option');
+                        opt.value = 1;
+                        opt.textContent = 'No chapters yet';
+                        chSel.appendChild(opt);
+                        document.getElementById('disp-title').textContent = data.title;
+                        document.getElementById('disp-meta').textContent = 'Drafting in progress...';
+                        document.getElementById('chapter-body').innerHTML = '<p class="no-indent" style="text-align:center; color: var(--text-muted); margin-top: 3rem;">This novel is currently queued to be drafted on the local GPU.</p>';
+                        return;
+                    }
+                    
+                    chaptersData.forEach(ch => {
+                        const opt = document.createElement('option');
+                        opt.value = ch.chapter;
+                        opt.textContent = 'Ch ' + ch.chapter + ': ' + ch.title + ' (' + ch.words.toLocaleString() + 'w)';
+                        chSel.appendChild(opt);
+                    });
+                    
+                    loadChapter(chaptersData[0].chapter);
+                });
+        }
+
+        function loadChapter(num) {
+            curChapter = num;
+            document.getElementById('chapter-select').value = num;
+            fetch(`/api/novel/chapter/${num}?slug=${encodeURIComponent(curSlug)}`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('disp-title').textContent = data.title;
+                    document.getElementById('disp-meta').textContent = `Chapter ${num} of ${totalChapters} • ${data.word_count.toLocaleString()} words`;
+                    document.getElementById('footer-progress').textContent = `Reading Chapter ${num} of ${totalChapters}`;
+                    
+                    document.getElementById('chapter-body').innerHTML = formatManuscriptText(data.content);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    const chIdx = chaptersData.findIndex(c => c.chapter === num);
+                    document.getElementById('btn-prev').disabled = (chIdx <= 0);
+                    document.getElementById('btn-next').disabled = (chIdx >= chaptersData.length - 1 || chIdx < 0);
+                });
+        }
+
+        function changeChapter(val) { loadChapter(parseInt(val)); }
+        function prevChapter() {
+            const chIdx = chaptersData.findIndex(c => c.chapter === curChapter);
+            if (chIdx > 0) loadChapter(chaptersData[chIdx - 1].chapter);
+        }
+        function nextChapter() {
+            const chIdx = chaptersData.findIndex(c => c.chapter === curChapter);
+            if (chIdx < chaptersData.length - 1 && chIdx >= 0) loadChapter(chaptersData[chIdx + 1].chapter);
+        }
+
+        function toggleFont() {
+            isSerif = !isSerif;
+            document.body.style.fontFamily = isSerif ? 'Georgia, serif' : '-apple-system, BlinkMacSystemFont, sans-serif';
+        }
+
+        function toggleTheme() {
+            themeIdx = (themeIdx + 1) % themes.length;
+            const t = themes[themeIdx];
+            document.documentElement.style.setProperty('--bg', t.bg);
+            document.documentElement.style.setProperty('--text', t.text);
+            document.documentElement.style.setProperty('--surface', t.surface);
+            document.documentElement.style.setProperty('--border', t.border);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+"""
+
+STUDIO_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 PRIME Local Author Studio — Easy Desktop Control</title>
+    <style>
+        :root {
+            --bg: #090d16;
+            --surface: #121824;
+            --surface-hover: #1b2333;
+            --border: #232d42;
+            --accent: #f43f5e;
+            --accent-hover: #fb7185;
+            --accent-glow: rgba(244, 63, 94, 0.25);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-serif: "Georgia", "Palatino", serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-ui);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.9rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+        }
+        .badge-gpu {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #34d399;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            font-family: monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .nav-btn {
+            background: #1e293b;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.45rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .nav-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+        }
+        .layout {
+            max-width: 1200px;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            height: 140px;
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 0.75rem;
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tropes-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .trope-pill {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            color: #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .trope-pill:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .heat-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.35rem;
+        }
+        .heat-btn {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 0.2rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .heat-btn.active {
+            background: var(--accent);
+            border-color: var(--accent-hover);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        select {
+            width: 100%;
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: 0.5rem 0.65rem;
+            font-size: 0.88rem;
+        }
+        .btn-generate {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            color: white;
+            border: none;
+            padding: 0.85rem 1.25rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            transition: all 0.15s ease;
+        }
+        .btn-generate:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        /* Right Output Panel */
+        .output-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .output-header {
+            background: #161e2e;
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .output-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+        .output-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .output-canvas {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            overflow-y: auto;
+            max-height: 750px;
+            font-family: var(--font-serif);
+            font-size: 1.15rem;
+            line-height: 1.85;
+            color: #f8fafc;
+            background: #0b0f19;
+            text-rendering: optimizeLegibility;
+        }
+        .output-canvas p {
+            margin-bottom: 1.35rem;
+            text-indent: 2rem;
+            text-align: justify;
+            text-justify: inter-word;
+            hyphens: auto;
+        }
+        .output-canvas p.no-indent,
+        .output-canvas p:first-of-type {
+            text-indent: 0 !important;
+        }
+        .output-canvas p.lead-dropcap:first-of-type::first-letter {
+            float: left;
+            font-size: 3.6em;
+            line-height: 0.8;
+            padding-top: 4px;
+            padding-right: 10px;
+            padding-bottom: 2px;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            font-weight: bold;
+        }
+        .output-canvas em {
+            font-style: italic;
+            color: #fbcfe8;
+        }
+        .output-canvas strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .output-canvas .scene-break {
+            text-align: center;
+            margin: 2.5rem 0;
+            color: var(--accent);
+            font-size: 1.3rem;
+            letter-spacing: 0.5em;
+            opacity: 0.85;
+            user-select: none;
+        }
+
+        .loading-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            gap: 1rem;
+            color: var(--accent);
+        }
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(244, 63, 94, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .mode-tab {
+            background: #161e2e;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.6rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .mode-tab.active {
+            background: #1e293b;
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        .progress-box {
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .progress-bar-bg {
+            background: #1e293b;
+            height: 10px;
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #f43f5e 0%, #ec4899 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .chapter-pill-list {
+            max-height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            padding-right: 4px;
+        }
+        .chapter-pill {
+            background: #161e2e;
+            border: 1px solid var(--border);
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <span>👑 PRIME Local Author Studio</span>
+            <span class="badge-gpu">● AMD ROCm • Meta-Llama-3-8B</span>
+        </div>
+        <div class="nav-links">
+            <a href="/reader" class="nav-btn">📖 Open Reader</a>
+            <a href="/api/novel/sample_pdf" class="nav-btn">📄 Sample PDF</a>
+            <a href="/" class="nav-btn">🔬 Lab Dashboard</a>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- Control Panel -->
+        <div class="card">
+            <div class="mode-tabs">
+                <button class="mode-tab active" id="tab-scene" onclick="switchMode('scene')">📝 Scene / Chapter Mode</button>
+                <button class="mode-tab" id="tab-50k" onclick="switchMode('50k')">📚 Full 50k Novel Mode</button>
+            </div>
+
+            <!-- Single Scene Mode -->
+            <div id="section-scene" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="card-title">✍️ Tell Local AI What To Write</div>
+                
+                <div>
+                    <label>Direct Story / Scene Prompt</label>
+                    <textarea id="prompt-input" placeholder="e.g. Write a dark, intense scene where Caelum pins Aurelia against the obsidian altar in the bone crypts. Knife to throat, explicit dirty talk, he makes her beg for it..."></textarea>
+                </div>
+
+                <div>
+                    <label>⚡ Quick Trope Ideas (Click to Fill)</label>
+                    <div class="tropes-container">
+                        <span class="trope-pill" onclick="setPrompt('Caelum catches Aurelia harvesting venom in the dead of night. He disarms her, pins her against the bone wyrm-rib, and forces her to feel his hardness while kissing her neck.')">🔪 Knife & Wall Pin</span>
+                        <span class="trope-pill" onclick="setPrompt('Aurelia is bathing in the executioner estate. Caelum walks in blind, feeling her heartbeat and wet skin through bone-resonance, refusing to leave.')">🛁 Bathhouse Intrusion</span>
+                        <span class="trope-pill" onclick="setPrompt('Primal chase through the gothic catacombs. Caelum whispers \'Run, little viper\' into the dark as she desperately flees.')">🩸 Primal Chase</span>
+                        <span class="trope-pill" onclick="setPrompt('A rival noble tries to lay hands on Aurelia at the royal banquet. Caelum unleashes unhinged vigilante fury in her defense.')">👑 \'Who Did This To You?\'</span>
+                        <span class="trope-pill" onclick="setPrompt('Forced betrothal bedroom scene. Aurelia has a blade under her pillow; Caelum slides into her bed and takes it from her.')">🖤 Bedchamber Claim</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label>🔥 Spice / Smut Level</label>
+                    <div class="heat-selector">
+                        <button class="heat-btn" onclick="setHeat(1, this)">🌶️ 1<br><small>Tension</small></button>
+                        <button class="heat-btn" onclick="setHeat(2, this)">🌶️ 2<br><small>Banter</small></button>
+                        <button class="heat-btn" onclick="setHeat(3, this)">🌶️ 3<br><small>Steamy</small></button>
+                        <button class="heat-btn" onclick="setHeat(4, this)">🌶️ 4<br><small>Explicit</small></button>
+                        <button class="heat-btn active" onclick="setHeat(5, this)">🌶️ 5<br><small>Smut</small></button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label>Target Length</label>
+                        <select id="token-select">
+                            <option value="600">Short Scene (~500 words)</option>
+                            <option value="900" selected>Full Scene (~850 words)</option>
+                            <option value="1200">Extended Scene (~1,100 words)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Character Context</label>
+                        <select id="char-select">
+                            <option value="caelum_aurelia" selected>Caelum & Aurelia (Gilded Bones)</option>
+                            <option value="vaelen_elena">Vaelen & Elena (Smoke & Sin)</option>
+                            <option value="custom">Custom / Freestyle</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-generate" id="btn-generate" onclick="generateProse()">
+                    <span>⚡ Generate Scene on Local GPU</span>
+                </button>
+            </div>
+
+            <!-- Full 50,000-Word Novel Mode -->
+            <div id="section-50k" style="display: none; flex-direction: column; gap: 1rem;">
+                <div class="card-title">🚀 Full 50,000-Word Novel Generator</div>
+                
+                <div>
+                    <label>Book Title</label>
+                    <input type="text" id="novel-title-input" value="A Crown of Gilded Bones" style="width: 100%; background: #090d16; border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 0.6rem; font-size: 0.95rem;">
+                </div>
+
+                <div>
+                    <label>Premise & Dark Tropes</label>
+                    <textarea id="novel-premise-input" style="height: 90px;">In a subterranean gothic bone kingdom, a blind royal executioner obsessed with a lethal poisoner stalks her through the catacombs. Forced betrothal, knife play, 5/5 heat.</textarea>
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label>Target Word Count</label>
+                        <select id="novel-words-select">
+                            <option value="50000" selected>50,000 Words (20 Chapters • Full Book)</option>
+                            <option value="75000">75,000 Words (30 Chapters)</option>
+                            <option value="100000">100,000 Words (40 Chapters)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Spice Setting</label>
+                        <select id="novel-heat-select">
+                            <option value="5" selected>🌶️ 5/5 Extreme Dark Smut</option>
+                            <option value="4">🌶️ 4/5 High Heat</option>
+                            <option value="3">🌶️ 3/5 Steamy</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-generate" onclick="launch50kNovel()">
+                    <span>🚀 Launch 50,000-Word Autonomous Production</span>
+                </button>
+
+                <!-- Live 50k Progress Card -->
+                <div class="progress-box" id="novel-live-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong id="live-novel-title" style="color: var(--accent);">A Crown of Gilded Bones</strong>
+                        <span id="live-novel-status" style="font-size: 0.75rem; background: #1e293b; padding: 2px 6px; border-radius: 4px;">WRITING</span>
+                    </div>
+
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="live-progress-fill" style="width: 3%;"></div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                        <span id="live-words-count">1,567 / 75,000 words (2.1%)</span>
+                        <span id="live-chapters-count">1 / 30 chapters</span>
+                    </div>
+
+                    <div class="chapter-pill-list" id="live-chapter-list">
+                        <div class="chapter-pill"><span>Ch 1: The Ossuary Citadel</span><span>1,567 words [✓]</span></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.3rem;">
+                        <button class="nav-btn" onclick="draftNextChapter()" id="btn-next-ch" style="background: var(--accent); color: white; border: none; font-weight: 600;">⚡ Draft Next Chapter</button>
+                        <a href="/reader" class="nav-btn" style="text-align: center;">📖 Open Reader</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Display -->
+        <div class="output-card">
+            <div class="output-header">
+                <div class="output-meta" id="output-meta">Waiting for prompt...</div>
+                <div class="output-actions">
+                    <button class="nav-btn" onclick="copyText()">📋 Copy</button>
+                    <a href="/api/novel/sample_pdf" class="nav-btn" target="_blank">📄 View PDF</a>
+                </div>
+            </div>
+
+            <div class="loading-state" id="loading-state">
+                <div class="spinner"></div>
+                <div style="font-weight: 600; font-size: 1.05rem;" id="loading-title">Writing on AMD Radeon GPU (bfloat16)...</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);" id="loading-sub">Executing local token generation with PRIME constant memory...</div>
+            </div>
+
+            <div class="output-canvas" id="output-canvas">
+                <p style="color: var(--text-muted); font-style: italic; text-indent: 0;">
+                    Your generated scene or 50,000-word book status will appear here formatted and ready to read.<br><br>
+                    <strong>Choose a mode:</strong><br>
+                    • <strong>📝 Scene Mode</strong>: Quick, high-heat scenes generated in seconds.<br>
+                    • <strong>📚 Full 50k Novel Mode</strong>: Generates an entire 50,000-word novel chapter-by-chapter directly on your GPU.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let curHeat = 5;
+
+        function setHeat(level, btn) {
+            curHeat = level;
+            document.querySelectorAll('.heat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function setPrompt(text) {
+            document.getElementById('prompt-input').value = text;
+        }
+
+        function formatManuscriptText(rawText) {
+            if (!rawText) return '';
+            let text = rawText
+                .replace(/<\\|[a-z0-9_]+\\|>/gi, '')
+                .replace(/^(Instruction|Target Heat Level|Novel|Objective|Premise|Chapter \\d+:?):.*$/gmi, '')
+                .replace(/^Story text:?\\s*/gmi, '')
+                .replace(/^#{1,6}\\s+.*$/gm, '')
+                .trim();
+
+            text = text.replace(/^(\\\\s*(\\\\*|\\\\-)\\\\s*){3,}$/gm, '___SCENE_BREAK___');
+
+            let paragraphs = text.split(/\\n\\s*\\n+/);
+            let htmlParts = [];
+            let isFirstAfterBreak = true;
+            let isFirstInChapter = true;
+
+            for (let p of paragraphs) {
+                let trimmed = p.trim();
+                if (!trimmed) continue;
+
+                if (trimmed === '___SCENE_BREAK___') {
+                    htmlParts.push('<div class="scene-break">✦ ✦ ✦</div>');
+                    isFirstAfterBreak = true;
+                    continue;
+                }
+
+                let escaped = trimmed
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+
+                escaped = escaped.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+                escaped = escaped.replace(/__(.+?)__/g, '<strong>$1</strong>');
+                escaped = escaped.replace(/\\*([^\\*\\n]+?)\\*/g, '<em>$1</em>');
+                escaped = escaped.replace(/_([^\\_\\n]+?)_/g, '<em>$1</em>');
+                escaped = escaped.replace(/\\n\\s*([“"«—\\-])/g, '<br>$1');
+                escaped = escaped.replace(/\\n\\s*/g, ' ');
+
+                let classes = [];
+                if (isFirstAfterBreak) {
+                    classes.push('no-indent');
+                    if (isFirstInChapter) {
+                        classes.push('lead-dropcap');
+                        isFirstInChapter = false;
+                    }
+                    isFirstAfterBreak = false;
+                }
+
+                let classAttr = classes.length > 0 ? ` class="${classes.join(' ')}"` : '';
+                htmlParts.push(`<p${classAttr}>${escaped}</p>`);
+            }
+
+            return htmlParts.join('\\n');
+        }
+
+        async function generateProse() {
+            const prompt = document.getElementById('prompt-input').value.trim();
+            if (!prompt) {
+                alert('Please enter a prompt or click a quick trope!');
+                return;
+            }
+
+            const btn = document.getElementById('btn-generate');
+            const loading = document.getElementById('loading-state');
+            const canvas = document.getElementById('output-canvas');
+            const meta = document.getElementById('output-meta');
+            const maxTokens = parseInt(document.getElementById('token-select').value);
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ Generating on GPU...</span>';
+            loading.style.display = 'flex';
+            canvas.style.display = 'none';
+            meta.textContent = 'Generating on AMD GPU...';
+
+            try {
+                const res = await fetch('/api/author/prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        heat_level: curHeat,
+                        max_tokens: maxTokens
+                    })
+                });
+
+                if (!res.ok) throw new Error('Generation failed: ' + res.statusText);
+                const data = await res.json();
+
+                canvas.innerHTML = formatManuscriptText(data.text);
+                meta.textContent = `${data.words} words • ${data.time_seconds}s (${(data.words / data.time_seconds).toFixed(1)} w/s) • VRAM: ${data.vram_gb} GB`;
+            } catch (err) {
+                canvas.innerHTML = '<p style="color: #f87171;">Error: ' + err.message + '</p>';
+                meta.textContent = 'Error occurred';
+            } finally {
+                loading.style.display = 'none';
+                canvas.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<span>⚡ Generate on Local GPU</span>';
+            }
+        }
+
+        let curMode = 'scene';
+        let currentSlug = 'a_crown_of_gilded_bones';
+
+        function switchMode(mode) {
+            curMode = mode;
+            if (mode === 'scene') {
+                document.getElementById('tab-scene').classList.add('active');
+                document.getElementById('tab-50k').classList.remove('active');
+                document.getElementById('section-scene').style.display = 'flex';
+                document.getElementById('section-50k').style.display = 'none';
+            } else {
+                document.getElementById('tab-50k').classList.add('active');
+                document.getElementById('tab-scene').classList.remove('active');
+                document.getElementById('section-scene').style.display = 'none';
+                document.getElementById('section-50k').style.display = 'flex';
+                refreshNovelStatus();
+            }
+        }
+
+        async function refreshNovelStatus() {
+            try {
+                const res = await fetch('/api/novel/status_detail?slug=' + encodeURIComponent(currentSlug));
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.title) {
+                    document.getElementById('live-novel-title').textContent = data.title;
+                    document.getElementById('live-novel-status').textContent = data.status || 'WRITING';
+                    const pct = data.percent_complete || 0;
+                    document.getElementById('live-progress-fill').style.width = pct + '%';
+                    document.getElementById('live-words-count').textContent = `${(data.current_words || 0).toLocaleString()} / ${(data.target_words || 50000).toLocaleString()} words (${pct}%)`;
+                    document.getElementById('live-chapters-count').textContent = `${data.completed_chapters || 0} / ${data.total_chapters || 20} chapters`;
+                    
+                    const listEl = document.getElementById('live-chapter-list');
+                    if (data.chapter_list && data.chapter_list.length > 0) {
+                        listEl.innerHTML = data.chapter_list.map(ch => 
+                            `<div class="chapter-pill"><span>Ch ${ch.chapter}: ${ch.title}</span><span>${ch.words.toLocaleString()} words [✓]</span></div>`
+                        ).join('');
+                    } else {
+                        listEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem; padding: 0.25rem;">No chapters written yet. Click Draft Next Chapter or run the autonomous daemon!</div>';
+                    }
+                }
+            } catch (e) {
+                console.error('Error refreshing novel status:', e);
+            }
+        }
+
+        async function launch50kNovel() {
+            const title = document.getElementById('novel-title-input').value.trim();
+            const prompt = document.getElementById('novel-premise-input').value.trim();
+            const targetWords = parseInt(document.getElementById('novel-words-select').value);
+            const heat = parseInt(document.getElementById('novel-heat-select').value);
+
+            if (!title) {
+                alert('Please enter a book title');
+                return;
+            }
+
+            const canvas = document.getElementById('output-canvas');
+            const meta = document.getElementById('output-meta');
+            meta.textContent = 'Launching 50,000-Word Autonomous Novel Production...';
+            canvas.innerHTML = `<h3>🚀 Registering '${title}' for Full Novel Production...</h3><p>Generating Book Bible, chapter progression outline, and SQLite tracking entry...</p>`;
+
+            try {
+                const totalCh = targetWords === 50000 ? 20 : (targetWords === 75000 ? 30 : 40);
+                const res = await fetch('/api/novel/launch_50k', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        prompt: prompt,
+                        target_words: targetWords,
+                        total_chapters: totalCh,
+                        heat_level: heat
+                    })
+                });
+                const data = await res.json();
+                currentSlug = data.slug;
+                canvas.innerHTML = `
+                    <h2 style="color: var(--accent);">👑 Autonomous Novel Project Launched!</h2>
+                    <p><strong>Title:</strong> ${data.title}</p>
+                    <p><strong>Slug:</strong> <code>${data.slug}</code></p>
+                    <p><strong>Target Length:</strong> ${data.target_words.toLocaleString()} words (${data.total_chapters} Chapters)</p>
+                    <p><strong>Heat Level:</strong> 🌶️ ${heat}/5</p>
+                    <div class="scene-break">✦ ✦ ✦</div>
+                    <p>The book bible has been registered. The autonomous studio daemon and the "Draft Next Chapter" button below can now write chapters sequentially on your local GPU.</p>
+                `;
+                refreshNovelStatus();
+            } catch (err) {
+                canvas.innerHTML = `<p style="color: #f87171;">Error launching novel: ${err.message}</p>`;
+            }
+        }
+
+        async function draftNextChapter() {
+            const btn = document.getElementById('btn-next-ch');
+            const loading = document.getElementById('loading-state');
+            const canvas = document.getElementById('output-canvas');
+            const meta = document.getElementById('output-meta');
+            const loadingTitle = document.getElementById('loading-title');
+            const loadingSub = document.getElementById('loading-sub');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Drafting on GPU...';
+            loading.style.display = 'flex';
+            canvas.style.display = 'none';
+            loadingTitle.textContent = 'Drafting Next Chapter on AMD GPU...';
+            loadingSub.textContent = 'Local Meta-Llama-3-8B writing multi-scene narrative with constant PRIME memory...';
+            meta.textContent = 'Drafting chapter on GPU...';
+
+            try {
+                const res = await fetch('/api/novel/draft_chapter_step?slug=' + encodeURIComponent(currentSlug), {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.status === 'ALREADY_COMPLETE') {
+                    canvas.innerHTML = `<h2>🎉 Book Complete!</h2><p>All ${data.completed} chapters have been written.</p>`;
+                } else {
+                    canvas.innerHTML = `<h2 style="color: var(--accent); margin-bottom: 1.5rem; text-align: center;">${data.title}</h2>` + formatManuscriptText(data.content || '');
+                    meta.textContent = `Drafted ${data.words || 0} words • Total Novel: ${(data.total_words || 0).toLocaleString()} words (${data.percent || 0}%)`;
+                }
+                refreshNovelStatus();
+            } catch (err) {
+                canvas.innerHTML = `<p style="color: #f87171;">Error drafting chapter: ${err.message}</p>`;
+                meta.textContent = 'Error occurred';
+            } finally {
+                loading.style.display = 'none';
+                canvas.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '⚡ Draft Next Chapter';
+            }
+        }
+
+        function copyText() {
+            const text = document.getElementById('output-canvas').innerText;
+            navigator.clipboard.writeText(text);
+            alert('Copied to clipboard!');
+        }
+
+        async function initStudio() {
+            refreshNovelStatus();
+            try {
+                const res = await fetch('/api/novel/latest_chapter?slug=' + encodeURIComponent(currentSlug));
+                if (res.ok) {
+                    const data = await res.json();
+                    const canvas = document.getElementById('output-canvas');
+                    const meta = document.getElementById('output-meta');
+                    canvas.innerHTML = `<h2 style="color: var(--accent); margin-bottom: 1.5rem; text-align: center;">${data.title}</h2>` + formatManuscriptText(data.content || '');
+                    meta.textContent = `Displaying ${data.title} (${data.words.toLocaleString()} words) • Ready for next scene or chapter.`;
+                }
+            } catch (e) {
+                console.log('No existing chapter preview:', e);
+            }
+        }
+
+        // Auto-refresh status if in 50k mode
+        setInterval(() => {
+            if (curMode === '50k') refreshNovelStatus();
+        }, 12000);
+
+        // Initial check on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initStudio);
+        } else {
+            initStudio();
+        }
+    </script>
+</body>
+</html>
+"""
+
+@app.get("/studio", response_class=HTMLResponse)
+@app.get("/author", response_class=HTMLResponse)
+@app.get("/easy", response_class=HTMLResponse)
+def serve_author_studio():
+    return HTMLResponse(content=STUDIO_HTML)
+
+@app.get("/reader", response_class=HTMLResponse)
+def serve_novel_reader():
+    return HTMLResponse(content=STANDALONE_READER_HTML)
 
 def run_server(host: str = "0.0.0.0", port: int = 7860):
     import uvicorn

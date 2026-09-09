@@ -1,0 +1,193 @@
+{
+  "slug": "beyond_the_event_horizon",
+  "title": "Relic of the Void",
+  "series_title": "Beyond the Event Horizon",
+  "book_number": 1,
+  "subgenre": "Hard Science Fiction Space Opera",
+  "target_words": 50000,
+  "total_chapters": 20,
+  "heat_level": 3,
+  "synopsis": "An experimental test pilot loses control near a rotating black hole, slingshotting around the event horizon under extreme gravitational time dilation. When he emerges, 1,000 years have passed. Salvaged by a fierce space pirate captain, he must navigate vacuum warfare, pirate politics, and his growing feelings for his captor while discovering humanity's ancestral home is gone.",
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "The Ergosphere Slingshot",
+      "target_words": 2500,
+      "actual_words": 2202,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Leo Mercer conducts an experimental torch burn near Cygnus X-1; antimatter injector failure pulls him into the gravitational well; crushing g-forces as he skims the ergosphere; time dilation accelerates; waking up to silent, dead systems 1,000 years in the future as a pirate boarding team cuts through his airlock."
+    },
+    {
+      "chapter": 2,
+      "title": "Boarding Action",
+      "target_words": 2500,
+      "actual_words": 2397,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Captain Astrid 'Vex' Ross breaches the cockpit expecting scrap, finding a living Golden Age pilot; standoff in zero gravity; razor-sharp banter and initial sparks of tension as she disarms him and brings him aboard the Starlight Marauder."
+    },
+    {
+      "chapter": 3,
+      "title": "A Thousand Years from Home",
+      "target_words": 2500,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Leo is confined to the medical bay; Orlo inspects his flight suit and prototype telemetry; Astrid interrogates him; Leo learns the devastating truth that 1,000 years have passed and Earth is an ancient ruin.",
+      "actual_words": 2094
+    },
+    {
+      "chapter": 4,
+      "title": "The Scavenger's Code",
+      "target_words": 2500,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "A rival corsair wolf-pack ambushes the Starlight Marauder; Astrid's flight pilot is incapacitated by shrapnel; Leo takes the flight couch and executes a manual high-g drift maneuver that saves the ship.",
+      "actual_words": 2165
+    },
+    {
+      "chapter": 5,
+      "title": "G-Force and Starlight",
+      "target_words": 2500,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Aftermath of the dogfight; Astrid treats Leo's acceleration bruising in private quarters; mutual respect turns into intense, breathless physical proximity; establishing a fragile partnership.",
+      "actual_words": 2047
+    },
+    {
+      "chapter": 6,
+      "title": "The Corsair Haven of Ostra-9",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Docking at a hollowed-out asteroid pirate station; decadent space bazaars, lawless bounty hunters, and orbital speakeasies; Leo sees the wild, fractured 31st-century human frontier.",
+      "actual_words": 2219
+    },
+    {
+      "chapter": 7,
+      "title": "Bounty on the Ghost",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Word spreads that Astrid has recovered a Golden Age military prototype; pirate syndicates and Dominion informants close in; a neon-lit shootout through the pressurized market tunnels.",
+      "actual_words": 2253
+    },
+    {
+      "chapter": 8,
+      "title": "The Thermal Shadow",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Escaping Ostra-9 into the shadow of a gas giant's ring system; running dark with radiators stowed; silent, freezing tension inside the cockpit; shared whispers and vulnerable admissions in the dark.",
+      "actual_words": 2143
+    },
+    {
+      "chapter": 9,
+      "title": "The Derelict Dyson Array",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Investigating a colossal shattered star-collector orbiting a red dwarf; breathtaking cosmic scale; searching for antimatter fuel canisters to recharge the Chronos-1.",
+      "actual_words": 2098
+    },
+    {
+      "chapter": 10,
+      "title": "Zero-G Entanglement",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Tethered spacewalk inside the hollow megastructure; micro-meteorite rupture forces Leo and Astrid into an emergency pressure shelter; heated intimacy and their first passionate kiss floating in weightlessness.",
+      "actual_words": 2198
+    },
+    {
+      "chapter": 11,
+      "title": "The Dominion Patrol",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "A Dominion heavy cruiser ambushes them at the edge of the array; long-range kinetic railgun duel across 5,000 kilometers; physics-grounded missile interception.",
+      "actual_words": 2219
+    },
+    {
+      "chapter": 12,
+      "title": "The Deceleration Burn",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Surviving a crushing 6-g flip-and-burn burn into an asteroid trench; physical toll on the human body; Astrid and Leo's bond tested and deepened under pressure.",
+      "actual_words": 2257
+    },
+    {
+      "chapter": 13,
+      "title": "Secrets of the Chronos Core",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Orlo unlocks an encrypted black-box partition on Leo's flight recorder; coordinates to an ancient automated orbital shipyard hidden in a cometary cloud.",
+      "actual_words": 2182
+    },
+    {
+      "chapter": 14,
+      "title": "The Pirate King's Summons",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "The Corsair Syndicate council demands Astrid hand over Leo and the ship; Astrid defies the syndicate lords, choosing loyalty to Leo over her pirate standing.",
+      "actual_words": 2229
+    },
+    {
+      "chapter": 15,
+      "title": "A Kiss Before the Jump",
+      "target_words": 2500,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "The eve of battle; spending the night together in the captain's quarters; passionate, high-heat romantic commitment before entering hostile territory.",
+      "actual_words": 2124
+    },
+    {
+      "chapter": 16,
+      "title": "Ambush at the Oort Cloud",
+      "target_words": 2500,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Arriving at the cometary coordinates only to find an ambush; Syndicate traitors have sold them out to the Dominion navy; heavy damage to the Marauder.",
+      "actual_words": 1991
+    },
+    {
+      "chapter": 17,
+      "title": "Flight of the Ancient Torch",
+      "target_words": 2500,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Leo launches the repaired Chronos-1 prototype; flying manual maneuvers impossible for modern computerized ships; cutting through the enemy fighter screen.",
+      "actual_words": 2187
+    },
+    {
+      "chapter": 18,
+      "title": "The Silent Broadside",
+      "target_words": 2500,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Tactical coordination between the Marauder and Chronos-1; disabling the Dominion cruiser's thermal radiators, forcing them to surrender or cook from waste heat.",
+      "actual_words": 2169
+    },
+    {
+      "chapter": 19,
+      "title": "Awakening the Shipyard",
+      "target_words": 2500,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Docking at the ancient Golden Age automated shipyard; the station's AI recognizes Leo's biometric clearance as Commander; lights flicker on across a fleet of sleeping ships.",
+      "actual_words": 2035
+    },
+    {
+      "chapter": 20,
+      "title": "Horizon's Edge",
+      "target_words": 2500,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "The Starlight Marauder is upgraded with Golden Age drives; Astrid and Leo stand side-by-side on the command deck as partners and lovers; charting a course for the lost cradle of Sol.",
+      "actual_words": 2144
+    }
+  ]
+}

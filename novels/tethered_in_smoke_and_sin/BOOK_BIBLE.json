@@ -1,0 +1,82 @@
+{
+  "title": "Tethered in Smoke and Sin",
+  "genre": "Spicy Portal Fantasy Romance (Romantasy)",
+  "target_word_count": 50000,
+  "trope_profile": [
+    "Portal Fantasy (Isekai)",
+    "Enemies-to-Lovers",
+    "Forced Proximity (Magical Blood-Tether)",
+    "Touch Her and You Die",
+    "Fake Captive / Morally Gray Shadow Warlord",
+    "Fated Celestial & Umbral Bond"
+  ],
+  "characters": {
+    "protagonist": {
+      "name": "Elena Vance",
+      "age": 27,
+      "origin": "Modern Earth (Chicago Museum Antiquities Archivist)",
+      "appearance": "Dark auburn waves, hazel-amber eyes with flecks of gold, athletic frame, sharp cheekbones, expressive lips.",
+      "personality": "Witty, fiercely resilient, observant, guarded, refuses to bow to tyrants, passionate under pressure.",
+      "magic": "Latent Celestial Dawn-Fire (dormant mortal sun-resonance that counters and heals shadow corruption)."
+    },
+    "male_lead": {
+      "name": "Lord Vaelen Thorne",
+      "title": "High Commander of the Umbral Guard, Lord of the Nightglass Citadel",
+      "age": "420 (appears late 20s/early 30s in immortal human terms)",
+      "origin": "The Obsidian Veil (Aethelgard)",
+      "appearance": "6'4\", broad-shouldered, lean lethal muscle, silver molten eyes, raven hair swept back, angular jaw, throat and chest inked in glowing violet-shadow runes.",
+      "personality": "Brooding, lethally dangerous, tactical genius, outwardly cold and merciless, fiercely protective of Elena, sensual, possessive.",
+      "magic": "Master of Umbral Shifting (shadow tendrils, spatial phasing, blade resonance, nocturnal sensory vision)."
+    },
+    "antagonist": {
+      "name": "High King Malakor",
+      "title": "Sovereign of the Black Sun",
+      "description": "Cruel, decadent, obsessed with bleeding mortal lifeforce to maintain his decaying immortality."
+    },
+    "supporting": [
+      {
+        "name": "Kaelen",
+        "role": "Vaelen's loyal second-in-command, dual-dagger scout with dry humor."
+      },
+      {
+        "name": "Lady Lysandra",
+        "role": "Spymistress of the Silk Court, politically treacherous, former suitor of Vaelen."
+      }
+    ]
+  },
+  "setting": {
+    "world": "The Realm of Aethelgard (The Obsidian Veil)",
+    "atmosphere": "Perpetual twilight, silver mist, black obsidian spires, luminescent violet flora, cold mountain winds, opulent gothic palaces lit by bioluminescent glass lanterns.",
+    "rules_of_the_tether": [
+      "Cannot separate beyond 50 paces without burning spiritual pain.",
+      "Sensory bleed: Heartbeats sync; extreme emotions (rage, lust, fear) echo across the link.",
+      "Shared lifeforce: Severe injury to one physically shocks the other; fatal blow to one kills both unless broken."
+    ]
+  },
+  "chapters": [
+    {"chapter": 1, "title": "The Glass Relic", "act": 1, "target_words": 2100, "focus": "Elena in Chicago archives, the cracked mirror, the pull across worlds."},
+    {"chapter": 2, "title": "The Blade and the Beast", "act": 1, "target_words": 2100, "focus": "Crashing onto the obsidian throne, meeting Vaelen, the blade at her throat, the tether ignites."},
+    {"chapter": 3, "title": "A Chain of Smoke", "act": 1, "target_words": 2100, "focus": "The agony of separation, escorted to Vaelen's private tower, establishing boundary rules."},
+    {"chapter": 4, "title": "The Bath of Ash and Silk", "act": 1, "target_words": 2100, "focus": "Washing the grime of travel, Vaelen walks in, breathless forced proximity, sensory bleed."},
+    {"chapter": 5, "title": "The Court of Raven Mirrors", "act": 1, "target_words": 2100, "focus": "Audience before King Malakor, Vaelen claims her as his favored captive, poisoned wine thwarted."},
+    {"chapter": 6, "title": "Whispers in the Dark", "act": 1, "target_words": 2100, "focus": "Unlacing her gown, first electric touch, secrets of the lost mortals, building sexual tension."},
+    {"chapter": 7, "title": "The Midnight Ambush", "act": 1, "target_words": 2100, "focus": "Shadow assassins attack Vaelen's tower, fighting back-to-back, Elena saves his life with hidden blade."},
+    {"chapter": 8, "title": "Into the Twilight Fen", "act": 2, "target_words": 2100, "focus": "Fleeing the capital on war-beasts, branded as traitors, entering the wild untamed fens."},
+    {"chapter": 9, "title": "The Runed Sanctuary", "act": 2, "target_words": 2100, "focus": "Taking shelter in ancient ruins, cleaning Vaelen's wounds, vulnerability beneath the armor."},
+    {"chapter": 10, "title": "The Heat of the Hearth", "act": 2, "target_words": 2100, "focus": "Rainstorm outside, sharing a single fur bedroll, mutual confessions, explosive first kiss."},
+    {"chapter": 11, "title": "The Awakening", "act": 2, "target_words": 2100, "focus": "Elena's celestial dawn-fire sparks, Vaelen trains her hands, skin-to-skin magical grounding."},
+    {"chapter": 12, "title": "Smoke and Skin", "act": 2, "target_words": 2200, "focus": "The dam breaks: full scorching steamy encounter by firelight, breathless passion and intimacy."},
+    {"chapter": 13, "title": "The River of Souls", "act": 2, "target_words": 2100, "focus": "Crossing the Mist-Fens, meeting the Nightglass Oracle, prophecy of the Eclipse Bond."},
+    {"chapter": 14, "title": "Treachery at Iron Keep", "act": 2, "target_words": 2100, "focus": "Reaching a supposed allied stronghold, betrayal from within, Elena captured and dragged into the deep cells."},
+    {"chapter": 15, "title": "Severance", "act": 2, "target_words": 2100, "focus": "The agony of magical distance, Elena fighting back, Vaelen going full demonic warlord to find her."},
+    {"chapter": 16, "title": "Reunion in Blood", "act": 2, "target_words": 2100, "focus": "Vaelen breaches the dungeons, desperate possessive reunion against the stone wall, renewed bond."},
+    {"chapter": 17, "title": "Forging the Eclipse Blade", "act": 3, "target_words": 2100, "focus": "Merging celestial fire with umbral steel, preparing for the counter-coup."},
+    {"chapter": 18, "title": "Eve of the Blood Moon", "act": 3, "target_words": 2100, "focus": "Quiet intimacy before war, pledging souls to each other, emotional and physical devotion."},
+    {"chapter": 19, "title": "Infiltration of the Spire", "act": 3, "target_words": 2100, "focus": "Breaching the Obsidian Palace under cover of night, stealth and lethal teamwork."},
+    {"chapter": 20, "title": "The Clash of Kings", "act": 3, "target_words": 2100, "focus": "Vaelen vs. King Malakor in the grand throne room, Elena unleashes full dawn-fire storm."},
+    {"chapter": 21, "title": "Breaking the Mirror", "act": 3, "target_words": 2100, "focus": "Shattering the dark dimensional anchor, Elena's choice: stay in Aethelgard with Vaelen forever."},
+    {"chapter": 22, "title": "Crowning the Shadow King", "act": 3, "target_words": 2100, "focus": "Vaelen claims the throne, proclaims Elena his equal Queen before the kneeling lords."},
+    {"chapter": 23, "title": "Coronation Night", "act": 3, "target_words": 2200, "focus": "Opulent celebratory feast, royal chambers, decadent euphoric intimacy in silk and velvet."},
+    {"chapter": 24, "title": "Tethered in Eternity", "act": 3, "target_words": 2100, "focus": "Epilogue: Ruling the healed realm, dawn rising over the Obsidian Veil, forever bound."}
+  ]
+}

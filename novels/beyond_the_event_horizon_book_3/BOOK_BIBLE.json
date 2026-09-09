@@ -1,0 +1,193 @@
+{
+  "slug": "beyond_the_event_horizon_book_3",
+  "title": "The Star-Eater's Wake",
+  "series_title": "Beyond the Event Horizon",
+  "book_number": 3,
+  "subgenre": "Hard Science Fiction Space Opera",
+  "target_words": 50000,
+  "total_chapters": 20,
+  "heat_level": 3,
+  "synopsis": "A perilous deep-space expedition through uncharted stellar nurseries and blinding magnetar storms. Leo and Astrid witness the sublime majesty and terror of dying stars while evading the relentless pursuit of Commodore Hawke's Dominion fleet. Amidst catastrophic radiation leaks and high-g drift maneuvers, feelings unspoken erupt into passionate devotion.",
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "Edge of the Abyss",
+      "target_words": 2500,
+      "actual_words": 2051,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Entering the forbidden Star-Eater sector; gravitational gradients and glowing purple plasma."
+    },
+    {
+      "chapter": 2,
+      "title": "The Magnetar's Pulse",
+      "target_words": 2500,
+      "actual_words": 2098,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "A nearby magnetar emits periodic gamma-ray bursts; precision orbital timing required."
+    },
+    {
+      "chapter": 3,
+      "title": "The Silent Cathedrals",
+      "target_words": 2500,
+      "actual_words": 2179,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Encountering crystal-dense comet rings; breathtaking cosmic majesty and silence."
+    },
+    {
+      "chapter": 4,
+      "title": "Radiation Lockout",
+      "target_words": 2500,
+      "actual_words": 2212,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Shield failure forces the crew into the heavily leaded storm shelter; forced intimacy in cramped quarters."
+    },
+    {
+      "chapter": 5,
+      "title": "Stolen Breaths",
+      "target_words": 2500,
+      "actual_words": 2032,
+      "act": 1,
+      "status": "COMPLETED",
+      "summary": "Leo and Astrid confront the reality of their mortality; passionate embrace amidst alarm lights."
+    },
+    {
+      "chapter": 6,
+      "title": "The Ghost Signal Decoded",
+      "target_words": 2500,
+      "actual_words": 2064,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Orlo deciphers the beacon: an ancient automated gateway leading toward Sol's perimeter."
+    },
+    {
+      "chapter": 7,
+      "title": "The Corsair Council",
+      "target_words": 2500,
+      "actual_words": 2110,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Astrid calls a holographic council of pirate captains; warning them of Dominion mobilization."
+    },
+    {
+      "chapter": 8,
+      "title": "Betrayal at the Coordinates",
+      "target_words": 2500,
+      "actual_words": 2221,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "A traitor captain leaks their rendezvous point to Commodore Hawke."
+    },
+    {
+      "chapter": 9,
+      "title": "The Trap Springs",
+      "target_words": 2500,
+      "actual_words": 2201,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Dominion cruisers jump out of sub-light, surrounding the small fleet."
+    },
+    {
+      "chapter": 10,
+      "title": "Silent Fleet Warfare",
+      "target_words": 2500,
+      "actual_words": 2126,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Massive railgun barrages, PDCs lighting the void, silent thermonuclear torpedo detonations."
+    },
+    {
+      "chapter": 11,
+      "title": "The Marauder's Stand",
+      "target_words": 2500,
+      "actual_words": 2231,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Astrid maneuvers between two capital ships, using their own crossfire against them."
+    },
+    {
+      "chapter": 12,
+      "title": "Leo's High-G Burn",
+      "target_words": 2500,
+      "actual_words": 2197,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Taking the secondary flight helm, Leo pulls an 11-G vector change to rescue a friendly corvette."
+    },
+    {
+      "chapter": 13,
+      "title": "Armor Pierced",
+      "target_words": 2500,
+      "actual_words": 1943,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "A kinetic slug shears through the Marauder's forward radiator wing; fire in the starboard nacelle."
+    },
+    {
+      "chapter": 14,
+      "title": "Spacewalk Under Fire",
+      "target_words": 2500,
+      "actual_words": 2248,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "Leo and Orlo suit up to manually eject the burning radiator before it cooks the fusion reactor."
+    },
+    {
+      "chapter": 15,
+      "title": "The Magnetar Flare",
+      "target_words": 2500,
+      "actual_words": 2098,
+      "act": 2,
+      "status": "COMPLETED",
+      "summary": "A massive pulse from the magnetar blinds all radar and thermal sensors across the battle sphere."
+    },
+    {
+      "chapter": 16,
+      "title": "Blind Navigation",
+      "target_words": 2500,
+      "actual_words": 2132,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Leo flies blind using inertial dead-reckoning, slipping the Marauder into the magnetar's shadow."
+    },
+    {
+      "chapter": 17,
+      "title": "Casualties of the Void",
+      "target_words": 2500,
+      "actual_words": 2071,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Tending to the wounded in the cargo deck; Astrid's grief and Leo's comforting touch."
+    },
+    {
+      "chapter": 18,
+      "title": "Vows in the Dark",
+      "target_words": 2500,
+      "actual_words": 2143,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Astrid and Leo acknowledge that they are inseparable; a promise to see Earth together."
+    },
+    {
+      "chapter": 19,
+      "title": "The Gateway Discovered",
+      "target_words": 2500,
+      "actual_words": 2031,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "The ancient pre-collapse Jump Ring stands dormant before them, wrapped in cosmic dust."
+    },
+    {
+      "chapter": 20,
+      "title": "The Key Turned",
+      "target_words": 2500,
+      "actual_words": 2240,
+      "act": 3,
+      "status": "COMPLETED",
+      "summary": "Activating the gateway; the ring pulses with sapphire light as the Dominion closes in."
+    }
+  ]
+}

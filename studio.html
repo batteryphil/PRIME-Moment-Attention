@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRIME Local Author Studio — 50k Romantasy Novel Generator</title>
+    <style>
+        :root {
+            --bg: #090d16;
+            --surface: #111827;
+            --border: #1f293d;
+            --accent: #f43f5e;
+            --accent-glow: rgba(244, 63, 94, 0.35);
+            --accent-hover: #e11d48;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --font-serif: "Georgia", "Merriweather", serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+        .badge-gpu {
+            font-size: 0.75rem;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+            font-family: monospace;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .nav-btn {
+            background: #1e293b;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem 2rem;
+            flex: 1;
+            max-width: 1700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.35rem;
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            height: 110px;
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tropes-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .trope-pill {
+            background: #161e2e;
+            border: 1px solid var(--border);
+            padding: 0.35rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .trope-pill:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .heat-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.35rem;
+        }
+        .heat-btn {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 0.2rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .heat-btn.active {
+            background: var(--accent);
+            border-color: var(--accent-hover);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        select {
+            width: 100%;
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: 0.5rem 0.65rem;
+            font-size: 0.88rem;
+        }
+        .btn-generate {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            color: white;
+            border: none;
+            padding: 0.85rem 1.25rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            transition: all 0.15s ease;
+        }
+        .btn-generate:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+        .output-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .output-header {
+            background: #161e2e;
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .output-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+        .output-canvas {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            overflow-y: auto;
+            max-height: 800px;
+            font-family: var(--font-serif);
+            font-size: 1.15rem;
+            line-height: 1.85;
+            color: #f8fafc;
+            background: #0b0f19;
+            text-rendering: optimizeLegibility;
+        }
+        .output-canvas p {
+            margin-bottom: 1.35rem;
+            text-indent: 2rem;
+            text-align: justify;
+            text-justify: inter-word;
+            hyphens: auto;
+        }
+        .output-canvas p.no-indent,
+        .output-canvas p:first-of-type {
+            text-indent: 0 !important;
+        }
+        .output-canvas p.lead-dropcap:first-of-type::first-letter {
+            float: left;
+            font-size: 3.6em;
+            line-height: 0.8;
+            padding-top: 4px;
+            padding-right: 10px;
+            padding-bottom: 2px;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            font-weight: bold;
+        }
+        .output-canvas em {
+            font-style: italic;
+            color: #fbcfe8;
+        }
+        .output-canvas strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .output-canvas .scene-break {
+            text-align: center;
+            margin: 2.5rem 0;
+            color: var(--accent);
+            font-size: 1.3rem;
+            letter-spacing: 0.5em;
+            opacity: 0.85;
+            user-select: none;
+        }
+        .loading-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            gap: 1rem;
+            color: var(--accent);
+        }
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(244, 63, 94, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .mode-tab {
+            background: #161e2e;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.6rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .mode-tab.active {
+            background: #1e293b;
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        .progress-box {
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .progress-bar-bg {
+            background: #1e293b;
+            height: 10px;
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #f43f5e 0%, #ec4899 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .chapter-pill-list {
+            max-height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            padding-right: 4px;
+        }
+        .chapter-pill {
+            background: #161e2e;
+            border: 1px solid var(--border);
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <span>👑 PRIME Local Author Studio</span>
+            <span class="badge-gpu">● AMD ROCm • Meta-Llama-3-8B</span>
+        </div>
+        <div class="nav-links">
+            <a href="http://localhost:7860/reader" class="nav-btn" target="_blank">📖 Open Reader</a>
+            <a href="http://localhost:7860/api/novel/sample_pdf" class="nav-btn" target="_blank">📄 Sample PDF</a>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- Control Panel -->
+        <div class="card">
+            <div class="mode-tabs">
+                <button class="mode-tab active" id="tab-scene" onclick="switchMode('scene')">📝 Scene / Chapter Mode</button>
+                <button class="mode-tab" id="tab-50k" onclick="switchMode('50k')">📚 Full 50k Novel Mode</button>
+            </div>
+
+            <!-- Single Scene Mode -->
+            <div id="section-scene" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="card-title">✍️ Tell Local AI What To Write</div>
+                
+                <div>
+                    <label>Direct Story / Scene Prompt</label>
+                    <textarea id="prompt-input" placeholder="e.g. Write a dark, intense scene where Caelum pins Aurelia against the obsidian altar in the bone crypts. Knife to throat, explicit dirty talk, he makes her beg for it..."></textarea>
+                </div>
+
+                <div>
+                    <label>⚡ Quick Trope Ideas (Click to Fill)</label>
+                    <div class="tropes-container">
+                        <span class="trope-pill" onclick="setPrompt('Caelum catches Aurelia harvesting venom in the dead of night. He disarms her, pins her against the bone wyrm-rib, and forces her to feel his hardness while kissing her neck.')">🔪 Knife & Wall Pin</span>
+                        <span class="trope-pill" onclick="setPrompt('Aurelia is bathing in the executioner estate. Caelum walks in blind, feeling her heartbeat and wet skin through bone-resonance, refusing to leave.')">🛁 Bathhouse Intrusion</span>
+                        <span class="trope-pill" onclick="setPrompt('Primal chase through the gothic catacombs. Caelum whispers \'Run, little viper\' into the dark as she desperately flees.')">🩸 Primal Chase</span>
+                        <span class="trope-pill" onclick="setPrompt('A rival noble tries to lay hands on Aurelia at the royal banquet. Caelum unleashes unhinged vigilante fury in her defense.')">👑 \'Who Did This To You?\'</span>
+                        <span class="trope-pill" onclick="setPrompt('Forced betrothal bedroom scene. Aurelia has a blade under her pillow; Caelum slides into her bed and takes it from her.')">🖤 Bedchamber Claim</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label>🔥 Spice / Smut Level</label>
+                    <div class="heat-selector">
+                        <button class="heat-btn" onclick="setHeat(1, this)">🌶️ 1<br><small>Tension</small></button>
+                        <button class="heat-btn" onclick="setHeat(2, this)">🌶️ 2<br><small>Banter</small></button>
+                        <button class="heat-btn" onclick="setHeat(3, this)">🌶️ 3<br><small>Steamy</small></button>
+                        <button class="heat-btn" onclick="setHeat(4, this)">🌶️ 4<br><small>Explicit</small></button>
+                        <button class="heat-btn active" onclick="setHeat(5, this)">🌶️ 5<br><small>Smut</small></button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label>Target Length</label>
+                        <select id="token-select">
+                            <option value="600">Short Scene (~500 words)</option>
+                            <option value="900" selected>Full Scene (~850 words)</option>
+                            <option value="1200">Extended Scene (~1,100 words)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Character Context</label>
+                        <select id="char-select">
+                            <option value="caelum_aurelia" selected>Caelum & Aurelia (Gilded Bones)</option>
+                            <option value="vaelen_elena">Vaelen & Elena (Smoke & Sin)</option>
+                            <option value="custom">Custom / Freestyle</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-generate" id="btn-generate" onclick="generateProse()">
+                    <span>⚡ Generate on Local GPU</span>
+                </button>
+            </div>
+
+            <!-- Full 50,000-Word Novel Mode -->
+            <div id="section-50k" style="display: none; flex-direction: column; gap: 1rem;">
+                <div class="card-title">🚀 Full 50,000-Word Novel Generator</div>
+                
+                <div>
+                    <label>Book Title</label>
+                    <input type="text" id="novel-title-input" value="A Crown of Gilded Bones" style="width: 100%; background: #090d16; border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 0.6rem; font-size: 0.95rem;">
+                </div>
+
+                <div>
+                    <label>Premise & Dark Tropes</label>
+                    <textarea id="novel-premise-input" style="height: 90px;">In a subterranean gothic bone kingdom, a blind royal executioner obsessed with a lethal poisoner stalks her through the catacombs. Forced betrothal, knife play, 5/5 heat.</textarea>
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label>Target Word Count</label>
+                        <select id="novel-words-select">
+                            <option value="50000" selected>50,000 Words (20 Chapters • Full Book)</option>
+                            <option value="75000">75,000 Words (30 Chapters)</option>
+                            <option value="100000">100,000 Words (40 Chapters)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Spice Setting</label>
+                        <select id="novel-heat-select">
+                            <option value="5" selected>🌶️ 5/5 Extreme Dark Smut</option>
+                            <option value="4">🌶️ 4/5 High Heat</option>
+                            <option value="3">🌶️ 3/5 Steamy</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-generate" onclick="launch50kNovel()">
+                    <span>🚀 Launch 50,000-Word Autonomous Production</span>
+                </button>
+
+                <!-- Live 50k Progress Card -->
+                <div class="progress-box" id="novel-live-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong id="live-novel-title" style="color: var(--accent);">A Crown of Gilded Bones</strong>
+                        <span id="live-novel-status" style="font-size: 0.75rem; background: #1e293b; padding: 2px 6px; border-radius: 4px;">WRITING</span>
+                    </div>
+
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="live-progress-fill" style="width: 3%;"></div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                        <span id="live-words-count">1,567 / 75,000 words (2.1%)</span>
+                        <span id="live-chapters-count">1 / 30 chapters</span>
+                    </div>
+
+                    <div class="chapter-pill-list" id="live-chapter-list">
+                        <div class="chapter-pill"><span>Ch 1: The Ossuary Citadel</span><span>1,567 words [✓]</span></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.3rem;">
+                        <button class="nav-btn" onclick="draftNextChapter()" id="btn-next-ch" style="background: var(--accent); color: white; border: none; font-weight: 600;">⚡ Draft Next Chapter</button>
+                        <a href="http://localhost:7860/reader" class="nav-btn" target="_blank" style="text-align: center;">📖 Open Reader</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Display -->
+        <div class="output-card">
+            <div class="output-header">
+                <div class="output-meta" id="output-meta">Waiting for prompt...</div>
+                <div class="output-actions">
+                    <button class="nav-btn" onclick="copyText()">📋 Copy</button>
+                    <a href="http://localhost:7860/api/novel/sample_pdf" class="nav-btn" target="_blank">📄 View PDF</a>
+                </div>
+            </div>
+
+            <div class="loading-state" id="loading-state">
+                <div class="spinner"></div>
+                <div style="font-weight: 600; font-size: 1.05rem;" id="loading-title">Writing on AMD Radeon GPU (bfloat16)...</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);" id="loading-sub">Executing local token generation with PRIME constant memory...</div>
+            </div>
+
+            <div class="output-canvas" id="output-canvas">
+                <p style="color: var(--text-muted); font-style: italic; text-indent: 0;">
+                    Your generated scene or 50,000-word book status will appear here formatted and ready to read.<br><br>
+                    <strong>Choose a mode:</strong><br>
+                    • <strong>📝 Scene Mode</strong>: Quick, high-heat scenes generated in seconds.<br>
+                    • <strong>📚 Full 50k Novel Mode</strong>: Generates an entire 50,000-word novel chapter-by-chapter directly on your GPU.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin.startsWith('http') ? '' : 'http://localhost:7860';
+        let curHeat = 5;
+        let curMode = 'scene';
+        let currentSlug = 'a_crown_of_gilded_bones';
+
+        function setHeat(level, btn) {
+            curHeat = level;
+            document.querySelectorAll('.heat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function setPrompt(text) {
+            document.getElementById('prompt-input').value = text;
+        }
+
+        function switchMode(mode) {
+            curMode = mode;
+            if (mode === 'scene') {
+                document.getElementById('tab-scene').classList.add('active');
+                document.getElementById('tab-50k').classList.remove('active');
+                document.getElementById('section-scene').style.display = 'flex';
+                document.getElementById('section-50k').style.display = 'none';
+            } else {
+                document.getElementById('tab-50k').classList.add('active');
+                document.getElementById('tab-scene').classList.remove('active');
+                document.getElementById('section-scene').style.display = 'none';
+                document.getElementById('section-50k').style.display = 'flex';
+                refreshNovelStatus();
+            }
+        }
+
+        async function refreshNovelStatus() {
+            try {
+                const res = await fetch(API_BASE + '/api/novel/status_detail?slug=' + encodeURIComponent(currentSlug));
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.title) {
+                    document.getElementById('live-novel-title').textContent = data.title;
+                    document.getElementById('live-novel-status').textContent = data.status || 'WRITING';
+                    const pct = data.percent_complete || 0;
+                    document.getElementById('live-progress-fill').style.width = pct + '%';
+                    document.getElementById('live-words-count').textContent = `${(data.current_words || 0).toLocaleString()} / ${(data.target_words || 50000).toLocaleString()} words (${pct}%)`;
+                    document.getElementById('live-chapters-count').textContent = `${data.completed_chapters || 0} / ${data.total_chapters || 20} chapters`;
+                    
+                    const listEl = document.getElementById('live-chapter-list');
+                    if (data.chapter_list && data.chapter_list.length > 0) {
+                        listEl.innerHTML = data.chapter_list.map(ch => 
+                            `<div class="chapter-pill"><span>Ch ${ch.chapter}: ${ch.title}</span><span>${ch.words.toLocaleString()} words [✓]</span></div>`
+                        ).join('');
+                    } else {
+                        listEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem; padding: 0.25rem;">No chapters written yet. Click Draft Next Chapter or run the autonomous daemon!</div>';
+                    }
+                }
+            } catch (e) {
+                console.error('Error refreshing novel status:', e);
+            }
+        }
+
+        async function launch50kNovel() {
+            const title = document.getElementById('novel-title-input').value.trim();
+            const prompt = document.getElementById('novel-premise-input').value.trim();
+            const targetWords = parseInt(document.getElementById('novel-words-select').value);
+            const heat = parseInt(document.getElementById('novel-heat-select').value);
+
+            if (!title) {
+                alert('Please enter a book title');
+                return;
+            }
+
+            const canvas = document.getElementById('output-canvas');
+            const meta = document.getElementById('output-meta');
+            meta.textContent = 'Launching 50,000-Word Autonomous Novel Production...';
+            canvas.innerHTML = `<h3>🚀 Registering '${title}' for Full Novel Production...</h3><p>Generating Book Bible, chapter progression outline, and SQLite tracking entry...</p>`;
+
+            try {
+                const totalCh = targetWords === 50000 ? 20 : (targetWords === 75000 ? 30 : 40);
+                const res = await fetch(API_BASE + '/api/novel/launch_50k', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        prompt: prompt,
+                        target_words: targetWords,
+                        total_chapters: totalCh,
+                        heat_level: heat
+                    })
+                });
+                const data = await res.json();
+                currentSlug = data.slug;
+                canvas.innerHTML = `
+                    <h2 style="color: var(--accent);">👑 Autonomous Novel Project Launched!</h2>
+                    <p><strong>Title:</strong> ${data.title}</p>
+                    <p><strong>Slug:</strong> <code>${data.slug}</code></p>
+                    <p><strong>Target Length:</strong> ${data.target_words.toLocaleString()} words (${data.total_chapters} Chapters)</p>
+                    <p><strong>Heat Level:</strong> 🌶️ ${heat}/5</p>
+                    <div class="scene-break">✦ ✦ ✦</div>
+                    <p>The book bible has been registered. The autonomous studio daemon and the "Draft Next Chapter" button below can now write chapters sequentially on your local GPU.</p>
+                `;
+                refreshNovelStatus();
+            } catch (err) {
+                canvas.innerHTML = `<p style="color: #f87171;">Error launching novel: ${err.message}</p>`;
+            }
+        }
+
+        async function draftNextChapter() {
+            const btn = document.getElementById('btn-next-ch');
+            const loading = document.getElementById('loading-state');
+            const canvas = document.getElementById('output-canvas');
+            const meta = document.getElementById('output-meta');
+            const loadingTitle = document.getElementById('loading-title');
+            const loadingSub = document.getElementById('loading-sub');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Drafting on GPU...';
+            loading.style.display = 'flex';
+            canvas.style.display = 'none';
+            loadingTitle.textContent = 'Drafting Next Chapter on AMD GPU...';
+            loadingSub.textContent = 'Local Meta-Llama-3-8B writing multi-scene narrative with constant PRIME memory...';
+            meta.textContent = 'Drafting chapter on GPU...';
+
+            try {
+                const res = await fetch(API_BASE + '/api/novel/draft_chapter_step?slug=' + encodeURIComponent(currentSlug), {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.status === 'ALREADY_COMPLETE') {
+                    canvas.innerHTML = `<h2>🎉 Book Complete!</h2><p>All ${data.completed} chapters have been written.</p>`;
+                } else {
+                    canvas.innerHTML = `<h2 style="color: var(--accent); margin-bottom: 1.5rem; text-align: center;">${data.title}</h2>` + formatManuscriptText(data.content || '');
+                    meta.textContent = `Drafted ${data.words || 0} words • Total Novel: ${(data.total_words || 0).toLocaleString()} words (${data.percent || 0}%)`;
+                }
+                refreshNovelStatus();
+            } catch (err) {
+                canvas.innerHTML = `<p style="color: #f87171;">Error drafting chapter: ${err.message}</p>`;
+                meta.textContent = 'Error occurred';
+            } finally {
+                loading.style.display = 'none';
+                canvas.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '⚡ Draft Next Chapter';
+            }
+        }
+
+        function formatManuscriptText(rawText) {
+            if (!rawText) return '';
+            let text = rawText
+                .replace(/<\|[a-z0-9_]+\|>/gi, '')
+                .replace(/^(Instruction|Target Heat Level|Novel|Objective|Premise|Chapter \d+:?):.*$/gmi, '')
+                .replace(/^Story text:?\s*/gmi, '')
+                .replace(/^#{1,6}\s+.*$/gm, '')
+                .trim();
+
+            text = text.replace(/^(\s*(\*|\-)\s*){3,}$/gm, '___SCENE_BREAK___');
+
+            let paragraphs = text.split(/\n\s*\n+/);
+            let htmlParts = [];
+            let isFirstAfterBreak = true;
+            let isFirstInChapter = true;
+
+            for (let p of paragraphs) {
+                let trimmed = p.trim();
+                if (!trimmed) continue;
+
+                if (trimmed === '___SCENE_BREAK___') {
+                    htmlParts.push('<div class="scene-break">✦ ✦ ✦</div>');
+                    isFirstAfterBreak = true;
+                    continue;
+                }
+
+                let escaped = trimmed
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+
+                escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                escaped = escaped.replace(/__(.+?)__/g, '<strong>$1</strong>');
+                escaped = escaped.replace(/\*([^\*\n]+?)\*/g, '<em>$1</em>');
+                escaped = escaped.replace(/_([^_\n]+?)_/g, '<em>$1</em>');
+                escaped = escaped.replace(/\n\s*([“"«—\-])/g, '<br>$1');
+                escaped = escaped.replace(/\n\s*/g, ' ');
+
+                let classes = [];
+                if (isFirstAfterBreak) {
+                    classes.push('no-indent');
+                    if (isFirstInChapter) {
+                        classes.push('lead-dropcap');
+                        isFirstInChapter = false;
+                    }
+                    isFirstAfterBreak = false;
+                }
+
+                let classAttr = classes.length > 0 ? ` class="${classes.join(' ')}"` : '';
+                htmlParts.push(`<p${classAttr}>${escaped}</p>`);
+            }
+
+            return htmlParts.join('\n');
+        }
+
+        async function generateProse() {
+            const prompt = document.getElementById('prompt-input').value.trim();
+            if (!prompt) {
+                alert('Please enter a prompt or click a quick trope!');
+                return;
+            }
+
+            const btn = document.getElementById('btn-generate');
+            const loading = document.getElementById('loading-state');
+            const canvas = document.getElementById('output-canvas');
+            const meta = document.getElementById('output-meta');
+            const maxTokens = parseInt(document.getElementById('token-select').value);
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ Generating on GPU...</span>';
+            loading.style.display = 'flex';
+            canvas.style.display = 'none';
+            meta.textContent = 'Generating on AMD GPU...';
+
+            try {
+                const res = await fetch(API_BASE + '/api/author/prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        heat_level: curHeat,
+                        max_tokens: maxTokens
+                    })
+                });
+
+                if (!res.ok) throw new Error('Generation failed: ' + res.statusText);
+                const data = await res.json();
+
+                canvas.innerHTML = formatManuscriptText(data.text);
+                meta.textContent = `${data.words} words • ${data.time_seconds}s (${(data.words / data.time_seconds).toFixed(1)} w/s) • VRAM: ${data.vram_gb} GB`;
+            } catch (err) {
+                canvas.innerHTML = '<p style="color: #f87171;">Error: ' + err.message + '</p>';
+                meta.textContent = 'Error occurred';
+            } finally {
+                loading.style.display = 'none';
+                canvas.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<span>⚡ Generate on Local GPU</span>';
+            }
+        }
+
+        function copyText() {
+            const text = document.getElementById('output-canvas').innerText;
+            navigator.clipboard.writeText(text);
+            alert('Copied to clipboard!');
+        }
+
+        async function initStudio() {
+            refreshNovelStatus();
+            try {
+                const res = await fetch(API_BASE + '/api/novel/latest_chapter?slug=' + encodeURIComponent(currentSlug));
+                if (res.ok) {
+                    const data = await res.json();
+                    const canvas = document.getElementById('output-canvas');
+                    const meta = document.getElementById('output-meta');
+                    canvas.innerHTML = `<h2 style="color: var(--accent); margin-bottom: 1.5rem; text-align: center;">${data.title}</h2>` + formatManuscriptText(data.content || '');
+                    meta.textContent = `Displaying ${data.title} (${data.words.toLocaleString()} words) • Ready for next scene or chapter.`;
+                }
+            } catch (e) {
+                console.log('No existing chapter preview:', e);
+            }
+        }
+
+        // Auto-refresh status if in 50k mode
+        setInterval(() => {
+            if (curMode === '50k') refreshNovelStatus();
+        }, 12000);
+
+        // Initial check on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initStudio);
+        } else {
+            initStudio();
+        }
+    </script>
+</body>
+</html>
