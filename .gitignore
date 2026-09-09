@@ -57,3 +57,8 @@ novels/**/export/*_Sample.pdf
 novels/**/export/*_sample.pdf
 *.bak
 
+# Audio narration caches and raw uncompressed wavs
+audio_cache/
+*.wav
+novels/**/audio/*.wav
+

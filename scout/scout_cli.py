@@ -211,9 +211,28 @@ def cmd_lab(args):
         from scout.autonomous_daemon import run_autonomous_daemon
         run_autonomous_daemon(interval_sec=args.interval)
 
+def cmd_narrate(args):
+    from scout.audio_narrator import narrate_chapter_file
+    print("=" * 80)
+    print(f"🎙️ PRIME Sovereign Audio Narrator: '{args.slug}' (Chapter {args.chapter})")
+    print("=" * 80)
+    res = narrate_chapter_file(novel_slug=args.slug, chapter_num=args.chapter, device=args.device)
+    print("\n" + "=" * 80)
+    print(f"🎉 Narration Complete!")
+    print(f"    Duration: {res['duration_min']:.2f} min ({res['duration_sec']:.1f}s)")
+    print(f"    Master MP3: {res['mp3_path']}")
+    print("=" * 80)
+
 def main():
     parser = argparse.ArgumentParser(description="PRIME-Scout: Autonomous Local Repository Intelligence Agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Narrate
+    p_narrate = subparsers.add_parser("narrate", help="Narrate a novel chapter into an ACX-compliant multi-voice audiobook")
+    p_narrate.add_argument("--slug", type=str, default="beyond_the_event_horizon", help="Novel directory slug")
+    p_narrate.add_argument("--chapter", type=int, default=1, help="Chapter number (default 1)")
+    p_narrate.add_argument("--device", type=str, default="cpu", help="Compute device ('cpu' or 'cuda')")
+    p_narrate.set_defaults(func=cmd_narrate)
 
     # Lab / Scientist
     p_lab = subparsers.add_parser("lab", help="Autonomous theory formulation and test synthesis engine")
