@@ -1,0 +1,46 @@
+{
+  "memory_vs_length": {
+    "512": {
+      "pure_mamba_kb": 2.0,
+      "jamba_softmax_kb": 257.5,
+      "mamba_prime_trunk_kb": 34.53,
+      "mamba_hybrid_trunk_kb": 66.53
+    },
+    "1024": {
+      "pure_mamba_kb": 2.0,
+      "jamba_softmax_kb": 513.5,
+      "mamba_prime_trunk_kb": 34.53,
+      "mamba_hybrid_trunk_kb": 66.53
+    },
+    "2048": {
+      "pure_mamba_kb": 2.0,
+      "jamba_softmax_kb": 1025.5,
+      "mamba_prime_trunk_kb": 34.53,
+      "mamba_hybrid_trunk_kb": 66.53
+    },
+    "4096": {
+      "pure_mamba_kb": 2.0,
+      "jamba_softmax_kb": 2049.5,
+      "mamba_prime_trunk_kb": 34.53,
+      "mamba_hybrid_trunk_kb": 66.53
+    },
+    "8192": {
+      "pure_mamba_kb": 2.0,
+      "jamba_softmax_kb": 4097.5,
+      "mamba_prime_trunk_kb": 34.53,
+      "mamba_hybrid_trunk_kb": 66.53
+    },
+    "16384": {
+      "pure_mamba_kb": 2.0,
+      "jamba_softmax_kb": 8193.5,
+      "mamba_prime_trunk_kb": 34.53,
+      "mamba_hybrid_trunk_kb": 66.53
+    }
+  },
+  "timing_ms": {
+    "Pure Mamba (All SSM)": 160.44,
+    "Mamba + Softmax Trunk (Jamba)": 117.33,
+    "Mamba + PRIME Trunk": 756.7,
+    "Mamba + Hybrid Trunk (W=64)": 791.21
+  }
+}
