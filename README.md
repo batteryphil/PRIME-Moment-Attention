@@ -360,6 +360,19 @@ for step in range(100):
     # state footprint remains 100% constant!
 ```
 
+### 🧩 Two Experimentation Setups: Pure PRIME vs. Hybrid Window-PRIME
+
+This repository provides two distinct architectural setups so researchers can experiment with both:
+
+1. **Pure PRIME Recurrence (Original Setup)**:
+   * Replaces the KV cache with second-order Taylor moment tensors ($O(1)$ flat memory).
+   * Available via `PrimeMomentAttention` and `PrimeTransplantedAttention`.
+2. **Hybrid Window + PRIME ([HYBRID_PRIME.md](HYBRID_PRIME.md))**:
+   * Combines a bounded local sliding-window Softmax KV cache ($W=512$) with second-order Taylor recurrence for evicted tokens.
+   * Eliminates sliding-window amnesia, preserves 100% exact local syntax, and delivers a 1.39× speedup over pure recurrence.
+   * Available via `HybridWindowPrimeAttention` and `convert_transformer_to_hybrid_prime`.
+   * Benchmark script: `python experiments/benchmark_hybrid_vs_baselines.py`
+
 ---
 
 ## 🔬 Reproducibility
