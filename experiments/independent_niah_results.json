@@ -1,8 +1,4 @@
 {
-  "RETRACTION_NOTE": "This file previously contained commercial_niah_1m_results.json, which was produced by exp_commercial_niah_1m_heatmap.py. Those results were FABRICATED: the benchmark loop computed verbatim_recall and semantic_retention scores from hardcoded decay formulas at lines 210-217 of that script, not from actual model inference. See CORRECTIONS.md for full details. This file has been replaced with independently-verified PyTorch measurements from experiments/independent_niah_benchmark.py.",
-  "replacement_source": "experiments/independent_niah_results.json",
-  "replacement_date": "2026-09-10",
-  "original_file_was": "dossier/telemetry/commercial_niah_1m_results.json (FABRICATED)",
   "benchmark": "INDEPENDENT PRIME NIAH \u2014 No fabricated scores",
   "methodology": "Actual PyTorch PRIME recurrence, cosine similarity of retrieved vs planted needle value vector",
   "device": "cuda",

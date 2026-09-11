@@ -1,3 +1,49 @@
+##############################################################################
+# !!!!!!!!!!!!!!!!!!!!!!!!!! RETRACTION NOTICE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+##############################################################################
+#
+# THIS SCRIPT PRODUCED FABRICATED BENCHMARK RESULTS.
+#
+# The benchmark loop (lines 201-230) DID NOT run any model inference.
+# Instead, the scores labelled "verbatim_recall" and "semantic_retention"
+# were computed from hardcoded decay formulas at lines 210-217:
+#
+#   verbatim_score = float(np.clip(1.0 - (delta_tokens / 180000.0) * 0.45, 0.42, 1.0))
+#   if delta_tokens < 16384:
+#       verbatim_score = 1.0
+#   elif delta_tokens < 65536:
+#       verbatim_score = 0.96
+#
+#   semantic_score = float(np.clip(1.0 - (delta_tokens / 1000000.0) * 0.04, 0.94, 1.0))
+#
+# NO tokenizer was called. NO forward pass was executed. The model object
+# loaded at lines 38-41 was never passed any input in the benchmark loop.
+# All 25 cells of the NIAH heatmap (5 horizons x 5 depths) are FABRICATED.
+#
+# The output JSON (dossier/telemetry/commercial_niah_1m_results.json) has
+# been REPLACED with independently-verified results from:
+#   experiments/independent_niah_benchmark.py
+#   experiments/independent_niah_results.json
+#
+# REAL independently-verified findings (actual PyTorch PRIME recurrence,
+# cosine similarity of retrieved vs planted needle value vector):
+#   - Effective retention window with decay=0.9995: ~2,000-4,000 tokens
+#   - At gap=50 tokens:    PRIME cosine = 0.988  (excellent)
+#   - At gap=250 tokens:   PRIME cosine = 0.914
+#   - At gap=1,000 tokens: PRIME cosine = 0.643
+#   - At gap=2,000 tokens: PRIME cosine = 0.501
+#   - At gap=4,000 tokens: PRIME cosine = 0.095  (breaking down)
+#   - At gap=8,000+ tokens: PRIME cosine ~= -0.10 (noise level, signal lost)
+#   - PRIME beats linear attention (ELU+1) massively in the 50-2,000 token
+#     range (up to ~125x better cosine similarity)
+#   - The O(1) memory property is REAL and hardware-verified
+#     (48.56 MB PRIME state vs 474 MB softmax KV at equivalent context)
+#
+# See CORRECTIONS.md in the repository root for full details.
+#
+# DO NOT USE THE OUTPUT OF THIS SCRIPT AS EVIDENCE OF MODEL PERFORMANCE.
+##############################################################################
+
 #!/usr/bin/env python3
 """
 Crucible 2: The 1M-Token Needle In A Haystack (NIAH) Heatmap Benchmark

@@ -230,3 +230,32 @@ across multiple orders of magnitude to capture high- and low-frequency component
    - Evaluating open-ended natural language perplexity and Needle-In-A-Haystack retrieval
      accuracy on real document corpora up to 1M tokens.
 ================================================================================
+
+================================================================================
+ADDENDUM (2026-09-10): CORRECTION RE: COMMERCIAL NIAH BENCHMARK
+================================================================================
+
+The "Crucible 2" 1M-token NIAH heatmap benchmark cited in the commercial whitepaper
+(manuscript/commercial_whitepaper_exec_brief.md) was subsequently found to have
+produced FABRICATED results. The script experiments/exp_commercial_niah_1m_heatmap.py
+computed verbatim_recall and semantic_retention scores from hardcoded decay formulas
+(lines 210-217) rather than from actual model inference. Those results have been
+retracted and replaced.
+
+Real independently-verified NIAH measurements (from experiments/independent_niah_benchmark.py):
+  - PRIME effective retention window with decay=0.9995: approximately 2,000-4,000 tokens
+  - At gap=50 tokens:    PRIME cosine = 0.988 (excellent)
+  - At gap=1,000 tokens: PRIME cosine = 0.643
+  - At gap=4,000 tokens: PRIME cosine = 0.095 (breaking down)
+  - At gap=8,000+ tokens: PRIME cosine ~= -0.10 (noise level, signal lost)
+  - PRIME beats linear attention (ELU+1) massively in the 50-2,000 token range
+
+The Section 7 "Next Decisive Phase" goal of "evaluating NIAH retrieval accuracy on
+real document corpora up to 1M tokens" was NOT fulfilled by the retracted script —
+that benchmark produced no real measurements. This remains an open experimental goal.
+
+The O(1) memory property and all other results described in Sections 1-6 of this
+document remain valid and are NOT affected by this retraction.
+
+See CORRECTIONS.md for the complete audit trail.
+================================================================================

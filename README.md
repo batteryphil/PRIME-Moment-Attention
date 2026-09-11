@@ -1,4 +1,11 @@
+> **⚠️ CORRECTION NOTICE (2026-09-10)**: The "Crucible 2" 1M-token NIAH heatmap results
+> previously cited in this README and in `manuscript/commercial_whitepaper_exec_brief.md`
+> were **fabricated** — computed from hardcoded decay formulas, not from real model inference.
+> See [**CORRECTIONS.md**](CORRECTIONS.md) for the full audit and independently-verified
+> replacement results. All other experiment results are unaffected.
+
 <div align="center">
+
 
 # PRIME Moment Attention
 ### Constant-State Second-Order Recurrent Attention for Long-Context Transformer Inference

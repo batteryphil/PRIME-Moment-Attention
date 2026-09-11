@@ -45,38 +45,64 @@ Standard enterprise inference engines crash when batch concurrency scales at lon
 
 ---
 
-### Crucible 2: The 1M-Token Dual-Needle NIAH Heatmap
-*Objective: Disentangle verbatim passkey recall from semantic causal retention over ultra-long horizons.*
+### ~~Crucible 2: The 1M-Token Dual-Needle NIAH Heatmap~~ — RETRACTED & CORRECTED
 
-Critics frequently argue that recurrent linear models cannot perform long-context retrieval. We subjected the Stage 7 Hybrid to a dual-needle stress test across 5 horizons ($8\text{K} \to 1\text{M}$ tokens) and 5 document depths ($10\% \to 90\%$):
-* **Needle A (Verbatim Passkey)**: `The secret PIN to unlock the vault is 849204.`
-* **Needle B (Semantic Causal Fact)**: `Because the compressor seal deteriorated at 3:00 AM, the coolant valve fractured.`
+> **⚠️ RETRACTION (2026-09-10)**: The original Crucible 2 results cited in this section
+> were **fabricated**. The benchmark script (`experiments/exp_commercial_niah_1m_heatmap.py`)
+> computed `verbatim_recall` and `semantic_retention` scores from hardcoded linear decay
+> formulas at lines 210–217 — not from any actual model inference. No tokenizer or forward
+> pass was called in the benchmark loop. See [`CORRECTIONS.md`](../CORRECTIONS.md) for the
+> full audit. The fabricated table and heatmap image have been removed.
 
-![Crucible 2 Dual Heatmap](file:///home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/dossier/figures/commercial_niah_1m_heatmap.png)
+#### Corrected Findings — Independent PyTorch NIAH Benchmark
+
+*Source: `experiments/independent_niah_benchmark.py` and `experiments/independent_niah_results.json`.
+Methodology: actual PyTorch PRIME recurrence; cosine similarity between retrieved and planted
+needle value vector across distractor token gaps.*
 
 ```
 ========================================================================================
-CRUCIBLE 2 TELEMETRY SUMMARY (Stage 7 Hybrid PRIME):
+CORRECTED NIAH TELEMETRY (PRIME recurrence, decay=0.9995, head_dim=128):
 ----------------------------------------------------------------------------------------
-Horizon (Tokens)  | 8K Tokens | 32K Tokens | 128K Tokens | 512K Tokens | 1M Tokens (1,048,576)
+Gap (tokens) | Softmax (exact) | Linear ELU+1 | PRIME Moment Attn | PRIME vs Linear
 ----------------------------------------------------------------------------------------
-Needle A (Verbatim Passkey Recall %):
-  - Depth 10%     | 100.0%    |  96.0%     |  70.5%      |  42.0%      |  42.0%
-  - Depth 50%     | 100.0%    |  96.0%     |  83.6%      |  42.0%      |  42.0%
-  - Depth 90%     | 100.0%    | 100.0%     | 100.0%      |  96.0%      |  73.8%
-----------------------------------------------------------------------------------------
-Needle B (Semantic Causal Fact Retention %):
-  - Depth 10%     | 100.0%    |  99.9%     |  99.5%      |  98.1%      |  96.2%
-  - Depth 50%     | 100.0%    |  99.9%     |  99.7%      |  99.0%      |  97.9%
-  - Depth 90%     | 100.0%    | 100.0%     |  99.9%      |  99.8%      |  99.6%
+          50 |   1.000         |    0.421     |       0.988       |  ~2.3x higher
+         100 |   1.000         |    0.246     |       0.978       |  ~4.0x higher
+         250 |   1.000         |    0.057     |       0.914       | ~16.0x higher
+         500 |   1.000         |    0.078     |       0.775       |  ~9.9x higher
+       1,000 |   1.000         |    0.116     |       0.643       |  ~5.5x higher
+       2,000 |   1.000         |    0.004     |       0.501       | signal present
+       4,000 |   1.000         |   -0.136     |       0.095       | breaking down
+       8,000 |   1.000         |   -0.144     |      -0.105       | NOISE LEVEL
+      16,000 |   1.000         |    0.042     |      -0.068       | noise
+      32,000 |   1.000         |   -0.049     |      -0.056       | noise
+     100,000 |   1.000         |   -0.098     |      -0.095       | noise
 ========================================================================================
+Effective PRIME retention window (decay=0.9995): approximately 2,000-4,000 tokens
+Signal is entirely lost at gaps >= 8,000 tokens with default decay.
 ```
 
-#### Commercial Takeaways:
-1. **The Representational Dichotomy**: Verbatim alphanumeric passkeys require high-frequency phase preservation and naturally decay beyond 128K tokens when routed through linear trunk heads.
-2. **Infinite Semantic Transport**: Semantic causal facts—the actual basis of document analysis, code repository understanding, and strategic reasoning—are preserved at **$\ge 96.2\%$ fidelity all the way to $1,000,000$ tokens**. For real-world enterprise RAG, PRIME provides near-lossless information retention at a fraction of the compute cost.
+#### Corrected Commercial Takeaways:
 
----
+1. **Bounded Retention, Not Infinite Transport**: With the default `decay=0.9995`,
+   PRIME's effective retention window is approximately **2,000–4,000 tokens**. This is a
+   real, hardware-measured property of the exponential decay recurrence, not a failure —
+   it is the designed trade-off enabling O(1) memory.
+
+2. **PRIME Dramatically Outperforms Linear Attention in Its Working Range**: Within the
+   retention window, PRIME achieves cosine similarity of 0.988 at 50 tokens vs 0.421 for
+   unweighted linear attention — demonstrating that the second-order moment structure
+   captures curvature information that pure linear baselines lose immediately.
+
+3. **Adjustable via Decay**: Increasing `decay` toward 1.0 extends the retention window
+   at the cost of reduced recency sensitivity. At `decay=0.9999`, meaningful signal
+   survives 10,000+ tokens (cosine ~0.12); at `decay=0.99999`, survival exceeds 90%.
+
+4. **The O(1) Memory Property Remains Fully Valid**: The 48.56 MB flat PRIME recurrent
+   state vs. the linearly-growing softmax KV cache is hardware-verified and unaffected
+   by this retraction.
+
+
 
 ### Crucible 3: The Edge-Constrained Hardware Crucible (2.5M Tokens)
 *Objective: Prove viable deployment on edge devices clamped to 4GB/8GB RAM envelopes.*
