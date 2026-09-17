@@ -107,6 +107,8 @@ def main():
     parser.add_argument("--eval-every", type=int, default=25, help="Steps between eval & generation")
     parser.add_argument("--save-every", type=int, default=100, help="Steps between checkpoints")
     parser.add_argument("--resume-from", type=str, default=None, help="Path to checkpoint to resume training from")
+    parser.add_argument("--target-loss", type=float, default=None, help="Target loss to stop training early if achieved")
+    parser.add_argument("--min-lr", type=float, default=1e-5, help="Minimum learning rate at end of cosine decay")
     parser.add_argument("--output-dir", type=str, default="checkpoints")
     args = parser.parse_args()
 
@@ -141,12 +143,23 @@ def main():
 
     # 3. Optimizer & Scheduler
     optimizer = AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.95), weight_decay=0.01)
+    if args.resume_from and os.path.exists(args.resume_from):
+        ckpt = torch.load(args.resume_from, map_location=device, weights_only=False)
+        if "optimizer_state_dict" in ckpt:
+            print(f"    Restoring optimizer state from {args.resume_from}...")
+            optimizer.load_state_dict(ckpt["optimizer_state_dict"])
 
+    resume_warmup = 50 if start_step > 1 else args.warmup_steps
     def get_lr(step: int) -> float:
-        if step < args.warmup_steps:
-            return args.lr * float(step) / float(max(1, args.warmup_steps))
-        progress = float(step - args.warmup_steps) / float(max(1, args.steps - args.warmup_steps))
-        return args.lr * 0.5 * (1.0 + math.cos(math.pi * progress))
+        relative_step = step - start_step
+        if relative_step < resume_warmup:
+            warmup_factor = float(relative_step + 1) / float(resume_warmup)
+            return args.min_lr + (args.lr - args.min_lr) * warmup_factor
+        remaining_steps = max(1, args.steps - start_step - resume_warmup)
+        progress = float(relative_step - resume_warmup) / float(remaining_steps)
+        progress = min(1.0, max(0.0, progress))
+        cosine_decay = 0.5 * (1.0 + math.cos(math.pi * progress))
+        return args.min_lr + (args.lr - args.min_lr) * cosine_decay
 
     # 4. Infinite Streaming Data Pipeline
     print(f"[3] Initializing Streaming Dataset Pipeline from '{args.dataset}'...")
@@ -178,29 +191,37 @@ def main():
         x = batch[:, :-1]
         y = batch[:, 1:]
 
-        optimizer.zero_grad()
+        optimizer.zero_grad(set_to_none=True)
 
         if device == "cuda":
             amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32
             with torch.amp.autocast('cuda', dtype=amp_dtype):
                 out = model(x, labels=y)
                 loss = out["loss"]
-            if torch.isnan(loss):
-                print(f"[Warning] Step {step}: Loss is NaN, skipping step...")
-                optimizer.zero_grad()
+            if torch.isnan(loss) or torch.isinf(loss):
+                print(f"[Warning] Step {step}: Loss is non-finite ({loss}), skipping step...")
+                optimizer.zero_grad(set_to_none=True)
                 continue
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            if not torch.isfinite(grad_norm):
+                print(f"[Warning] Step {step}: GradNorm is non-finite ({grad_norm}), skipping optimizer step...")
+                optimizer.zero_grad(set_to_none=True)
+                continue
             optimizer.step()
         else:
             out = model(x, labels=y)
             loss = out["loss"]
-            if torch.isnan(loss):
-                print(f"[Warning] Step {step}: Loss is NaN, skipping step...")
-                optimizer.zero_grad()
+            if torch.isnan(loss) or torch.isinf(loss):
+                print(f"[Warning] Step {step}: Loss is non-finite ({loss}), skipping step...")
+                optimizer.zero_grad(set_to_none=True)
                 continue
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            if not torch.isfinite(grad_norm):
+                print(f"[Warning] Step {step}: GradNorm is non-finite ({grad_norm}), skipping optimizer step...")
+                optimizer.zero_grad(set_to_none=True)
+                continue
             optimizer.step()
 
         step_dt = time.time() - step_t0
@@ -221,6 +242,19 @@ def main():
                 f"Throughput: {tok_per_sec:.0f} tok/s | "
                 f"VRAM: {vram_mb:.0f} MB"
             )
+
+        # Early exit if target loss is reached
+        if args.target_loss is not None and loss_val <= args.target_loss:
+            print(f"\n🎉 Target loss {args.target_loss:.2f} achieved at Step {step}! (Loss: {loss_val:.4f})")
+            ckpt_path = os.path.join(args.output_dir, f"prime_{args.size}_target_reached_step_{step}.pt")
+            torch.save({
+                "step": step,
+                "model_state_dict": model.state_dict(),
+                "config": config,
+                "loss": loss_val,
+            }, ckpt_path)
+            print(f"  [Target Checkpoint] Saved to {ckpt_path}")
+            break
 
         # Periodic Generation Evaluation
         if step % args.eval_every == 0 or step == 1:
@@ -247,6 +281,7 @@ def main():
             torch.save({
                 "step": step,
                 "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
                 "config": config,
                 "loss": loss_val,
             }, ckpt_path)
