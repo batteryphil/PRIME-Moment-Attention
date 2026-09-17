@@ -43,7 +43,7 @@ class PrimeMomentAttention(nn.Module):
         num_kv_heads: Optional[int] = None,
         decay: float = 0.9995,
         use_qk_norm: bool = False,
-        eps: float = 1e-4,
+        eps: float = 1.0,
     ):
         super().__init__()
         self.hidden_size = hidden_size

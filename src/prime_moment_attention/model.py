@@ -29,7 +29,7 @@ class PrimeConfig:
     decay: float = 0.9995
     use_qk_norm: bool = True
     rms_norm_eps: float = 1e-6
-    eps: float = 1e-4
+    eps: float = 1.0
     tie_word_embeddings: bool = True
     initializer_range: float = 0.02
 
@@ -123,6 +123,12 @@ class PrimeForCausalLM(nn.Module):
 
         self.apply(self._init_weights)
 
+        # Scale output projections once by 1/sqrt(2 * num_layers) for residual variance stability
+        scale = self.config.initializer_range / math.sqrt(2 * self.config.num_layers)
+        for layer in self.layers:
+            layer.self_attn.o_proj.weight.data.normal_(mean=0.0, std=scale)
+            layer.mlp.down_proj.weight.data.normal_(mean=0.0, std=scale)
+
     def _init_weights(self, module: nn.Module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
             nn.init.normal_(module.weight, mean=0.0, std=self.config.initializer_range)
@@ -160,7 +166,7 @@ class PrimeForCausalLM(nn.Module):
 
         loss = None
         if labels is not None:
-            shift_logits = logits[..., :-1, :].contiguous()
+            shift_logits = logits[..., :-1, :].contiguous().to(torch.float32)
             shift_labels = labels[..., 1:].contiguous()
             loss = F.cross_entropy(
                 shift_logits.view(-1, self.config.vocab_size),
@@ -193,12 +199,14 @@ class PrimeForCausalLM(nn.Module):
         generated = input_ids
 
         for _ in range(max_new_tokens):
+            next_token_logits = torch.nan_to_num(next_token_logits, nan=0.0, posinf=50.0, neginf=-50.0)
             if temperature > 0.0:
-                logits = next_token_logits / temperature
+                logits = next_token_logits / max(temperature, 1e-4)
                 if top_k > 0:
                     v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
                     logits[logits < v[:, [-1]]] = -float("Inf")
                 probs = F.softmax(logits, dim=-1)
+                probs = torch.nan_to_num(probs, nan=1.0 / self.config.vocab_size)
                 next_token = torch.multinomial(probs, num_samples=1)
             else:
                 next_token = torch.argmax(next_token_logits, dim=-1, keepdim=True)
