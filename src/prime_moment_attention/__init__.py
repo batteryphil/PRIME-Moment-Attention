@@ -11,6 +11,7 @@ from .hybrid import HybridWindowPrimeAttention, convert_transformer_to_hybrid_pr
 from .adaptive import AdaptivePrimeRouter, EmpiricalBandwidthRouter
 from .gumbel import gumbel_softmax_ste, GumbelHeadRouter, GumbelAnnealingScheduler
 from .distillation import GumbelPrimeQwen2Attention, convert_qwen_to_stage7_hybrid
+from .model import PrimeConfig, PrimeBlock, PrimeForCausalLM
 
 __version__ = "0.4.0"
 
@@ -59,4 +60,7 @@ __all__ = [
     "GumbelAnnealingScheduler",
     "GumbelPrimeQwen2Attention",
     "convert_qwen_to_stage7_hybrid",
+    "PrimeConfig",
+    "PrimeBlock",
+    "PrimeForCausalLM",
 ]
