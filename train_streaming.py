@@ -106,6 +106,7 @@ def main():
     parser.add_argument("--warmup-steps", type=int, default=20, help="Warmup steps")
     parser.add_argument("--eval-every", type=int, default=25, help="Steps between eval & generation")
     parser.add_argument("--save-every", type=int, default=100, help="Steps between checkpoints")
+    parser.add_argument("--resume-from", type=str, default=None, help="Path to checkpoint to resume training from")
     parser.add_argument("--output-dir", type=str, default="checkpoints")
     args = parser.parse_args()
 
@@ -130,11 +131,16 @@ def main():
     model = PrimeForCausalLM(config).to(device)
     total_params = sum(p.numel() for p in model.parameters())
     print(f"[2] Initialized PrimeForCausalLM ({total_params / 1e6:.2f}M params, {config.num_layers} layers)")
-    print(f"    Hidden: {config.hidden_size} | Heads: {config.num_heads} | Head Dim: {config.head_dim} | QK-Norm: {config.use_qk_norm}")
+    start_step = 1
+    if args.resume_from and os.path.exists(args.resume_from):
+        print(f"[Resume] Loading checkpoint from {args.resume_from}...")
+        ckpt = torch.load(args.resume_from, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt["model_state_dict"])
+        start_step = ckpt.get("step", 0) + 1
+        print(f"    Resuming training from Step {start_step} (checkpoint loss: {ckpt.get('loss', 'N/A')})")
 
     # 3. Optimizer & Scheduler
     optimizer = AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.95), weight_decay=0.01)
-    scaler = torch.amp.GradScaler('cuda') if device == "cuda" else None
 
     def get_lr(step: int) -> float:
         if step < args.warmup_steps:
@@ -154,13 +160,13 @@ def main():
         "The little boy looked at the stars and",
     ]
 
-    print(f"\n[4] Commencing Pretraining for {args.steps} Steps...")
+    print(f"\n[4] Commencing Pretraining from Step {start_step} to Step {args.steps}...")
     start_time = time.time()
     total_tokens_trained = 0
     history = []
 
     model.train()
-    for step in range(1, args.steps + 1):
+    for step in range(start_step, args.steps + 1):
         step_t0 = time.time()
 
         # Update learning rate
