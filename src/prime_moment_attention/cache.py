@@ -14,7 +14,13 @@ from transformers.cache_utils import Cache
 
 class PrimeMomentCache(Cache):
     def __init__(self):
-        super().__init__()
+        try:
+            super().__init__(layers=[])
+        except (TypeError, ValueError):
+            try:
+                super().__init__()
+            except Exception:
+                pass
         self.prime_states: Dict[int, Tuple[torch.Tensor, ...]] = {}
         self._seen_tokens = 0
 

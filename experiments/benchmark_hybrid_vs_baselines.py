@@ -15,7 +15,7 @@ Tests passkey retrieval ('94812') across context gaps:
 """
 
 import sys, os, time, json
-sys.path.insert(0, '/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/src')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from prime_moment_attention.surgery import PrimeTransplantedAttention

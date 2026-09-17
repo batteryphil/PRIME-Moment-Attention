@@ -12,7 +12,7 @@ Testing the 6 Critical Peer-Review Inquiries on Qwen2.5-1.5B-Instruct:
 
 import os
 import sys
-sys.path.insert(0, '/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/src')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 import time
 import json
 import math

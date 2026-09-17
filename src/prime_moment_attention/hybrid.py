@@ -15,12 +15,32 @@ Mechanics:
 Memory is strictly bounded to O(W + D^2) and independent of sequence length L.
 """
 
+import os
 from typing import Dict, Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers.cache_utils import Cache
 from transformers.models.qwen2.modeling_qwen2 import apply_rotary_pos_emb, repeat_kv
+
+_cpp_kernel = None
+
+def get_cpp_kernel():
+    global _cpp_kernel
+    if _cpp_kernel is False:
+        return None
+    if _cpp_kernel is not None:
+        return _cpp_kernel
+    try:
+        from torch.utils.cpp_extension import load
+        cpp_source = os.path.join(os.path.dirname(__file__), "prime_cpp_kernel.cpp")
+        if os.path.exists(cpp_source):
+            _cpp_kernel = load(name="prime_cpp_hybrid", sources=[cpp_source], verbose=False)
+            return _cpp_kernel
+    except Exception:
+        pass
+    _cpp_kernel = False
+    return None
 
 class HybridWindowPrimeAttention(nn.Module):
     def __init__(
@@ -66,155 +86,116 @@ class HybridWindowPrimeAttention(nn.Module):
         key_states = self.k_proj(hidden_states).view(hidden_shape).transpose(1, 2)
         value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
 
-        cos, sin = position_embeddings
-        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
+        if position_embeddings is not None:
+            cos, sin = position_embeddings
+            query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
-        # GQA repeat for Key and Value
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
-        # Scale query
-        query_states = query_states * self.scaling
+        q_scaled = query_states * self.scaling
+        device = hidden_states.device
+        cpp_mod = get_cpp_kernel()
 
-        device = query_states.device
-        H, D = self.num_heads, self.head_dim
+        state = None
+        if past_key_values is not None:
+            if not hasattr(past_key_values, 'hybrid_prime_states'):
+                past_key_values.hybrid_prime_states = {}
+            state = past_key_values.hybrid_prime_states.get(self.layer_idx, None)
 
-        # ----------------------------------------------------------------------
-        # MODE 1: Prefill (L > 1)
-        # ----------------------------------------------------------------------
-        if L > 1:
-            # 1. Local Window Attention (Tokens attend to the most recent min(t, W) tokens)
-            scores = torch.matmul(query_states, key_states.transpose(2, 3))  # [B, H, L, L]
+        if L > 1 or state is None:
+            # Prefill mode:
+            # 1. PRIME C++ scan
+            q_f32 = q_scaled.to(torch.float32)
+            k_f32 = key_states.to(torch.float32)
+            v_f32 = value_states.to(torch.float32)
 
-            # Create causal + sliding window mask
-            causal_mask = torch.triu(torch.full((L, L), float("-inf"), device=device), diagonal=1)
-            window_mask = torch.tril(torch.full((L, L), float("-inf"), device=device), diagonal=-self.window_size)
-            combined_mask = causal_mask + window_mask
-
-            attn_weights = F.softmax((scores + combined_mask.unsqueeze(0).unsqueeze(0)).to(torch.float32), dim=-1).to(query_states.dtype)
-            local_attn_out = torch.matmul(attn_weights, value_states)  # [B, H, L, D]
-
-            # 2. Accumulate tokens that have fallen out of the final window into PRIME state
-            num_evicted = max(0, L - self.window_size)
-            
-            S0 = torch.zeros(B, H, D, device=device, dtype=torch.float32)
-            S1 = torch.zeros(B, H, D, D, device=device, dtype=torch.float32)
-            S2 = torch.zeros(B, H, D, D, device=device, dtype=torch.float32)
-            K0 = torch.zeros(B, H, 1, device=device, dtype=torch.float32)
-            K1 = torch.zeros(B, H, D, device=device, dtype=torch.float32)
-            K2 = torch.zeros(B, H, D, device=device, dtype=torch.float32)
-
-            if num_evicted > 0:
-                k_evict = key_states[:, :, :num_evicted].to(torch.float32)
-                v_evict = value_states[:, :, :num_evicted].to(torch.float32)
-                
-                # Recurrent accumulation over evicted tokens
-                for t in range(num_evicted):
-                    kt = k_evict[:, :, t]
-                    vt = v_evict[:, :, t]
+            if cpp_mod is not None:
+                out_prime, S0, S1, S2, K0, K1, K2 = cpp_mod.prime_prefill_cpp(q_f32, k_f32, v_f32, self.decay)
+            else:
+                out_prime = torch.zeros_like(q_f32)
+                S0 = torch.zeros(B, self.num_heads, self.head_dim, device=device, dtype=torch.float32)
+                S1 = torch.zeros(B, self.num_heads, self.head_dim, self.head_dim, device=device, dtype=torch.float32)
+                S2 = torch.zeros(B, self.num_heads, self.head_dim, self.head_dim, device=device, dtype=torch.float32)
+                K0 = torch.zeros(B, self.num_heads, 1, device=device, dtype=torch.float32)
+                K1 = torch.zeros(B, self.num_heads, self.head_dim, device=device, dtype=torch.float32)
+                K2 = torch.zeros(B, self.num_heads, self.head_dim, device=device, dtype=torch.float32)
+                for t in range(L):
+                    qt = q_f32[:, :, t]
+                    kt = k_f32[:, :, t]
+                    vt = v_f32[:, :, t]
                     S0 = self.decay * S0 + vt
                     S1 = self.decay * S1 + torch.einsum('bhd,bhe->bhde', kt, vt)
                     S2 = self.decay * S2 + torch.einsum('bhd,bhe->bhde', kt**2, vt)
                     K0 = self.decay * K0 + 1.0
                     K1 = self.decay * K1 + kt
                     K2 = self.decay * K2 + (kt**2)
+                    num = S0 + torch.einsum('bhd,bhde->bhe', qt, S1) + 0.5 * torch.einsum('bhd,bhde->bhe', qt**2, S2)
+                    den = (K0 + torch.sum(qt * K1, dim=-1, keepdim=True) + 0.5 * torch.sum((qt**2) * K2, dim=-1, keepdim=True)).clamp(min=1e-3)
+                    out_prime[:, :, t] = num / den
 
-                # Fuse PRIME distant attention for the final token that initiates generation
-                q_last = query_states[:, :, -1].to(torch.float32)
-                num_prime = S0 + torch.einsum('bhd,bhde->bhe', q_last, S1) + 0.5 * torch.einsum('bhd,bhde->bhe', q_last**2, S2)
-                den_prime = (K0 + torch.sum(q_last * K1, dim=-1, keepdim=True) + 0.5 * torch.sum((q_last**2) * K2, dim=-1, keepdim=True)).clamp(min=1e-3)
-                prime_last_out = (num_prime / den_prime).to(query_states.dtype)
+            out_prime = out_prime.to(query_states.dtype)
 
-                # Fuse for the final prefill token
-                local_attn_out[:, :, -1] = self.alpha * local_attn_out[:, :, -1] + (1.0 - self.alpha) * prime_last_out
+            # 2. Local Softmax
+            scores = torch.matmul(q_scaled, key_states.transpose(2, 3))
+            causal_mask = torch.triu(torch.full((L, L), float('-inf'), device=device), diagonal=1)
+            attn_weights = F.softmax((scores + causal_mask).to(torch.float32), dim=-1).to(query_states.dtype)
+            out_local = torch.matmul(attn_weights, value_states)
 
-            # 3. Store local window buffer and PRIME recurrent state in past_key_values
+            # 3. Blend
+            fused = self.alpha * out_local + (1.0 - self.alpha) * out_prime
+
             if past_key_values is not None:
-                if not hasattr(past_key_values, 'hybrid_window_states'):
-                    past_key_values.hybrid_window_states = {}
-                
-                # Window buffer stores the last W tokens
-                w_start = max(0, L - self.window_size)
-                k_win = key_states[:, :, w_start:].clone()
-                v_win = value_states[:, :, w_start:].clone()
-
-                past_key_values.hybrid_window_states[self.layer_idx] = {
-                    "k_window": k_win,
-                    "v_window": v_win,
-                    "prime_state": (S0, S1, S2, K0, K1, K2),
-                    "num_evicted": num_evicted
+                past_key_values.hybrid_prime_states[self.layer_idx] = {
+                    'k_win': key_states[:, :, -self.window_size:].clone(),
+                    'v_win': value_states[:, :, -self.window_size:].clone(),
+                    'prime_state': (S0, S1, S2, K0, K1, K2)
                 }
 
-            attn_output = local_attn_out.transpose(1, 2).contiguous().view(*input_shape, -1)
-            return self.o_proj(attn_output), None
-
-        # ----------------------------------------------------------------------
-        # MODE 2: Autoregressive Decoding (L == 1)
-        # ----------------------------------------------------------------------
-        state = None
-        if past_key_values is not None and hasattr(past_key_values, 'hybrid_window_states'):
-            state = past_key_values.hybrid_window_states.get(self.layer_idx, None)
-
-        if state is None:
-            # Fallback if no cache
-            scores = torch.matmul(query_states, key_states.transpose(2, 3))
-            local_weights = F.softmax(scores.to(torch.float32), dim=-1).to(query_states.dtype)
-            local_out = torch.matmul(local_weights, value_states)
-            attn_output = local_out.transpose(1, 2).contiguous().view(*input_shape, -1)
-            return self.o_proj(attn_output), None
-
-        k_win = state["k_window"]
-        v_win = state["v_window"]
-        S0, S1, S2, K0, K1, K2 = state["prime_state"]
-
-        # Step 2a: Local Softmax Attention over the current window
-        k_full = torch.cat([k_win, key_states], dim=2)
-        v_full = torch.cat([v_win, value_states], dim=2)
-
-        local_scores = torch.matmul(query_states, k_full.transpose(2, 3))  # [B, H, 1, WinLen+1]
-        local_weights = F.softmax(local_scores.to(torch.float32), dim=-1).to(query_states.dtype)
-        local_attn_out = torch.matmul(local_weights, v_full)  # [B, H, 1, D]
-
-        # Step 2b: Distant PRIME Attention from Recurrent State
-        q_f32 = query_states[:, :, 0].to(torch.float32)  # [B, H, D]
-        has_prime_history = (state["num_evicted"] > 0)
-
-        if has_prime_history:
-            num_prime = S0 + torch.einsum('bhd,bhde->bhe', q_f32, S1) + 0.5 * torch.einsum('bhd,bhde->bhe', q_f32**2, S2)
-            den_prime = (K0 + torch.sum(q_f32 * K1, dim=-1, keepdim=True) + 0.5 * torch.sum((q_f32**2) * K2, dim=-1, keepdim=True)).clamp(min=1e-3)
-            prime_attn_out = (num_prime / den_prime).unsqueeze(2).to(query_states.dtype)  # [B, H, 1, D]
-
-            # Step 2c: Joint Convex Fusion
-            fused_out = self.alpha * local_attn_out + (1.0 - self.alpha) * prime_attn_out
+            out = fused.transpose(1, 2).contiguous().view(*input_shape, -1)
+            return self.o_proj(out), None
         else:
-            # All tokens still fit in local window, pure local softmax is exact
-            fused_out = local_attn_out
+            # Autoregressive decoding (L == 1)
+            k_win = state['k_win']
+            v_win = state['v_win']
+            S0, S1, S2, K0, K1, K2 = state['prime_state']
 
-        # Step 2d: Window Eviction & PRIME Update
-        if k_full.size(2) > self.window_size:
-            kt_evict = k_full[:, :, 0].to(torch.float32)
-            vt_evict = v_full[:, :, 0].to(torch.float32)
+            # 1. Update PRIME state with the new token
+            kt_f32 = key_states[:, :, 0].to(torch.float32)
+            vt_f32 = value_states[:, :, 0].to(torch.float32)
+            q_f32 = q_scaled[:, :, 0].to(torch.float32)
 
-            S0 = self.decay * S0 + vt_evict
-            S1 = self.decay * S1 + torch.einsum('bhd,bhe->bhde', kt_evict, vt_evict)
-            S2 = self.decay * S2 + torch.einsum('bhd,bhe->bhde', kt_evict**2, vt_evict)
-            K0 = self.decay * K0 + 1.0
-            K1 = self.decay * K1 + kt_evict
-            K2 = self.decay * K2 + (kt_evict**2)
+            if cpp_mod is not None:
+                cpp_mod.prime_step_evict_update_cpp(kt_f32, vt_f32, S0, S1, S2, K0, K1, K2, self.decay)
+                out_prime = cpp_mod.prime_query_step_cpp(q_f32, S0, S1, S2, K0, K1, K2).unsqueeze(2).to(query_states.dtype)
+            else:
+                S0 = self.decay * S0 + vt_f32
+                S1 = self.decay * S1 + torch.einsum('bhd,bhe->bhde', kt_f32, vt_f32)
+                S2 = self.decay * S2 + torch.einsum('bhd,bhe->bhde', kt_f32**2, vt_f32)
+                K0 = self.decay * K0 + 1.0
+                K1 = self.decay * K1 + kt_f32
+                K2 = self.decay * K2 + (kt_f32**2)
+                num = S0 + torch.einsum('bhd,bhde->bhe', q_f32, S1) + 0.5 * torch.einsum('bhd,bhde->bhe', q_f32**2, S2)
+                den = (K0 + torch.sum(q_f32 * K1, dim=-1, keepdim=True) + 0.5 * torch.sum((q_f32**2) * K2, dim=-1, keepdim=True)).clamp(min=1e-3)
+                out_prime = (num / den).unsqueeze(2).to(query_states.dtype)
 
-            k_win = k_full[:, :, 1:]
-            v_win = v_full[:, :, 1:]
-            state["num_evicted"] += 1
-        else:
-            k_win = k_full
-            v_win = v_full
+            # 2. Local Window Softmax
+            k_full = torch.cat([k_win, key_states], dim=2)
+            v_full = torch.cat([v_win, value_states], dim=2)
 
-        state["k_window"] = k_win
-        state["v_window"] = v_win
-        state["prime_state"] = (S0, S1, S2, K0, K1, K2)
+            scores = torch.matmul(q_scaled, k_full.transpose(2, 3))
+            attn_weights = F.softmax(scores.to(torch.float32), dim=-1).to(query_states.dtype)
+            out_local = torch.matmul(attn_weights, v_full)
 
-        attn_output = fused_out.transpose(1, 2).contiguous().view(*input_shape, -1)
-        return self.o_proj(attn_output), None
+            # 3. Blend
+            fused = self.alpha * out_local + (1.0 - self.alpha) * out_prime
+
+            state['k_win'] = k_full[:, :, -self.window_size:]
+            state['v_win'] = v_full[:, :, -self.window_size:]
+            state['prime_state'] = (S0, S1, S2, K0, K1, K2)
+
+            out = fused.transpose(1, 2).contiguous().view(*input_shape, -1)
+            return self.o_proj(out), None
 
 def convert_transformer_to_hybrid_prime(
     model: nn.Module,
@@ -230,20 +211,24 @@ def convert_transformer_to_hybrid_prime(
     Returns:
         (model, converted_layer_indices)
     """
-    layers = getattr(model, "model", model).layers
+    from prime_moment_attention.surgery import get_model_layers
+    layers = get_model_layers(model)
     num_layers = len(layers)
 
     if target_layers is None:
         target_layers = [num_layers // 2]
 
     for idx in target_layers:
-        orig_attn = layers[idx].self_attn
-        layers[idx].self_attn = HybridWindowPrimeAttention(
+        layer = layers[idx]
+        attr_name = "self_attn" if hasattr(layer, "self_attn") else "attn"
+        orig_attn = getattr(layer, attr_name)
+        hybrid_layer = HybridWindowPrimeAttention(
             original_attn=orig_attn,
             layer_idx=idx,
             window_size=window_size,
             decay=decay,
             alpha=alpha
         )
+        setattr(layer, attr_name, hybrid_layer)
 
     return model, target_layers

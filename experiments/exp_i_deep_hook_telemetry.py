@@ -30,7 +30,7 @@ import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Add local library path to sys.path
-sys.path.insert(0, "/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/src")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 from prime_moment_attention.selective import PrimeSelectiveAttention, convert_transformer_to_prime_selective
 
 

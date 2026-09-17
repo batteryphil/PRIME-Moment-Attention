@@ -1,9 +1,11 @@
+# Python bytecode & cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
+
+# Build & packaging
 build/
 develop-eggs/
 dist/
@@ -16,16 +18,27 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Virtual environments
+# C / C++ / Cosmopolitan Builds
+*.o
+*.obj
+*.dylib
+*.a
+c/bin/
+.ape-*
+
+# Virtual Environments
 venv/
 .venv/
 ENV/
+env/
 
-# Weights & Checkpoints
+# Checkpoints, Weights & Large Artifacts
 *.pt
 *.pth
 *.bin
@@ -34,7 +47,7 @@ ENV/
 *.onnx
 checkpoints/
 
-# IDE & OS
+# IDE & Editor files
 .idea/
 .vscode/
 *.swp
@@ -47,24 +60,8 @@ checkpoints/
 .env
 ghp_*
 
-# PRIME-Scout Sandboxes, Scratch, Data, and Database
-scout/sandbox/
-scout/vault/
-scout/data/
-
-# Intermediate draft sample PDFs (master full novel PDFs are tracked)
-novels/**/export/*_Sample.pdf
-novels/**/export/*_sample.pdf
-*.bak
-
-# Audio narration caches and raw uncompressed wavs
-audio_cache/
-*.wav
-novels/**/audio/*.wav
-
-# Master audio/video exports (>100MB exceeds GitHub hard limit)
-novels/**/export/*.mp3
-novels/**/export/*.m4b
-novels/**/export/*.mp4
-
-
+# Compiler / Accelerator Caches
+.triton/
+triton_cache/
+miopen_db/
+torchinductor_*/

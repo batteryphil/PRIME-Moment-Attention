@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prime-moment-attention"
+version = "0.4.0"
+description = "Constant-State Second-Order Recurrent Attention for Long-Context Transformer Inference"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.9"
+authors = [
+    { name = "Phil (@batteryphil)" },
+    { name = "PRIME-Net Research Team" }
+]
+keywords = [
+    "deep-learning",
+    "transformers",
+    "attention-mechanism",
+    "recurrent-attention",
+    "constant-memory",
+    "long-context",
+    "pytorch"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.40.0",
+    "numpy>=1.24.0",
+    "accelerate>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+experiments = [
+    "matplotlib>=3.7.0",
+    "pillow>=9.0.0",
+    "pyarrow>=14.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/batteryphil/PRIME-Moment-Attention"
+Repository = "https://github.com/batteryphil/PRIME-Moment-Attention.git"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["prime_moment_attention*"]
+
+[tool.setuptools.package-data]
+prime_moment_attention = ["*.cpp"]

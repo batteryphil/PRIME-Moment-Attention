@@ -1,7 +1,7 @@
 import os
 os.environ["TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL"] = "1"
 import sys
-sys.path.append("/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/src")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 import torch
 import torch.nn.functional as F
 from torch.optim import AdamW

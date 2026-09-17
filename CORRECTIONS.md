@@ -210,3 +210,37 @@ Our deep retrieval benchmarks (`experiments/test_deep_retrieval_limit.py`, `void
 *Corrections committed: September 2026*  
 *Authors: Phil (@batteryphil) & Antigravity (Google DeepMind)*  
 *Verified on bare-metal AMD ROCm 7.2 hardware with zero synthetic emulation.*
+
+---
+
+## 6. Retraction: Crucible 4 RULER Benchmark Mock Data (September 2026)
+
+> **⚠️ RETRACTION**: The results previously reported for "Crucible 4: The RULER Long-Context Reasoning Suite" (`experiments/exp_commercial_ruler_reasoning.py` and `dossier/telemetry/commercial_ruler_reasoning_results.json`) were **fabricated from hardcoded mock values** and are **retracted in their entirety**.
+
+### What Was Fabricated
+In `experiments/exp_commercial_ruler_reasoning.py` (lines 152–173), accuracy metrics across contexts $L \in \{4096, 8192, 16384, 32768\}$ were populated directly from a static Python dictionary:
+```python
+scores = {
+    4096: {
+        "baseline_softmax": {"vt_accuracy": 94.2, "mqa_accuracy": 92.5, "kva_accuracy": 95.8, "composite_accuracy": 94.2},
+        "pure_linear":      {"vt_accuracy": 82.1, "mqa_accuracy": 84.6, "kva_accuracy": 80.3, "composite_accuracy": 82.3},
+        "stage7_hybrid":    {"vt_accuracy": 93.8, "mqa_accuracy": 92.1, "kva_accuracy": 95.4, "composite_accuracy": 93.8}
+    },
+    ...
+}
+```
+The script initialized the model but never evaluated RULER prompts, variable tracking chains, or multi-query aggregations. The resulting composite accuracy claims (claiming Stage 7 Hybrid matched Full Softmax within 0.8% at 32K context) were not derived from empirical task execution.
+
+---
+
+## 7. Clarification: Crucible 3 (Edge 2.5M Token Streaming)
+
+> **Clarification**: Crucible 3 (`experiments/exp_commercial_edge_2_5m_crucible.py`) was presented in some contexts as a live 2.5-million-token document streaming benchmark. In reality, it is an **analytical hardware scaling projection** based on measured recurrent state size.
+
+### Methodology and Ground Truth
+1. The script verified hardware allocation by running a 256-token chunk through the Stage 7 Hybrid model on GPU, measuring actual recurrent state tensor memory (37.74 MB attention cache).
+2. Memory consumption across $L = 0$ to $2,500,000$ tokens was then calculated analytically using exact architectural byte formulas:
+   - Softmax KV cache: $2 \times N_{\text{layers}} \times N_{\text{kv\_heads}} \times D_{\text{head}} \times 2\text{ bytes} = 28.0\text{ KB/token}$.
+   - PRIME recurrent trunk state: Strictly constant at 8.38 MB (plus 29.36 MB local window buffer for boundary layers).
+3. **What is true**: The $O(1)$ memory bound of the recurrent state is mathematically and hardware-verified. Unlike Softmax attention, the state memory does not grow with sequence length.
+4. **What is NOT true**: A live 2,500,000 token sequence was not streamed in real time during that benchmark, nor does PRIME maintain 2.5M-token associative retrieval (retention is bounded by exponential decay to ~2,000–4,000 tokens under default settings).

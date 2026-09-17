@@ -68,7 +68,7 @@ os.environ["TRITON_CACHE_DIR"] = "/home/phil/.gemini/antigravity/scratch/.triton
 os.environ["PYTHONUNBUFFERED"] = "1"
 
 import sys
-sys.path.append("/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/src")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 import time
 import json

@@ -7,7 +7,7 @@ Replaces quadratic Softmax attention with PRIME Moment Attention while preservin
 original weights, biases, and rotary positional embeddings (RoPE).
 """
 
-from typing import Set, Tuple
+from typing import Set, Tuple, Optional
 import torch
 import torch.nn as nn
 from transformers import PreTrainedModel
@@ -36,7 +36,7 @@ class PrimeTransplantedAttention(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        position_embeddings: Tuple[torch.Tensor, torch.Tensor],
+        position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         attention_mask: torch.Tensor = None,
         past_key_values: Cache = None,
         **kwargs
@@ -49,8 +49,9 @@ class PrimeTransplantedAttention(nn.Module):
         key_states = self.k_proj(hidden_states).view(hidden_shape).transpose(1, 2)
         value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
 
-        cos, sin = position_embeddings
-        query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
+        if position_embeddings is not None:
+            cos, sin = position_embeddings
+            query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
         # GQA repeat for Key and Value
         key_states = repeat_kv(key_states, self.num_key_value_groups)
@@ -132,29 +133,53 @@ class PrimeTransplantedAttention(nn.Module):
         attn_output = attn_output.transpose(1, 2).contiguous().view(*input_shape, -1)
         return self.o_proj(attn_output), None
 
+def get_model_layers(model: nn.Module):
+    """
+    Universally locates the decoder layer list across Hugging Face and PyTorch models.
+    Supports LLaMA, Qwen, Mistral, Gemma, DeepSeek, GPT-2, Falcon, and custom modules.
+    """
+    if hasattr(model, "model") and hasattr(model.model, "layers"):
+        return model.model.layers
+    if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
+        return model.transformer.h
+    if hasattr(model, "layers"):
+        return model.layers
+    for _, module in model.named_modules():
+        if isinstance(module, (nn.ModuleList, list)) and len(module) > 1:
+            if hasattr(module[0], "self_attn") or hasattr(module[0], "attn"):
+                return module
+    raise AttributeError("Could not automatically locate Transformer layers in model.")
+
 def convert_transformer_to_prime(
     model: PreTrainedModel,
     hybrid_ratio: float = 1.0,
-    decay: float = 0.9995
+    decay: float = 0.9995,
+    target_layers: Optional[Set[int]] = None
 ) -> Tuple[PreTrainedModel, Set[int]]:
     """
     Transplants PRIME Moment Attention into a Hugging Face Transformer model.
+    target_layers:
+      Specific set/list of layer indices to convert. If provided, overrides hybrid_ratio.
     hybrid_ratio:
       1.0 = 100% layers converted to PRIME Moment Attention.
       0.5 = 50% layers converted (retains boundary layers for exact local attention).
     """
-    layers = model.model.layers
+    layers = get_model_layers(model)
     num_layers = len(layers)
 
-    if hybrid_ratio >= 1.0:
+    if target_layers is not None:
+        layers_to_convert = set(target_layers)
+    elif hybrid_ratio >= 1.0:
         layers_to_convert = set(range(num_layers))
     else:
         boundary = max(1, int(num_layers * (1.0 - hybrid_ratio) / 2))
         layers_to_convert = set(range(boundary, num_layers - boundary))
 
     for idx in layers_to_convert:
-        orig = layers[idx].self_attn
+        layer = layers[idx]
+        attr_name = "self_attn" if hasattr(layer, "self_attn") else "attn"
+        orig = getattr(layer, attr_name)
         prime_layer = PrimeTransplantedAttention(orig, layer_idx=idx, decay=decay)
-        layers[idx].self_attn = prime_layer
+        setattr(layer, attr_name, prime_layer)
 
     return model, layers_to_convert

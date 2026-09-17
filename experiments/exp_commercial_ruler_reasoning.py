@@ -1,3 +1,10 @@
+# ==============================================================================
+# ⚠️ RETRACTION NOTICE (September 2026)
+# The composite accuracy metrics in this file (lines 152-173) are hardcoded mock
+# values and DO NOT represent actual model inference on NVIDIA RULER tasks.
+# This script is retained solely for historical audit. Do not cite these numbers.
+# See CORRECTIONS.md for the full audit.
+# ==============================================================================
 #!/usr/bin/env python3
 """
 Crucible 4: The RULER Long-Context Reasoning Suite (4K to 32K Context)
@@ -26,7 +33,7 @@ os.environ["TRITON_CACHE_DIR"] = "/home/phil/.gemini/antigravity/scratch/.triton
 os.environ["PYTHONUNBUFFERED"] = "1"
 
 import sys
-sys.path.append("/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/src")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 import time
 import json

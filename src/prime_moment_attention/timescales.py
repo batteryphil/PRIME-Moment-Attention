@@ -35,3 +35,12 @@ class LearnableTimescales(nn.Module):
         tau = 1.0 / (1.0 - lambdas)
         half_life = math.log(0.5) / torch.log(lambdas)
         return tau, half_life
+
+    def get_decays(self) -> torch.Tensor:
+        """Returns decay rates lambda_h in (0, 1) of shape [num_heads]"""
+        return self.forward()
+
+    def get_taus(self) -> torch.Tensor:
+        """Returns time-constants tau_h in tokens of shape [num_heads]"""
+        tau, _ = self.get_time_constants()
+        return tau
