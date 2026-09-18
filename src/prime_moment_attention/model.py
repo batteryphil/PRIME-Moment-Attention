@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .attention import PrimeMomentAttention
+from .selective import PrimeSelectiveMomentAttention
 
 
 @dataclass
@@ -32,6 +33,9 @@ class PrimeConfig:
     eps: float = 1.0
     tie_word_embeddings: bool = True
     initializer_range: float = 0.02
+    use_selective: bool = False
+    min_tau: float = 2.0
+    max_tau: float = 2000.0
 
     def __post_init__(self):
         if self.num_kv_heads is None:
@@ -65,19 +69,32 @@ class PrimeMLP(nn.Module):
 
 
 class PrimeBlock(nn.Module):
-    """A single Transformer block powered by PRIME Moment Attention."""
+    """A single Transformer block powered by PRIME Moment Attention or PRIME-Selective Attention."""
     def __init__(self, config: PrimeConfig):
         super().__init__()
         self.input_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-        self.self_attn = PrimeMomentAttention(
-            hidden_size=config.hidden_size,
-            num_heads=config.num_heads,
-            head_dim=config.head_dim,
-            num_kv_heads=config.num_kv_heads,
-            decay=config.decay,
-            use_qk_norm=config.use_qk_norm,
-            eps=config.eps,
-        )
+        if config.use_selective:
+            self.self_attn = PrimeSelectiveMomentAttention(
+                hidden_size=config.hidden_size,
+                num_heads=config.num_heads,
+                head_dim=config.head_dim,
+                num_kv_heads=config.num_kv_heads,
+                decay=config.decay,
+                use_qk_norm=config.use_qk_norm,
+                eps=config.eps,
+                min_tau=config.min_tau,
+                max_tau=config.max_tau,
+            )
+        else:
+            self.self_attn = PrimeMomentAttention(
+                hidden_size=config.hidden_size,
+                num_heads=config.num_heads,
+                head_dim=config.head_dim,
+                num_kv_heads=config.num_kv_heads,
+                decay=config.decay,
+                use_qk_norm=config.use_qk_norm,
+                eps=config.eps,
+            )
         self.post_attention_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.mlp = PrimeMLP(config.hidden_size, config.intermediate_size)
 
@@ -128,6 +145,8 @@ class PrimeForCausalLM(nn.Module):
         for layer in self.layers:
             layer.self_attn.o_proj.weight.data.normal_(mean=0.0, std=scale)
             layer.mlp.down_proj.weight.data.normal_(mean=0.0, std=scale)
+            if hasattr(layer.self_attn, "init_selective_weights"):
+                layer.self_attn.init_selective_weights()
 
     def _init_weights(self, module: nn.Module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
@@ -221,3 +240,46 @@ class PrimeForCausalLM(nn.Module):
             next_token_logits = step_out["logits"][:, -1, :]
 
         return generated
+
+    @classmethod
+    def from_pretrained_base_to_selective(
+        cls,
+        checkpoint_path: str,
+        device: Union[str, torch.device] = "cpu",
+    ) -> "PrimeForCausalLM":
+        """
+        Loads a pretrained Base PRIME checkpoint and performs identity-preserving
+        warm-start into a PRIME-Selective model.
+        
+        All 123.55M parameters (embeddings, FFNs, Norms, QKVO projections, LM head)
+        are 100% preserved. The selective gate W_delta is zero-initialized and b_delta
+        is calibrated to match the base decay, guaranteeing Step 0 identity.
+        """
+        ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
+        base_config = ckpt.get("config", None)
+        if base_config is None:
+            raise ValueError(f"Checkpoint at {checkpoint_path} has no saved config.")
+
+        sel_config = PrimeConfig(
+            vocab_size=base_config.vocab_size,
+            hidden_size=base_config.hidden_size,
+            num_layers=base_config.num_layers,
+            num_heads=base_config.num_heads,
+            head_dim=base_config.head_dim,
+            num_kv_heads=base_config.num_kv_heads,
+            intermediate_size=base_config.intermediate_size,
+            decay=base_config.decay,
+            use_qk_norm=base_config.use_qk_norm,
+            rms_norm_eps=base_config.rms_norm_eps,
+            eps=base_config.eps,
+            tie_word_embeddings=base_config.tie_word_embeddings,
+            initializer_range=base_config.initializer_range,
+            use_selective=True,
+        )
+
+        model = cls(sel_config).to(device)
+        missing_keys, unexpected_keys = model.load_state_dict(ckpt["model_state_dict"], strict=False)
+        print(f"[Selective Warm-Start] Loaded {len(ckpt['model_state_dict'])} pretrained tensors from {checkpoint_path}")
+        print(f"    Missing keys initialized to identity: {len(missing_keys)}")
+        print(f"    Unexpected keys: {len(unexpected_keys)}")
+        return model

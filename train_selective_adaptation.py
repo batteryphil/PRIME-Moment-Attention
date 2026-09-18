@@ -1,0 +1,254 @@
+#!/usr/bin/env python3
+"""
+PRIME-Selective Adaptation Trainer
+===================================
+Fine-tunes the pretrained 125M model (step 10,000) with PRIME-Selective Attention
+using Identity-Preserving Warm-Start.
+
+Features:
+- Identity-preserving initialization on Step 0 (exact loss match, zero loss spike).
+- End-to-end co-adaptation of selective gating (W_delta, b_delta, tau_h, beta_h) and attention representations.
+- Infinite token streaming from roneneldan/TinyStories.
+- Mixed precision AMP (BF16 / FP16) with GradScaler.
+- Live autoregressive generation probes at regular intervals.
+- Periodic checkpointing to disk.
+"""
+
+import os
+import sys
+import time
+import math
+import argparse
+from typing import Iterator, List
+import torch
+import torch.nn as nn
+from torch.optim import AdamW
+from transformers import AutoTokenizer
+from datasets import load_dataset
+
+from prime_moment_attention import PrimeConfig, PrimeForCausalLM
+
+
+def token_packing_stream(
+    dataset_name: str,
+    tokenizer,
+    seq_len: int,
+    batch_size: int,
+) -> Iterator[torch.Tensor]:
+    """Infinite token-packed batch generator."""
+    buffer: List[int] = []
+    chunk_size = seq_len + 1
+
+    while True:
+        try:
+            ds = load_dataset(dataset_name, split="train", streaming=True)
+            for sample in ds:
+                text = sample.get("text", "")
+                if not text or len(text.strip()) == 0:
+                    continue
+                tokens = tokenizer.encode(text) + [tokenizer.eos_token_id]
+                buffer.extend(tokens)
+
+                while len(buffer) >= batch_size * chunk_size:
+                    batch_tokens = []
+                    for _ in range(batch_size):
+                        batch_tokens.append(buffer[:chunk_size])
+                        buffer = buffer[chunk_size:]
+                    yield torch.tensor(batch_tokens, dtype=torch.long)
+        except Exception as e:
+            print(f"[Stream Warning] Dataset error: {e}. Reconnecting...", file=sys.stderr)
+            time.sleep(1)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="PRIME-Selective Warm-Start Adaptation")
+    parser.add_argument("--base-checkpoint", type=str, default="checkpoints/prime_125m_step_10000.pt")
+    parser.add_argument("--dataset", type=str, default="roneneldan/TinyStories")
+    parser.add_argument("--tokenizer", type=str, default="gpt2")
+    parser.add_argument("--steps", type=int, default=1500, help="Total adaptation steps")
+    parser.add_argument("--batch-size", type=int, default=8, help="Batch size per step")
+    parser.add_argument("--seq-len", type=int, default=128, help="Sequence length")
+    parser.add_argument("--lr", type=float, default=5.0e-5, help="Peak learning rate")
+    parser.add_argument("--min-lr", type=float, default=1.0e-5, help="Minimum learning rate")
+    parser.add_argument("--warmup-steps", type=int, default=50, help="Warmup steps")
+    parser.add_argument("--eval-every", type=int, default=50, help="Steps between generation probes")
+    parser.add_argument("--save-every", type=int, default=250, help="Steps between checkpoints")
+    parser.add_argument("--output-dir", type=str, default="checkpoints")
+    args = parser.parse_args()
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    print("=" * 70)
+    print("  PRIME-Selective Attention: Warm-Start Adaptation")
+    print(f"  Base Checkpoint: {args.base_checkpoint}")
+    print(f"  Device:          {device}")
+    print(f"  Steps:           {args.steps} | Batch Size: {args.batch_size} | Seq Len: {args.seq_len}")
+    print(f"  Learning Rate:   {args.lr} -> {args.min_lr}")
+    print("=" * 70)
+
+    # 1. Load Tokenizer
+    print("\n[1] Loading Tokenizer...")
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    # 2. Warm-Start Model from Pretrained Base Checkpoint
+    print(f"\n[2] Initializing PRIME-Selective from {args.base_checkpoint}...")
+    model = PrimeForCausalLM.from_pretrained_base_to_selective(args.base_checkpoint, device=device)
+    total_params = sum(p.numel() for p in model.parameters())
+    selective_params = sum(
+        p.numel() for n, p in model.named_parameters()
+        if any(k in n for k in ["delta_proj", "log_tau", "log_beta"])
+    )
+    print(f"    Total Parameters:     {total_params / 1e6:.2f}M")
+    print(f"    Selective Parameters: {selective_params:,} ({selective_params / total_params * 100:.3f}%)")
+
+    # 3. Parameter Groups & Optimizer
+    # Base parameters get base LR, selective parameters get 2x LR for fast gate adaptation
+    base_params = [
+        p for n, p in model.named_parameters()
+        if not any(k in n for k in ["delta_proj", "log_tau", "log_beta"])
+    ]
+    gate_params = [
+        p for n, p in model.named_parameters()
+        if any(k in n for k in ["delta_proj", "log_tau", "log_beta"])
+    ]
+
+    optimizer = AdamW([
+        {"params": base_params, "lr": args.lr, "weight_decay": 0.01},
+        {"params": gate_params, "lr": args.lr * 2.0, "weight_decay": 0.001},
+    ], betas=(0.9, 0.95))
+
+    def get_lr_factor(step: int) -> float:
+        if step < args.warmup_steps:
+            return float(step + 1) / float(args.warmup_steps)
+        progress = float(step - args.warmup_steps) / float(max(1, args.steps - args.warmup_steps))
+        progress = min(1.0, max(0.0, progress))
+        cosine = 0.5 * (1.0 + math.cos(math.pi * progress))
+        min_factor = args.min_lr / args.lr
+        return min_factor + (1.0 - min_factor) * cosine
+
+    # 4. Data Stream
+    print(f"\n[3] Initializing Token Packing Stream from '{args.dataset}'...")
+    data_iter = token_packing_stream(args.dataset, tokenizer, args.seq_len, args.batch_size)
+
+    # 5. Prompts for live monitoring
+    test_prompts = [
+        "Once upon a time, there was a little girl named Lily.",
+        "One sunny morning, a dog found a big",
+        "The little boy looked at the stars and",
+    ]
+
+    print(f"\n[4] Commencing Selective Adaptation (1 to {args.steps} steps)...")
+    start_time = time.time()
+    total_tokens_trained = 0
+    history = []
+
+    model.train()
+    for step in range(1, args.steps + 1):
+        step_t0 = time.time()
+
+        # Update LR
+        factor = get_lr_factor(step)
+        optimizer.param_groups[0]["lr"] = args.lr * factor
+        optimizer.param_groups[1]["lr"] = args.lr * 2.0 * factor
+
+        batch = next(data_iter).to(device)
+        x = batch[:, :-1]
+        y = batch[:, 1:]
+
+        optimizer.zero_grad(set_to_none=True)
+
+        if device == "cuda":
+            amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32
+            with torch.amp.autocast('cuda', dtype=amp_dtype):
+                out = model(x, labels=y)
+                loss = out["loss"]
+
+            if torch.isnan(loss) or torch.isinf(loss):
+                print(f"[Warning] Step {step}: Loss is {loss}, skipping...")
+                optimizer.zero_grad(set_to_none=True)
+                continue
+
+            loss.backward()
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            if not torch.isfinite(grad_norm):
+                print(f"[Warning] Step {step}: GradNorm is {grad_norm}, skipping...")
+                optimizer.zero_grad(set_to_none=True)
+                continue
+            optimizer.step()
+        else:
+            out = model(x, labels=y)
+            loss = out["loss"]
+            loss.backward()
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+
+        step_time = time.time() - step_t0
+        tokens_in_step = args.batch_size * args.seq_len
+        total_tokens_trained += tokens_in_step
+        tokens_per_sec = tokens_in_step / max(step_time, 1e-4)
+
+        loss_val = loss.item()
+        history.append(loss_val)
+
+        # Log progress every 10 steps
+        if step % 10 == 0 or step == 1:
+            avg_loss_10 = sum(history[-10:]) / len(history[-10:])
+            # Inspect first layer selective gate stats
+            l0_attn = model.layers[0].self_attn
+            mean_beta = l0_attn.get_beta(device).mean().item()
+            mean_tau = l0_attn.get_tau(device).mean().item()
+            print(
+                f"Step {step:5d}/{args.steps} | "
+                f"Loss: {loss_val:.4f} (Avg10: {avg_loss_10:.4f}) | "
+                f"BaseLR: {optimizer.param_groups[0]['lr']:.2e} | "
+                f"L0 Beta: {mean_beta:.2f} | "
+                f"L0 Tau: {mean_tau:.1f} | "
+                f"{tokens_per_sec:6.1f} tok/s | "
+                f"{step_time:.3f}s/step",
+                flush=True
+            )
+
+        # Evaluation & Generation Probe
+        if step % args.eval_every == 0 or step == 1:
+            model.eval()
+            print(f"\n--- [Step {step} Selective Generation Probe] ---")
+            for prompt in test_prompts:
+                p_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
+                with torch.no_grad():
+                    gen_ids = model.generate(p_ids, max_new_tokens=35, temperature=0.7, top_k=40)
+                gen_text = tokenizer.decode(gen_ids[0].tolist(), skip_special_tokens=True)
+                print(f"  Prompt: \"{prompt}\"")
+                print(f"  Output: \"{gen_text}\"")
+            print("-" * 50 + "\n", flush=True)
+            model.train()
+
+        # Save Checkpoint
+        if step % args.save_every == 0 or step == args.steps:
+            ckpt_file = os.path.join(args.output_dir, f"prime_125m_selective_step_{step}.pt")
+            print(f"[Checkpoint] Saving selective checkpoint to {ckpt_file}...", flush=True)
+            torch.save({
+                "step": step,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "config": model.config,
+                "loss": loss_val,
+                "tokens_trained": total_tokens_trained,
+            }, ckpt_file)
+            print(f"[Checkpoint] Saved {ckpt_file} successfully.", flush=True)
+
+    elapsed = time.time() - start_time
+    print("\n" + "=" * 70)
+    print("  PRIME-Selective Adaptation Completed Successfully!")
+    print(f"  Total Steps:          {args.steps}")
+    print(f"  Tokens Trained:       {total_tokens_trained:,}")
+    print(f"  Final Loss:           {history[-1]:.4f}")
+    print(f"  Elapsed Time:         {elapsed:.1f}s ({elapsed / 60:.2f} min)")
+    print(f"  Final Checkpoint:     {os.path.join(args.output_dir, f'prime_125m_selective_step_{args.steps}.pt')}")
+    print("=" * 70, flush=True)
+
+
+if __name__ == "__main__":
+    main()

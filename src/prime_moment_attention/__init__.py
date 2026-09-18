@@ -4,7 +4,11 @@ PRIME Moment Attention: Constant-State Second-Order Recurrent Attention for Long
 
 from .attention import PrimeMomentAttention
 from .cache import PrimeMomentCache
-from .selective import PrimeSelectiveAttention, convert_transformer_to_prime_selective
+from .selective import (
+    PrimeSelectiveAttention,
+    PrimeSelectiveMomentAttention,
+    convert_transformer_to_prime_selective,
+)
 from .surgery import PrimeTransplantedAttention, convert_transformer_to_prime
 from .timescales import LearnableTimescales
 from .hybrid import HybridWindowPrimeAttention, convert_transformer_to_hybrid_prime
@@ -47,6 +51,7 @@ __all__ = [
     "PrimeMomentAttention",
     "PrimeMomentCache",
     "PrimeSelectiveAttention",
+    "PrimeSelectiveMomentAttention",
     "convert_transformer_to_prime_selective",
     "PrimeTransplantedAttention",
     "convert_transformer_to_prime",
