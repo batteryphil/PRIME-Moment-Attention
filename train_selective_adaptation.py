@@ -60,31 +60,51 @@ def token_packing_stream(
             time.sleep(1)
 
 
+def get_disk_free_gb(path: str) -> float:
+    try:
+        st = os.statvfs(path)
+        return (st.f_bavail * st.f_frsize) / (1024 ** 3)
+    except Exception:
+        return -1.0
+
+
 def main():
+    default_output = "/data/prime_checkpoints" if os.path.exists("/data") else "checkpoints"
     parser = argparse.ArgumentParser(description="PRIME-Selective Warm-Start Adaptation")
     parser.add_argument("--base-checkpoint", type=str, default="checkpoints/prime_125m_step_10000.pt")
+    parser.add_argument("--resume-from", type=str, default=None, help="Resume directly from a selective checkpoint")
     parser.add_argument("--dataset", type=str, default="roneneldan/TinyStories")
     parser.add_argument("--tokenizer", type=str, default="gpt2")
     parser.add_argument("--steps", type=int, default=1500, help="Total adaptation steps")
-    parser.add_argument("--batch-size", type=int, default=8, help="Batch size per step")
+    parser.add_argument("--target-tokens", type=int, default=None, help="Target total tokens (overrides --steps if set)")
+    parser.add_argument("--batch-size", type=int, default=16, help="Batch size per step (16 is optimal for 17GB GPU)")
     parser.add_argument("--seq-len", type=int, default=128, help="Sequence length")
     parser.add_argument("--lr", type=float, default=5.0e-5, help="Peak learning rate")
     parser.add_argument("--min-lr", type=float, default=1.0e-5, help="Minimum learning rate")
-    parser.add_argument("--warmup-steps", type=int, default=50, help="Warmup steps")
-    parser.add_argument("--eval-every", type=int, default=50, help="Steps between generation probes")
-    parser.add_argument("--save-every", type=int, default=250, help="Steps between checkpoints")
-    parser.add_argument("--output-dir", type=str, default="checkpoints")
+    parser.add_argument("--warmup-steps", type=int, default=100, help="Warmup steps")
+    parser.add_argument("--eval-every", type=int, default=250, help="Steps between generation probes")
+    parser.add_argument("--save-every", type=int, default=1000, help="Steps between checkpoints")
+    parser.add_argument("--keep-last-k", type=int, default=5, help="Number of rolling checkpoints to keep")
+    parser.add_argument("--milestone-every", type=int, default=10000, help="Steps between permanent milestone checkpoints")
+    parser.add_argument("--output-dir", type=str, default=default_output)
+    parser.add_argument("--additional-steps", type=int, default=None, help="Additional steps to train from resume checkpoint")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    tokens_per_step = args.batch_size * args.seq_len
+    if args.target_tokens is not None:
+        args.steps = args.target_tokens // tokens_per_step
+        print(f"[Target Config] Target: {args.target_tokens:,} tokens -> Final Step: {args.steps:,}")
+
+    free_gb = get_disk_free_gb(args.output_dir)
     print("=" * 70)
-    print("  PRIME-Selective Attention: Warm-Start Adaptation")
-    print(f"  Base Checkpoint: {args.base_checkpoint}")
-    print(f"  Device:          {device}")
-    print(f"  Steps:           {args.steps} | Batch Size: {args.batch_size} | Seq Len: {args.seq_len}")
-    print(f"  Learning Rate:   {args.lr} -> {args.min_lr}")
+    print("  PRIME-Selective Attention: High-Scale Pretraining / Adaptation")
+    print(f"  Target Checkpoint Dir: {args.output_dir} ({free_gb:.1f} GB free)")
+    print(f"  Device:                {device}")
+    print(f"  Batch Size:            {args.batch_size} | Seq Len: {args.seq_len} ({tokens_per_step:,} tok/step)")
+    print(f"  Learning Rate:         {args.lr} -> {args.min_lr}")
     print("=" * 70)
 
     # 1. Load Tokenizer
@@ -93,9 +113,27 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # 2. Warm-Start Model from Pretrained Base Checkpoint
-    print(f"\n[2] Initializing PRIME-Selective from {args.base_checkpoint}...")
-    model = PrimeForCausalLM.from_pretrained_base_to_selective(args.base_checkpoint, device=device)
+    # 2. Model Initialization (Resume or Warm-Start)
+    start_step = 1
+    total_tokens_trained = 0
+    saved_rolling_ckpts = []
+
+    if args.resume_from and os.path.exists(args.resume_from):
+        print(f"\n[2] Resuming PRIME-Selective directly from {args.resume_from}...")
+        ckpt = torch.load(args.resume_from, map_location=device, weights_only=False)
+        model = PrimeForCausalLM(ckpt["config"]).to(device)
+        model.load_state_dict(ckpt["model_state_dict"])
+        start_step = ckpt.get("step", 0) + 1
+        total_tokens_trained = ckpt.get("tokens_trained", (start_step - 1) * tokens_per_step)
+        print(f"    Resumed at Step {start_step:,} (Previously trained: {total_tokens_trained:,} tokens)")
+    else:
+        print(f"\n[2] Warm-Starting PRIME-Selective from Base Checkpoint {args.base_checkpoint}...")
+        model = PrimeForCausalLM.from_pretrained_base_to_selective(args.base_checkpoint, device=device)
+
+    if args.additional_steps is not None:
+        args.steps = start_step + args.additional_steps - 1
+        print(f"[Step Config] Running {args.additional_steps:,} additional steps -> Ending at Step {args.steps:,}")
+
     total_params = sum(p.numel() for p in model.parameters())
     selective_params = sum(
         p.numel() for n, p in model.named_parameters()
@@ -105,7 +143,6 @@ def main():
     print(f"    Selective Parameters: {selective_params:,} ({selective_params / total_params * 100:.3f}%)")
 
     # 3. Parameter Groups & Optimizer
-    # Base parameters get base LR, selective parameters get 2x LR for fast gate adaptation
     base_params = [
         p for n, p in model.named_parameters()
         if not any(k in n for k in ["delta_proj", "log_tau", "log_beta"])
@@ -120,10 +157,20 @@ def main():
         {"params": gate_params, "lr": args.lr * 2.0, "weight_decay": 0.001},
     ], betas=(0.9, 0.95))
 
+    if args.resume_from and os.path.exists(args.resume_from) and "optimizer_state_dict" in ckpt:
+        print("    Restoring AdamW optimizer state...")
+        try:
+            optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        except Exception as e:
+            print(f"    [Warning] Could not restore full optimizer state: {e}. Reinitializing...")
+
+    effective_warmup = min(args.warmup_steps, max(10, (args.steps - start_step + 1) // 20))
     def get_lr_factor(step: int) -> float:
-        if step < args.warmup_steps:
-            return float(step + 1) / float(args.warmup_steps)
-        progress = float(step - args.warmup_steps) / float(max(1, args.steps - args.warmup_steps))
+        rel_step = step - start_step
+        if rel_step < effective_warmup:
+            return float(rel_step + 1) / float(effective_warmup)
+        remaining = max(1, args.steps - start_step - effective_warmup)
+        progress = float(rel_step - effective_warmup) / float(remaining)
         progress = min(1.0, max(0.0, progress))
         cosine = 0.5 * (1.0 + math.cos(math.pi * progress))
         min_factor = args.min_lr / args.lr
@@ -140,13 +187,12 @@ def main():
         "The little boy looked at the stars and",
     ]
 
-    print(f"\n[4] Commencing Selective Adaptation (1 to {args.steps} steps)...")
+    print(f"\n[4] Commencing Selective Adaptation ({start_step:,} to {args.steps:,} steps)...")
     start_time = time.time()
-    total_tokens_trained = 0
     history = []
 
     model.train()
-    for step in range(1, args.steps + 1):
+    for step in range(start_step, args.steps + 1):
         step_t0 = time.time()
 
         # Update LR
@@ -228,7 +274,11 @@ def main():
         # Save Checkpoint
         if step % args.save_every == 0 or step == args.steps:
             ckpt_file = os.path.join(args.output_dir, f"prime_125m_selective_step_{step}.pt")
-            print(f"[Checkpoint] Saving selective checkpoint to {ckpt_file}...", flush=True)
+            free_gb = get_disk_free_gb(args.output_dir)
+            print(f"[Checkpoint] Saving checkpoint to {ckpt_file} (Disk Free: {free_gb:.1f} GB)...", flush=True)
+            if free_gb > 0 and free_gb < 10.0:
+                print(f"[CRITICAL WARNING] Disk space low on {args.output_dir}: {free_gb:.1f} GB remaining!", flush=True)
+
             torch.save({
                 "step": step,
                 "model_state_dict": model.state_dict(),
@@ -238,6 +288,21 @@ def main():
                 "tokens_trained": total_tokens_trained,
             }, ckpt_file)
             print(f"[Checkpoint] Saved {ckpt_file} successfully.", flush=True)
+
+            # Rolling checkpoint pruning: preserve last K plus permanent milestones
+            is_milestone = (step % args.milestone_every == 0) or (step == args.steps)
+            if not is_milestone:
+                saved_rolling_ckpts.append(ckpt_file)
+                if len(saved_rolling_ckpts) > args.keep_last_k:
+                    oldest = saved_rolling_ckpts.pop(0)
+                    if os.path.exists(oldest):
+                        try:
+                            os.remove(oldest)
+                            print(f"[Storage Management] Pruned rolling checkpoint {oldest} to preserve disk space.", flush=True)
+                        except Exception as e:
+                            print(f"[Storage Management] Warning: failed to prune {oldest}: {e}", flush=True)
+            else:
+                print(f"[Storage Management] Permanent milestone checkpoint recorded at step {step:,}.", flush=True)
 
     elapsed = time.time() - start_time
     print("\n" + "=" * 70)
