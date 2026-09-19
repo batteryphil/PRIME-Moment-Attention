@@ -1,5 +1,5 @@
 {
-  "device": "AMD Radeon Graphics",
+  "device": "AMD Radeon RX 9060 XT",
   "mqar_accuracy": {
     "softmax": {
       "4": 33.0,
@@ -84,8 +84,8 @@
     }
   },
   "hardware_profiling": {
-    "mamba_latency_ms": 26.29,
-    "prime_mamba_latency_ms": 140.01,
+    "mamba_latency_ms": 27.01,
+    "prime_mamba_latency_ms": 138.25,
     "mamba_state_kb": 16.0,
     "prime_mamba_state_kb": 32.5
   }

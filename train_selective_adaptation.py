@@ -19,7 +19,9 @@ import sys
 import time
 import math
 import argparse
-from typing import Iterator, List
+import queue
+import threading
+from typing import Iterator, List, Optional
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
@@ -34,6 +36,7 @@ def token_packing_stream(
     tokenizer,
     seq_len: int,
     batch_size: int,
+    dataset_subset: Optional[str] = None,
 ) -> Iterator[torch.Tensor]:
     """Infinite token-packed batch generator."""
     buffer: List[int] = []
@@ -41,7 +44,10 @@ def token_packing_stream(
 
     while True:
         try:
-            ds = load_dataset(dataset_name, split="train", streaming=True)
+            if dataset_subset:
+                ds = load_dataset(dataset_name, name=dataset_subset, split="train", streaming=True)
+            else:
+                ds = load_dataset(dataset_name, split="train", streaming=True)
             for sample in ds:
                 text = sample.get("text", "")
                 if not text or len(text.strip()) == 0:
@@ -58,6 +64,36 @@ def token_packing_stream(
         except Exception as e:
             print(f"[Stream Warning] Dataset error: {e}. Reconnecting...", file=sys.stderr)
             time.sleep(1)
+
+
+class PrefetchDataIter:
+    """Asynchronous background prefetcher to keep GPU matrix units saturated."""
+    def __init__(self, generator_factory, queue_size: int = 8):
+        self.queue = queue.Queue(maxsize=queue_size)
+        self.stopped = False
+        self.generator_factory = generator_factory
+
+        def _worker():
+            try:
+                gen = self.generator_factory()
+                for item in gen:
+                    if self.stopped:
+                        break
+                    self.queue.put(item)
+            except Exception as e:
+                print(f"[Prefetch Worker Error] {e}", file=sys.stderr)
+
+        self.thread = threading.Thread(target=_worker, daemon=True)
+        self.thread.start()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.queue.get()
+
+    def stop(self):
+        self.stopped = True
 
 
 def get_disk_free_gb(path: str) -> float:
@@ -77,7 +113,8 @@ def main():
     parser.add_argument("--tokenizer", type=str, default="gpt2")
     parser.add_argument("--steps", type=int, default=1500, help="Total adaptation steps")
     parser.add_argument("--target-tokens", type=int, default=None, help="Target total tokens (overrides --steps if set)")
-    parser.add_argument("--batch-size", type=int, default=16, help="Batch size per step (16 is optimal for 17GB GPU)")
+    parser.add_argument("--batch-size", type=int, default=32, help="Micro-batch size per forward pass")
+    parser.add_argument("--grad-accum", type=int, default=1, help="Gradient accumulation steps (effective batch = batch_size * grad_accum)")
     parser.add_argument("--seq-len", type=int, default=128, help="Sequence length")
     parser.add_argument("--lr", type=float, default=5.0e-5, help="Peak learning rate")
     parser.add_argument("--min-lr", type=float, default=1.0e-5, help="Minimum learning rate")
@@ -88,22 +125,21 @@ def main():
     parser.add_argument("--milestone-every", type=int, default=10000, help="Steps between permanent milestone checkpoints")
     parser.add_argument("--output-dir", type=str, default=default_output)
     parser.add_argument("--additional-steps", type=int, default=None, help="Additional steps to train from resume checkpoint")
+    parser.add_argument("--restore-optimizer", action="store_true", default=False, help="Restore optimizer momentum state from checkpoint")
+    parser.add_argument("--dataset-subset", type=str, default=None, help="Subset/config name for dataset (e.g. sample-10BT for fineweb-edu)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    tokens_per_step = args.batch_size * args.seq_len
-    if args.target_tokens is not None:
-        args.steps = args.target_tokens // tokens_per_step
-        print(f"[Target Config] Target: {args.target_tokens:,} tokens -> Final Step: {args.steps:,}")
-
+    tokens_per_step = args.batch_size * args.seq_len * args.grad_accum
     free_gb = get_disk_free_gb(args.output_dir)
     print("=" * 70)
     print("  PRIME-Selective Attention: High-Scale Pretraining / Adaptation")
     print(f"  Target Checkpoint Dir: {args.output_dir} ({free_gb:.1f} GB free)")
     print(f"  Device:                {device}")
-    print(f"  Batch Size:            {args.batch_size} | Seq Len: {args.seq_len} ({tokens_per_step:,} tok/step)")
+    print(f"  Micro-Batch:           {args.batch_size} (Grad Accum: {args.grad_accum} -> Effective Batch: {args.batch_size * args.grad_accum})")
+    print(f"  Seq Len:               {args.seq_len} ({tokens_per_step:,} tok/step)")
     print(f"  Learning Rate:         {args.lr} -> {args.min_lr}")
     print("=" * 70)
 
@@ -120,17 +156,33 @@ def main():
 
     if args.resume_from and os.path.exists(args.resume_from):
         print(f"\n[2] Resuming PRIME-Selective directly from {args.resume_from}...")
-        ckpt = torch.load(args.resume_from, map_location=device, weights_only=False)
+        ckpt = torch.load(args.resume_from, map_location="cpu", weights_only=False)
         model = PrimeForCausalLM(ckpt["config"]).to(device)
         model.load_state_dict(ckpt["model_state_dict"])
         start_step = ckpt.get("step", 0) + 1
         total_tokens_trained = ckpt.get("tokens_trained", (start_step - 1) * tokens_per_step)
         print(f"    Resumed at Step {start_step:,} (Previously trained: {total_tokens_trained:,} tokens)")
+        # Discover existing rolling checkpoints to maintain proper disk pruning
+        if os.path.exists(args.output_dir):
+            for f in sorted(os.listdir(args.output_dir)):
+                if f.startswith("prime_125m_selective_step_") and f.endswith(".pt"):
+                    try:
+                        s_num = int(f.replace("prime_125m_selective_step_", "").replace(".pt", ""))
+                        if s_num % args.milestone_every != 0 and s_num <= start_step:
+                            saved_rolling_ckpts.append(os.path.join(args.output_dir, f))
+                    except ValueError:
+                        pass
+            print(f"    Discovered {len(saved_rolling_ckpts)} existing rolling checkpoint(s) for auto-pruning.")
     else:
         print(f"\n[2] Warm-Starting PRIME-Selective from Base Checkpoint {args.base_checkpoint}...")
         model = PrimeForCausalLM.from_pretrained_base_to_selective(args.base_checkpoint, device=device)
 
-    if args.additional_steps is not None:
+    if args.target_tokens is not None:
+        remaining_tokens = max(0, args.target_tokens - total_tokens_trained)
+        remaining_steps = math.ceil(remaining_tokens / tokens_per_step)
+        args.steps = start_step + remaining_steps - 1
+        print(f"    [Target Alignment] Target: {args.target_tokens:,} tokens | Remaining: {remaining_tokens:,} tokens -> Adjusted Final Step: {args.steps:,}")
+    elif args.additional_steps is not None:
         args.steps = start_step + args.additional_steps - 1
         print(f"[Step Config] Running {args.additional_steps:,} additional steps -> Ending at Step {args.steps:,}")
 
@@ -157,12 +209,20 @@ def main():
         {"params": gate_params, "lr": args.lr * 2.0, "weight_decay": 0.001},
     ], betas=(0.9, 0.95))
 
-    if args.resume_from and os.path.exists(args.resume_from) and "optimizer_state_dict" in ckpt:
+    if args.resume_from and os.path.exists(args.resume_from) and args.restore_optimizer and "optimizer_state_dict" in ckpt:
         print("    Restoring AdamW optimizer state...")
         try:
             optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+            if device == "cuda":
+                for state in optimizer.state.values():
+                    for k, v in state.items():
+                        if isinstance(v, torch.Tensor):
+                            state[k] = v.to(device)
+            print("    Optimizer state restored and mapped to device.")
         except Exception as e:
             print(f"    [Warning] Could not restore full optimizer state: {e}. Reinitializing...")
+    else:
+        print("    Optimizer initialized with fresh momentum & warmup schedule.")
 
     effective_warmup = min(args.warmup_steps, max(10, (args.steps - start_step + 1) // 20))
     def get_lr_factor(step: int) -> float:
@@ -176,15 +236,24 @@ def main():
         min_factor = args.min_lr / args.lr
         return min_factor + (1.0 - min_factor) * cosine
 
-    # 4. Data Stream
-    print(f"\n[3] Initializing Token Packing Stream from '{args.dataset}'...")
-    data_iter = token_packing_stream(args.dataset, tokenizer, args.seq_len, args.batch_size)
+    print(f"\n[3] Initializing Token Packing Stream from '{args.dataset}' (subset: {args.dataset_subset})...")
+    data_iter = PrefetchDataIter(
+        lambda: token_packing_stream(
+            args.dataset,
+            tokenizer,
+            args.seq_len,
+            args.batch_size,
+            dataset_subset=args.dataset_subset
+        ),
+        queue_size=8
+    )
 
     # 5. Prompts for live monitoring
     test_prompts = [
         "Once upon a time, there was a little girl named Lily.",
         "One sunny morning, a dog found a big",
-        "The little boy looked at the stars and",
+        "The primary function of mitochondria in a biological cell is",
+        "In modern science, the theory of relativity explains",
     ]
 
     print(f"\n[4] Commencing Selective Adaptation ({start_step:,} to {args.steps:,} steps)...")
@@ -200,43 +269,61 @@ def main():
         optimizer.param_groups[0]["lr"] = args.lr * factor
         optimizer.param_groups[1]["lr"] = args.lr * 2.0 * factor
 
-        batch = next(data_iter).to(device)
-        x = batch[:, :-1]
-        y = batch[:, 1:]
-
         optimizer.zero_grad(set_to_none=True)
+        step_loss = 0.0
+        skip_step = False
 
-        if device == "cuda":
-            amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32
-            with torch.amp.autocast('cuda', dtype=amp_dtype):
+        for accum_idx in range(args.grad_accum):
+            batch = next(data_iter).to(device)
+            x = batch[:, :-1]
+            y = batch[:, 1:]
+
+            if device == "cuda":
+                amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32
+                with torch.amp.autocast('cuda', dtype=amp_dtype):
+                    out = model(x, labels=y)
+                    loss = out["loss"] / args.grad_accum
+
+                if not torch.isfinite(loss):
+                    print(f"[Warning] Step {step} (micro {accum_idx}): Loss is {loss}, skipping...")
+                    optimizer.zero_grad(set_to_none=True)
+                    del out, loss
+                    torch.cuda.empty_cache()
+                    skip_step = True
+                    break
+
+                loss.backward()
+                step_loss += loss.item()
+                del out, loss  # Free activation graph and FP32 logits immediately!
+            else:
                 out = model(x, labels=y)
-                loss = out["loss"]
+                loss = out["loss"] / args.grad_accum
+                if not torch.isfinite(loss):
+                    print(f"[Warning] Step {step} (micro {accum_idx}): Loss is {loss}, skipping...")
+                    del out, loss
+                    skip_step = True
+                    break
+                loss.backward()
+                step_loss += loss.item()
+                del out, loss
 
-            if torch.isnan(loss) or torch.isinf(loss):
-                print(f"[Warning] Step {step}: Loss is {loss}, skipping...")
-                optimizer.zero_grad(set_to_none=True)
-                continue
+        if skip_step:
+            continue
 
-            loss.backward()
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            if not torch.isfinite(grad_norm):
-                print(f"[Warning] Step {step}: GradNorm is {grad_norm}, skipping...")
-                optimizer.zero_grad(set_to_none=True)
-                continue
-            optimizer.step()
-        else:
-            out = model(x, labels=y)
-            loss = out["loss"]
-            loss.backward()
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            optimizer.step()
+        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        if not torch.isfinite(grad_norm):
+            print(f"[Warning] Step {step}: GradNorm is {grad_norm}, skipping...")
+            optimizer.zero_grad(set_to_none=True)
+            torch.cuda.empty_cache()
+            continue
+        optimizer.step()
 
         step_time = time.time() - step_t0
-        tokens_in_step = args.batch_size * args.seq_len
+        tokens_in_step = args.batch_size * args.seq_len * args.grad_accum
         total_tokens_trained += tokens_in_step
         tokens_per_sec = tokens_in_step / max(step_time, 1e-4)
 
-        loss_val = loss.item()
+        loss_val = step_loss
         history.append(loss_val)
 
         # Log progress every 10 steps
@@ -246,8 +333,10 @@ def main():
             l0_attn = model.layers[0].self_attn
             mean_beta = l0_attn.get_beta(device).mean().item()
             mean_tau = l0_attn.get_tau(device).mean().item()
+            tok_cur = total_tokens_trained / 1e6
+            tok_tot = (args.target_tokens / 1e6) if args.target_tokens else ((args.steps * tokens_per_step) / 1e6)
             print(
-                f"Step {step:5d}/{args.steps} | "
+                f"Step {step:5d}/{args.steps} ({tok_cur:5.1f}M/{tok_tot:.0f}M tok) | "
                 f"Loss: {loss_val:.4f} (Avg10: {avg_loss_10:.4f}) | "
                 f"BaseLR: {optimizer.param_groups[0]['lr']:.2e} | "
                 f"L0 Beta: {mean_beta:.2f} | "

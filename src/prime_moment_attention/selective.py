@@ -366,7 +366,7 @@ class PrimeSelectiveMomentAttention(nn.Module):
 
         tau = self.get_tau(device)
         beta = self.get_beta(device)
-        delta = F.softplus(self.delta_proj(hidden_states)) # [B, L, H]
+        delta = F.softplus(self.delta_proj(hidden_states)).clamp(min=1e-4, max=50.0) # [B, L, H]
 
         if state is not None:
             S0, S1, S2, K0, K1, K2 = state
