@@ -1,0 +1,61 @@
+{
+  "mqar": {
+    "4": {
+      "softmax": 100.0,
+      "mamba": 100.0,
+      "pure_prime": 100.0,
+      "prime_mamba": 100.0
+    },
+    "8": {
+      "softmax": 100.0,
+      "mamba": 100.0,
+      "pure_prime": 100.0,
+      "prime_mamba": 100.0
+    },
+    "16": {
+      "softmax": 100.0,
+      "mamba": 100.0,
+      "pure_prime": 100.0,
+      "prime_mamba": 100.0
+    },
+    "32": {
+      "softmax": 100.0,
+      "mamba": 99.0,
+      "pure_prime": 100.0,
+      "prime_mamba": 99.0
+    },
+    "64": {
+      "softmax": 100.0,
+      "mamba": 88.0,
+      "pure_prime": 100.0,
+      "prime_mamba": 88.0
+    }
+  },
+  "noise_gaps": {
+    "100": {
+      "mamba": 0.98,
+      "pure_prime": 0.9832,
+      "prime_mamba": 0.9839
+    },
+    "250": {
+      "mamba": 0.954,
+      "pure_prime": 0.9587,
+      "prime_mamba": 0.9633
+    },
+    "500": {
+      "mamba": 0.9116,
+      "pure_prime": 0.9095,
+      "prime_mamba": 0.9272
+    },
+    "1000": {
+      "mamba": 0.8383,
+      "pure_prime": 0.7982,
+      "prime_mamba": 0.8634
+    },
+    "2000": {
+      "mamba": 0.7057,
+      "pure_prime": 0.5328,
+      "prime_mamba": 0.7368
+    }
+  }
+}
