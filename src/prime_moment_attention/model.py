@@ -241,6 +241,31 @@ class PrimeForCausalLM(nn.Module):
 
         return generated
 
+    def generate_with_primenet(
+        self,
+        tokenizer,
+        prompt: str,
+        max_new_tokens: int = 350,
+        temperature: float = 0.6,
+        top_k: int = 40,
+        verbose: bool = False,
+    ) -> str:
+        """
+        Generates text using the PRIME-Net Co-Thinker inside the <think> phase.
+        Automatically verifies arithmetic, checks logical invariants, and discovers
+        closed-form formulas during the thinking stream.
+        """
+        from .primenet import generate_with_primenet_cothinker
+        return generate_with_primenet_cothinker(
+            model=self,
+            tokenizer=tokenizer,
+            prompt=prompt,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            verbose=verbose,
+        )
+
     @classmethod
     def from_pretrained_base_to_selective(
         cls,
@@ -283,3 +308,30 @@ class PrimeForCausalLM(nn.Module):
         print(f"    Missing keys initialized to identity: {len(missing_keys)}")
         print(f"    Unexpected keys: {len(unexpected_keys)}")
         return model
+
+    def generate_with_primenet(
+        self,
+        tokenizer,
+        prompt: str,
+        max_new_tokens: int = 350,
+        temperature: float = 0.6,
+        top_k: int = 40,
+        verbose: bool = False,
+    ) -> str:
+        """
+        Generates text using the PRIME-Net Neuro-Symbolic Co-Thinker during the <think> phase.
+        """
+        try:
+            from src.prime_moment_attention.primenet import generate_with_primenet_cothinker
+        except ImportError:
+            from primenet import generate_with_primenet_cothinker
+        return generate_with_primenet_cothinker(
+            model=self,
+            tokenizer=tokenizer,
+            prompt=prompt,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            verbose=verbose,
+        )
+

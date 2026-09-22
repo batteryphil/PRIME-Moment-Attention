@@ -1,0 +1,101 @@
+{
+  "timestamp": "2026-09-20 21:55:36",
+  "model_architecture": "PRIME-Selective-Moment-Attention-125M",
+  "parameters": "123.7M",
+  "tokens_pretrained": 2313700000,
+  "sft_steps": 1000,
+  "fine_tuned_reasoning_model": {
+    "checkpoint": "/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/export_hf/prime-125m-reasoning",
+    "linguistic_accuracy": 0.8181818181818182,
+    "linguistic_breakdown": {
+      "Subject-Verb": {
+        "passed": 2,
+        "total": 3
+      },
+      "Pronoun Binding": {
+        "passed": 3,
+        "total": 3
+      },
+      "Commonsense": {
+        "passed": 2,
+        "total": 3
+      },
+      "Property Recall": {
+        "passed": 2,
+        "total": 2
+      }
+    },
+    "reasoning_format_adherence": 0.92,
+    "math_accuracy": 0.0,
+    "detailed_reasoning_samples": [
+      {
+        "question": "Janet\u2019s ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for ",
+        "reference": "18",
+        "predicted": "64",
+        "format_valid": true,
+        "correct": false,
+        "output_snippet": "<think>\nLet's analyze this step-by-step:\nShe makes 12 x 2 = 24 eggs per day.\nShe sells 12 x 3 = 48 eggs per day.\nShe sells 12 x 4 = 48 eggs per day.\nThus, she makes 72 x 3 = 72 eggs per day at the far"
+      },
+      {
+        "question": "A robe takes 2 bolts of blue fiber and half that much white fiber.  How many bolts in total does it ",
+        "reference": "3",
+        "predicted": "18",
+        "format_valid": true,
+        "correct": false,
+        "output_snippet": "<think>\nLet's analyze this step-by-step:\nFirst find how many bolts are in the blue fiber: 2 bolts * 2 = 4 spres\nThen find how many spres are in the blue fiber: 4 spres + 3 spres = 12 spres\nThen find h"
+      },
+      {
+        "question": "Josh decides to try flipping a house.  He buys a house for $80,000 and then puts in $50,000 in repai",
+        "reference": "70000",
+        "predicted": "45000",
+        "format_valid": true,
+        "correct": false,
+        "output_snippet": "<think>\nLet's analyze this step-by-step:\nHe made $200,000 and he made $90,000 for a total of 150*2=$120,000\nSo he made $100,000,000 for $72,000 and he made $200,000 for $80,000\n</think>\n\nThe final ans"
+      }
+    ],
+    "hardware_profiling": {
+      "context_128": {
+        "prompt_length": 128,
+        "generated_tokens": 100,
+        "tokens_per_second": 54.9,
+        "peak_vram_mb": 589.9
+      },
+      "context_512": {
+        "prompt_length": 512,
+        "generated_tokens": 100,
+        "tokens_per_second": 52.5,
+        "peak_vram_mb": 665.2
+      },
+      "context_1024": {
+        "prompt_length": 1024,
+        "generated_tokens": 100,
+        "tokens_per_second": 45.4,
+        "peak_vram_mb": 864.8
+      }
+    }
+  },
+  "base_pretrained_model": {
+    "checkpoint": "/home/phil/.gemini/antigravity/scratch/PRIME-Moment-Attention/checkpoints/prime_125m_step_10000.pt",
+    "linguistic_accuracy": 0.6363636363636364,
+    "linguistic_breakdown": {
+      "Subject-Verb": {
+        "passed": 1,
+        "total": 3
+      },
+      "Pronoun Binding": {
+        "passed": 3,
+        "total": 3
+      },
+      "Commonsense": {
+        "passed": 1,
+        "total": 3
+      },
+      "Property Recall": {
+        "passed": 2,
+        "total": 2
+      }
+    },
+    "reasoning_format_adherence": 0.0,
+    "math_accuracy": 0.0
+  }
+}

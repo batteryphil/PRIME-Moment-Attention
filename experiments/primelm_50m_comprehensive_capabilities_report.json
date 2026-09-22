@@ -1,0 +1,1177 @@
+{
+  "metadata": {
+    "model": "PrimeLM-50M",
+    "parameters": "50.92M",
+    "device": "cuda:0",
+    "timestamp": "2026-09-22 06:16:51",
+    "num_prompts": 26,
+    "conditions_tested": [
+      "Sub3_With_Registers",
+      "Sub3_Without_Registers_Ablated",
+      "Sub3_Scrambled_Registers_Control",
+      "Pretrained100M_With_Registers"
+    ]
+  },
+  "scorecard": {
+    "Sub3_With_Registers": {
+      "accuracy_all_pct": 0.0,
+      "accuracy_core_capabilities_pct": 0.0,
+      "accuracy_math_pct": 0.0,
+      "accuracy_science_pct": 0.0,
+      "accuracy_logic_pct": 0.0,
+      "accuracy_boundary_pct": 0.0,
+      "avg_rep_4": 0.0093,
+      "avg_latency_ms": 437.69,
+      "perplexity": Infinity,
+      "loss": 20.5918
+    },
+    "Sub3_Without_Registers_Ablated": {
+      "accuracy_all_pct": 3.85,
+      "accuracy_core_capabilities_pct": 5.0,
+      "accuracy_math_pct": 0.0,
+      "accuracy_science_pct": 20.0,
+      "accuracy_logic_pct": 0.0,
+      "accuracy_boundary_pct": 0.0,
+      "avg_rep_4": 0.0289,
+      "avg_latency_ms": 281.84,
+      "perplexity": Infinity,
+      "loss": 21.3152
+    },
+    "Sub3_Scrambled_Registers_Control": {
+      "accuracy_all_pct": 3.85,
+      "accuracy_core_capabilities_pct": 5.0,
+      "accuracy_math_pct": 0.0,
+      "accuracy_science_pct": 20.0,
+      "accuracy_logic_pct": 0.0,
+      "accuracy_boundary_pct": 0.0,
+      "avg_rep_4": 0.026,
+      "avg_latency_ms": 282.85,
+      "perplexity": 376821669.65,
+      "loss": 19.7473
+    },
+    "Pretrained100M_With_Registers": {
+      "accuracy_all_pct": 11.54,
+      "accuracy_core_capabilities_pct": 15.0,
+      "accuracy_math_pct": 60.0,
+      "accuracy_science_pct": 0.0,
+      "accuracy_logic_pct": 0.0,
+      "accuracy_boundary_pct": 0.0,
+      "avg_rep_4": 0.3993,
+      "avg_latency_ms": 313.43,
+      "perplexity": 418198.37,
+      "loss": 12.9437
+    }
+  },
+  "perplexity_benchmarks": {
+    "Sub3_With_Registers": {
+      "avg_loss": 20.5918,
+      "perplexity": Infinity
+    },
+    "Sub3_Without_Registers_Ablated": {
+      "avg_loss": 21.3152,
+      "perplexity": Infinity
+    },
+    "Sub3_Scrambled_Registers_Control": {
+      "avg_loss": 19.7473,
+      "perplexity": 376821669.65
+    },
+    "Pretrained100M_With_Registers": {
+      "avg_loss": 12.9437,
+      "perplexity": 418198.37
+    }
+  },
+  "prompt_details": [
+    {
+      "id": "M1",
+      "category": "Math",
+      "description": "1-step linear division equation",
+      "prompt": "Solve for x: 4 * x = 28.\nStep-by-step:",
+      "expected_target": "7",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "Subtract 28 from both sides to get x = 4.\nStep 2: Divide both sides by 4 to get x = 11.\nFinal Answer: 11.",
+          "is_correct": false,
+          "rep_4": 0.0312,
+          "unique_ratio": 0.6571,
+          "latency_ms": 4021.85,
+          "tokens_generated": 35
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "Subtract 28 from both sides to get 4 * x = 28.\nStep 2: Divide both sides by 4 to get x = 28.\nFinal Answer: 28.",
+          "is_correct": false,
+          "rep_4": 0.0588,
+          "unique_ratio": 0.6216,
+          "latency_ms": 422.6,
+          "tokens_generated": 37
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "Subtract 28 from both sides to get 4 * x = 28.\nStep 2: Divide both sides by 4 to get x = 28.\nFinal Answer: 28.",
+          "is_correct": false,
+          "rep_4": 0.0588,
+          "unique_ratio": 0.6216,
+          "latency_ms": 401.39,
+          "tokens_generated": 37
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "Subtract 1 to get 7*x = 8*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x",
+          "is_correct": true,
+          "rep_4": 0.6905,
+          "unique_ratio": 0.2444,
+          "latency_ms": 489.16,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "M2",
+      "category": "Math",
+      "description": "2-step linear equation",
+      "prompt": "Solve for x: 3 * x + 9 = 30.\nStep-by-step:",
+      "expected_target": "7",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "Divide both sides by 6 to get 3 to get x = simulate.\nStep 2: Divide both sides by 3 to get 6 * 6 = 6.\nFinal Answer: 6.",
+          "is_correct": false,
+          "rep_4": 0.0286,
+          "unique_ratio": 0.5263,
+          "latency_ms": 410.32,
+          "tokens_generated": 38
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "Divide both sides by 30 to get 3 to get x = 18.\nStep 2: Divide both sides by 3 to get x = 36.\nFinal Answer: 36.",
+          "is_correct": false,
+          "rep_4": 0.0909,
+          "unique_ratio": 0.5556,
+          "latency_ms": 369.41,
+          "tokens_generated": 36
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "Divide both sides by 6 to get 3 to get x = 3.\nStep 2: Divide both sides by 3 to get x = 3.\nFinal Answer: 3.",
+          "is_correct": false,
+          "rep_4": 0.1818,
+          "unique_ratio": 0.5,
+          "latency_ms": 406.05,
+          "tokens_generated": 36
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "Subtract 1 to get 3*x = 8, divide by 7 to get x = 8.\nAnswer: 12",
+          "is_correct": true,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8462,
+          "latency_ms": 291.0,
+          "tokens_generated": 26
+        }
+      }
+    },
+    {
+      "id": "M3",
+      "category": "Math",
+      "description": "2-step linear equation with negative constant",
+      "prompt": "Solve for x: 5 * x - 15 = 35.\nStep-by-step:",
+      "expected_target": "10",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "Divide both sides by 9 to get 5 to get x = 25.\nStep 2: Divide both sides by 5 to get x = 25.\nFinal Answer: 25.",
+          "is_correct": false,
+          "rep_4": 0.1818,
+          "unique_ratio": 0.5278,
+          "latency_ms": 398.88,
+          "tokens_generated": 36
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "Divide both sides by 9 to get 5 to get x = 25.\nFinal Answer: 25.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8095,
+          "latency_ms": 216.28,
+          "tokens_generated": 21
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = 4 * x.\nCalculation: y = 5 * 35 = 60 units.\nFinal Answer: 60.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 290.79,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "Subtract 3 to get 7*x = 8, divide by 7 to get x = 8.\nAnswer: 10",
+          "is_correct": true,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8077,
+          "latency_ms": 294.02,
+          "tokens_generated": 26
+        }
+      }
+    },
+    {
+      "id": "M4",
+      "category": "Math",
+      "description": "Proportional scaling and ratio",
+      "prompt": "If 4 apples cost 8 dollars, how much do 10 apples cost?\nAnswer:",
+      "expected_target": "20",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 8 * 10 = 80 units.\nFinal Answer: 80.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 292.21,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 8 * 10 = 80 units.\nFinal Answer: 80.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 266.92,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = 8 * x.\nCalculation: y = 8 * 10 = 80 units.\nFinal Answer: 80.",
+          "is_correct": false,
+          "rep_4": 0.0435,
+          "unique_ratio": 0.6154,
+          "latency_ms": 285.75,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "8 8 8: 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8",
+          "is_correct": false,
+          "rep_4": 0.881,
+          "unique_ratio": 0.0444,
+          "latency_ms": 500.98,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "M5",
+      "category": "Math",
+      "description": "Arithmetic operator precedence (order of operations)",
+      "prompt": "Calculate: 15 + 5 * 4.\nAnswer:",
+      "expected_target": "35",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "Solve for x in 8 * x + 14 = induce.\nStep 1: Subtract 14 from both sides to get 8 * x = 240.\nStep 2: Divide both sides by 8 to get x =",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6222,
+          "latency_ms": 500.44,
+          "tokens_generated": 45
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "Divide both sides by 6 to get x = 18.\nStep 2: Divide both sides by 6 to get x = 36.\nFinal Answer: 36.",
+          "is_correct": false,
+          "rep_4": 0.2,
+          "unique_ratio": 0.5758,
+          "latency_ms": 337.21,
+          "tokens_generated": 33
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "Divide both sides by 6 to get x = 41.\nStep 2: Divide both sides by 6 to get x = 3.\nFinal Answer: 3.",
+          "is_correct": false,
+          "rep_4": 0.2,
+          "unique_ratio": 0.5758,
+          "latency_ms": 363.04,
+          "tokens_generated": 33
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "5",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 22.58,
+          "tokens_generated": 2
+        }
+      }
+    },
+    {
+      "id": "M6_BOUNDARY",
+      "category": "Math_Boundary",
+      "description": "Multi-digit mental arithmetic (Capacity Boundary Test)",
+      "prompt": "Calculate: 374 * 829.\nAnswer:",
+      "expected_target": "310046",
+      "is_boundary": true,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "E = 0.5 * m * v^2.\nFinal Answer: Beh.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8421,
+          "latency_ms": 211.82,
+          "tokens_generated": 19
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "Solve for x in 8 * x + 14 = 200.\nStep 1: Subtract 14 from both sides to get 8 * x = 200.\nStep 2: Divide both sides by 8 to get x =",
+          "is_correct": false,
+          "rep_4": 0.0476,
+          "unique_ratio": 0.6,
+          "latency_ms": 470.73,
+          "tokens_generated": 45
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "Divide both sides by 6 to get x = 36.\nFinal Answer: 36.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8889,
+          "latency_ms": 195.3,
+          "tokens_generated": 18
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "8",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 22.19,
+          "tokens_generated": 2
+        }
+      }
+    },
+    {
+      "id": "S1",
+      "category": "Science",
+      "description": "Thermal energy conservation (Q = mc\u0394T)",
+      "prompt": "Calculate the thermal heat required to raise 2 kg of water by 10 K.\nFormula: Q = m * c * deltaT (c = 4.18 kJ/kg K).\nAnswer:",
+      "expected_target": "83.6 kJ",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "E = 8 * 10 = 100 Joules.\nFinal Answer: 100.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8235,
+          "latency_ms": 184.41,
+          "tokens_generated": 17
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "E = 8 * 10 = 200 Joules.\nFinal Answer: 200.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8235,
+          "latency_ms": 171.66,
+          "tokens_generated": 17
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "Divide both sides by 704.\nFinal Answer: 704.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8,
+          "latency_ms": 161.53,
+          "tokens_generated": 15
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "num6464",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.75,
+          "latency_ms": 44.21,
+          "tokens_generated": 4
+        }
+      }
+    },
+    {
+      "id": "S2",
+      "category": "Science",
+      "description": "Kinetic energy formula calculation",
+      "prompt": "What is the kinetic energy of an object of mass 4 kg moving at speed 5 m/s?\nFormula: E_k = 0.5 * m * v^2.\nAnswer:",
+      "expected_target": "50 J",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "E = 0.5 * 16 * 25 = 200 Joules.\nFinal Answer: 200.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.7619,
+          "latency_ms": 227.69,
+          "tokens_generated": 21
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "E = 0.5 * 5 * 25 = 75 Joules.\nFinal Answer: 75.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.7619,
+          "latency_ms": 211.99,
+          "tokens_generated": 21
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "E = 0.5 * m * v^2.\nFinal Answer: 216.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8421,
+          "latency_ms": 206.02,
+          "tokens_generated": 19
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "lettuce",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 22.38,
+          "tokens_generated": 2
+        }
+      }
+    },
+    {
+      "id": "S3",
+      "category": "Science",
+      "description": "Quadratic velocity scaling in kinetic energy",
+      "prompt": "If the speed of a moving object triples, by what factor does its kinetic energy increase?\nAnswer:",
+      "expected_target": "9",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 4 * 11 = 88 units.\nFinal Answer: 88.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 281.51,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 8 * 12 = 96 units.\nFinal Answer: 48.",
+          "is_correct": true,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6923,
+          "latency_ms": 262.69,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 8 * 12 = 96 units.\nFinal Answer: 12.",
+          "is_correct": true,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 280.8,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators",
+          "is_correct": false,
+          "rep_4": 0.9762,
+          "unique_ratio": 0.0222,
+          "latency_ms": 488.03,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "S4",
+      "category": "Science",
+      "description": "Ohm's Law linear conservation",
+      "prompt": "Find the electrical voltage across a resistor of 15 Ohms carrying a current of 3 Amperes.\nFormula: V = I * R.\nAnswer:",
+      "expected_target": "45 V",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "alysis.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 33.32,
+          "tokens_generated": 3
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "alysis.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 31.54,
+          "tokens_generated": 3
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "fixes.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 38.85,
+          "tokens_generated": 3
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "5",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 37.44,
+          "tokens_generated": 2
+        }
+      }
+    },
+    {
+      "id": "S5",
+      "category": "Science",
+      "description": "Fundamental momentum conservation law",
+      "prompt": "In an isolated physical system with no external forces, what happens to the total momentum during an inelastic collision?\nAnswer:",
+      "expected_target": "Conserved / Constant",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 7 * 19 = 133 units.\nFinal Answer: 133.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 310.3,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 8 * 19 = 136 units.\nFinal Answer: 136.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 261.65,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 8 * 19 = 152 units.\nFinal Answer: 152.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 282.79,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "8 8/2.2.2/2.2/2.2/2.2/2.2/2.2/2.2/2.2/2.2/2.2/",
+          "is_correct": false,
+          "rep_4": 0.8095,
+          "unique_ratio": 0.0889,
+          "latency_ms": 487.01,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "S6_BOUNDARY",
+      "category": "Science_Boundary",
+      "description": "Graduate-level non-equilibrium thermodynamics (Capacity Boundary Test)",
+      "prompt": "Calculate the exact non-equilibrium thermodynamic entropy production rate in Onsager reciprocal matrix form:\nDerivation:",
+      "expected_target": "Onsager flux formulation",
+      "is_boundary": true,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 3 * 9 = 27 units.\nFinal Answer: 27.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 282.0,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "Q = m * c * deltaT.\nCalculation: Q = 1 * 4 * 34 = 48 Joules.\nFinal Answer: 48.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6562,
+          "latency_ms": 319.65,
+          "tokens_generated": 32
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "E = 0.5 * m * v^2.\nCalculation: E = 0.5 * 9 * 36 = 88 Joules.\nFinal Answer: 88.",
+          "is_correct": false,
+          "rep_4": 0.0882,
+          "unique_ratio": 0.5946,
+          "latency_ms": 391.73,
+          "tokens_generated": 37
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "1. **Use a set of the set of all elements in the set of elements in the set of elements.\n2. **Use the set of elements**: The set of elements in the set of elements",
+          "is_correct": false,
+          "rep_4": 0.2143,
+          "unique_ratio": 0.3556,
+          "latency_ms": 476.31,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "L1",
+      "category": "Logic",
+      "description": "Transitive inequality deduction",
+      "prompt": "Alice is taller than Bob. Bob is taller than Charlie. Who is the tallest person?\nAnswer:",
+      "expected_target": "Alice",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 2 * 11 = 40 units.\nFinal Answer: 40.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 276.0,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 7 * 18 = 126 units.\nFinal Answer: 126.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 258.31,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 3 * 11 = 60 units.\nFinal Answer: 60.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 276.45,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "8.5",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 44.22,
+          "tokens_generated": 4
+        }
+      }
+    },
+    {
+      "id": "L2",
+      "category": "Logic",
+      "description": "Categorical syllogistic reasoning",
+      "prompt": "All mammals breathe air. Whales are mammals. Do whales breathe air?\nAnswer:",
+      "expected_target": "Yes",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 3 * 9 = 9 units.\nFinal Answer: 9.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6154,
+          "latency_ms": 274.83,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 2 * 19 = 38 units.\nFinal Answer: 38.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 257.04,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * 3 = 6.\nCalculation: 3 = 12 * 27 = 72 Joules.\nFinal Answer: 72.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6552,
+          "latency_ms": 306.93,
+          "tokens_generated": 29
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "8.5",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 43.34,
+          "tokens_generated": 4
+        }
+      }
+    },
+    {
+      "id": "L3",
+      "category": "Logic",
+      "description": "Conservation of mass across phase transition",
+      "prompt": "If an ice cube of 50 grams melts completely inside a tightly sealed thermos flask, what is the total mass of the resulting water?\nAnswer:",
+      "expected_target": "50 grams",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 7 * 8 = 56 units.\nFinal Answer: 56.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 276.67,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 7 * 8 = 56 units.\nFinal Answer: 56.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 258.42,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 7 * 8 = 56 units.\nFinal Answer: 56.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 278.15,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators",
+          "is_correct": false,
+          "rep_4": 0.9762,
+          "unique_ratio": 0.0222,
+          "latency_ms": 479.07,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "L4",
+      "category": "Logic",
+      "description": "Disjunctive elimination",
+      "prompt": "A locked box contains either a gold coin or a silver key. We discover there is no gold coin in the box. What is in the box?\nAnswer:",
+      "expected_target": "Silver key",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 3 * 8 = 44 units.\nFinal Answer: 44.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 274.97,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 4 * 19 = 70 units.\nFinal Answer: 70.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 257.13,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 8 * 8 = 120 units.\nFinal Answer: 120.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6154,
+          "latency_ms": 274.88,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "A: Senators Senators, a080, and aanolanolanolanolanolanolanolanol?\nAssistant: A visualization is a great way to learn from aDiffDiff, but it's a great Numerous. We've got",
+          "is_correct": false,
+          "rep_4": 0.0952,
+          "unique_ratio": 0.6,
+          "latency_ms": 475.97,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "L5_BOUNDARY",
+      "category": "Logic_Boundary",
+      "description": "Full Einstein / Zebra 5-constraint puzzle (Capacity Boundary Test)",
+      "prompt": "Five people live in five colored houses with five distinct pets and drink five distinct beverages. If the green house is to the left of the white house and the Norwegian lives in the first house, who owns the zebra?\nAnswer:",
+      "expected_target": "Japanese",
+      "is_boundary": true,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 7 * 12 = 63 units.\nFinal Answer: 12.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 275.55,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 5 * 18 = 90 units.\nFinal Answer: 90.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 258.28,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 7 * 5 = 105 units.\nFinal Answer: 105.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 274.94,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "8.5",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 43.54,
+          "tokens_generated": 4
+        }
+      }
+    },
+    {
+      "id": "C1",
+      "category": "Language",
+      "description": "Scientific semantic continuation",
+      "prompt": "Photosynthesis is the biological process by which plants",
+      "expected_target": "convert sunlight to energy/glucose",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": ".\nFormula: Q = m * c * deltaT.\nCalculation: Q = 3 * 4 * 34 = 1404 Joules.\nFinal Answer: 1404.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6154,
+          "latency_ms": 413.96,
+          "tokens_generated": 39
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": ".\nFormula: Q = m * c * deltaT.\nCalculation: Q = 2 * 4 * 34 = 64 Joules.\nFinal Answer: 64.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6216,
+          "latency_ms": 364.95,
+          "tokens_generated": 37
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": ".\nFormula: Q = m * c * deltaT.\nCalculation: Q = 1 * 4 * 18 = 144 Joules.\nFinal Answer: 144.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6216,
+          "latency_ms": 389.66,
+          "tokens_generated": 37
+        },
+        "Pretrained100M_With_Registers": {
+          "text": ", which is a result of the time.\n\nThe key to aic being the most effective in the anmatchedmatched, which is the most effective way to the specificBitcoinBitcoinBitcoin. The use of the intim's",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6,
+          "latency_ms": 475.0,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "C2",
+      "category": "Language",
+      "description": "Algorithmic description completion",
+      "prompt": "In computer science, a binary search algorithm operates by",
+      "expected_target": "dividing sorted list in half",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "9 K.\nFormula: Q = m * c * deltaT.\nCalculation: Q = 1 * 4 * 9 = 36 Joules.\nFinal Answer: 36.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6154,
+          "latency_ms": 412.86,
+          "tokens_generated": 39
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "8646464.\nFormula: y = k * x.\nCalculation: y = 8 * 8 = 64 units.\nFinal Answer: 64.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.5429,
+          "latency_ms": 344.76,
+          "tokens_generated": 35
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "3 to get x = 3.\nFinal Answer: 3.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.7857,
+          "latency_ms": 148.15,
+          "tokens_generated": 14
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "a set of numbers that is a appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling appalling",
+          "is_correct": false,
+          "rep_4": 0.8095,
+          "unique_ratio": 0.1556,
+          "latency_ms": 475.91,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "C3",
+      "category": "Language",
+      "description": "Causal scientific explanation",
+      "prompt": "Planets in the solar system orbit the Sun in elliptical paths because",
+      "expected_target": "gravitational attraction / Kepler's laws",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": ".\nFormula: V = I * R.\nCalculation: V = 9 * 13 = TT Volts.\nFinal Answer: TT.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.625,
+          "latency_ms": 341.85,
+          "tokens_generated": 32
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "strengths strengths strengths strengths strengths strengths strengths strengths strengths strengths Joules.\nFinal Answer: 300.",
+          "is_correct": false,
+          "rep_4": 0.3529,
+          "unique_ratio": 0.5,
+          "latency_ms": 198.66,
+          "tokens_generated": 20
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": ".\nFormula: E = 0.5 * m * v^2.\nCalculation: E = 0.5 * 19 * 49 = 465 Joules.\nFinal Answer: 465.",
+          "is_correct": false,
+          "rep_4": 0.1026,
+          "unique_ratio": 0.5714,
+          "latency_ms": 443.35,
+          "tokens_generated": 42
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "the power of theazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazel",
+          "is_correct": false,
+          "rep_4": 0.881,
+          "unique_ratio": 0.0889,
+          "latency_ms": 493.43,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "C4_REPETITION_PROBE",
+      "category": "Language_Degeneracy",
+      "description": "Low-temperature open-ended continuation (Degeneracy Loop Test)",
+      "prompt": "The primary fundamental differences between classical mechanics and quantum mechanics are",
+      "expected_target": "probabilistic/discrete vs deterministic",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": ".\nFormula: V = I * R.\nCalculation: V = 9 * 21 = 182 Volts.\nFinal Answer: 182.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.625,
+          "latency_ms": 339.56,
+          "tokens_generated": 32
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": ".\nFormula: Q = m * c * deltaT.\nCalculation: Q = 2 * 4 * 42 = 336 Joules.\nFinal Answer: 336.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6216,
+          "latency_ms": 366.85,
+          "tokens_generated": 37
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": ".\nFormula: V = I * R.\nCalculation: V = 9 * 29 = 108 Volts.\nFinal Answer: 108.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.625,
+          "latency_ms": 338.75,
+          "tokens_generated": 32
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "used in hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex hex",
+          "is_correct": false,
+          "rep_4": 0.9286,
+          "unique_ratio": 0.0667,
+          "latency_ms": 474.6,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "K1",
+      "category": "Knowledge",
+      "description": "Elementary chemistry fact",
+      "prompt": "What is the chemical symbol for the element Gold?\nAnswer:",
+      "expected_target": "Au",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 9 * 19 = 95 units.\nFinal Answer: 95.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 273.5,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 2 * 9 = 16 units.\nFinal Answer: 16.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 256.62,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 9 * 19 = 95 units.\nFinal Answer: 95.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 275.26,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators Senators",
+          "is_correct": false,
+          "rep_4": 0.9762,
+          "unique_ratio": 0.0222,
+          "latency_ms": 475.41,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "K2",
+      "category": "Knowledge",
+      "description": "Standard physical constant",
+      "prompt": "What is the standard boiling point of pure water in degrees Celsius at 1 atmosphere of pressure?\nAnswer:",
+      "expected_target": "100",
+      "is_boundary": false,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 4 * 19 = 1 units.\nFinal Answer: 1.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 274.04,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 8 * 19 = 1 units.\nFinal Answer: 1 counter.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6667,
+          "latency_ms": 266.65,
+          "tokens_generated": 27
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 9 * 19 = 1 units.\nFinal Answer: 1 counter.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6667,
+          "latency_ms": 285.65,
+          "tokens_generated": 27
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "numnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnumnum",
+          "is_correct": false,
+          "rep_4": 0.9762,
+          "unique_ratio": 0.0222,
+          "latency_ms": 476.66,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "K3_BOUNDARY",
+      "category": "Knowledge_Boundary",
+      "description": "Exact historical year (Deep Trivia Boundary Test)",
+      "prompt": "In what exact calendar year was the Peace of Westphalia signed to end the Thirty Years' War?\nAnswer:",
+      "expected_target": "1648",
+      "is_boundary": true,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x + 9 =auth.\nStep 1: Subtract 9 from both sides to get 9 * x = 264.\nStep 2: Divide both sides by 9 to get x = 47.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.5778,
+          "latency_ms": 484.62,
+          "tokens_generated": 45
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x + 31 = 320.\nStep 1: Subtract 31 from both sides to get 9 * x = 108.\nStep 2: Divide both sides by 9 to get x = 18.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6,
+          "latency_ms": 444.07,
+          "tokens_generated": 45
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 9 * 13 = 85 units.\nFinal Answer: 85.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 274.96,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "ieieieieieie, a080 of the Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph Randolph",
+          "is_correct": false,
+          "rep_4": 0.7619,
+          "unique_ratio": 0.1556,
+          "latency_ms": 476.73,
+          "tokens_generated": 45
+        }
+      }
+    },
+    {
+      "id": "K4_BOUNDARY",
+      "category": "Knowledge_Boundary",
+      "description": "Niche world geography (Encyclopedia Boundary Test)",
+      "prompt": "What is the capital city of Burkina Faso?\nAnswer:",
+      "expected_target": "Ouagadougou",
+      "is_boundary": true,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "y = k * x.\nCalculation: y = 2 * 8 = 30 units.\nFinal Answer: 30.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 274.37,
+          "tokens_generated": 26
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "y = k * x.\nCalculation: y = 2 * 8 = 30 units.\nFinal Answer: 30.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 257.14,
+          "tokens_generated": 26
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "y = k * x.\nCalculation: y = 4 * 8 = 32 units.\nFinal Answer: 32.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.6538,
+          "latency_ms": 275.02,
+          "tokens_generated": 26
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "8/2.5",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 64.76,
+          "tokens_generated": 6
+        }
+      }
+    },
+    {
+      "id": "K5_BOUNDARY",
+      "category": "Knowledge_Boundary",
+      "description": "Complex long-horizon coding synthesis (Capacity Boundary Test)",
+      "prompt": "Write a complete C++ implementation of a self-balancing AVL Tree insertion function with rotations:\nCode:",
+      "expected_target": "Full AVL Tree implementation",
+      "is_boundary": true,
+      "generations": {
+        "Sub3_With_Registers": {
+          "text": "12.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 1.0,
+          "latency_ms": 32.45,
+          "tokens_generated": 3
+        },
+        "Sub3_Without_Registers_Ablated": {
+          "text": "Q = 1 * 4 * 13 = 44.\nFinal Answer: 13.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.7647,
+          "latency_ms": 196.7,
+          "tokens_generated": 17
+        },
+        "Sub3_Scrambled_Registers_Control": {
+          "text": "Divide both sides by 3 to get 9 = 43.\nFinal Answer: 9.",
+          "is_correct": false,
+          "rep_4": 0.0,
+          "unique_ratio": 0.8889,
+          "latency_ms": 208.04,
+          "tokens_generated": 18
+        },
+        "Pretrained100M_With_Registers": {
+          "text": "```csharp\npublic:\n    \"\"\"\n   ropyropyropyropyropyropy\n            A",
+          "is_correct": false,
+          "rep_4": 0.4048,
+          "unique_ratio": 0.2444,
+          "latency_ms": 475.12,
+          "tokens_generated": 45
+        }
+      }
+    }
+  ]
+}

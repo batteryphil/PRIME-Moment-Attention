@@ -46,6 +46,7 @@ env/
 *.gguf
 *.onnx
 checkpoints/
+checkpoints_3tb
 
 # IDE & Editor files
 .idea/

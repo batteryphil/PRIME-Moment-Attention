@@ -1,0 +1,114 @@
+{
+  "1. Raw Falcon3-10B-1.58bit (Softmax)": {
+    "math_score": "7/15 (46.7%)",
+    "math_passed_count": 7,
+    "deduction_score": "5/7 (71.4%)",
+    "deduction_passed_count": 5,
+    "niah": {
+      "gap_250": {
+        "success": true,
+        "latency_s": 4.09,
+        "peak_vram_mb": 4103.8
+      },
+      "gap_1000": {
+        "success": true,
+        "latency_s": 5.03,
+        "peak_vram_mb": 4343.8
+      },
+      "gap_2000": {
+        "success": true,
+        "latency_s": 6.79,
+        "peak_vram_mb": 4800.9
+      },
+      "gap_4000": {
+        "success": true,
+        "latency_s": 12.45,
+        "peak_vram_mb": 6569.6
+      }
+    }
+  },
+  "2. Falcon3-10B-1.58bit + PRIME-Net Harness": {
+    "math_score": "14/15 (93.3%)",
+    "math_passed_count": 14,
+    "deduction_score": "2/7 (28.6%)",
+    "deduction_passed_count": 2,
+    "niah": {
+      "gap_250": {
+        "success": true,
+        "latency_s": 4.11,
+        "peak_vram_mb": 4116.8
+      },
+      "gap_1000": {
+        "success": true,
+        "latency_s": 5.03,
+        "peak_vram_mb": 4358.2
+      },
+      "gap_2000": {
+        "success": true,
+        "latency_s": 6.91,
+        "peak_vram_mb": 4828.4
+      },
+      "gap_4000": {
+        "success": true,
+        "latency_s": 12.59,
+        "peak_vram_mb": 6614.5
+      }
+    }
+  },
+  "3. Falcon3-10B-1.58bit + Hybrid Window-PRIME (W=512)": {
+    "math_score": "5/15 (33.3%)",
+    "math_passed_count": 5,
+    "deduction_score": "1/7 (14.3%)",
+    "deduction_passed_count": 1,
+    "niah": {
+      "gap_250": {
+        "success": false,
+        "latency_s": 4.17,
+        "peak_vram_mb": 4112.9
+      },
+      "gap_1000": {
+        "success": false,
+        "latency_s": 5.23,
+        "peak_vram_mb": 4355.0
+      },
+      "gap_2000": {
+        "success": false,
+        "latency_s": 7.35,
+        "peak_vram_mb": 4806.3
+      },
+      "gap_4000": {
+        "success": false,
+        "latency_s": 13.59,
+        "peak_vram_mb": 6566.1
+      }
+    }
+  },
+  "4. Falcon3-10B-1.58bit + Hybrid PRIME + PRIME-Net (Unified)": {
+    "math_score": "3/15 (20.0%)",
+    "math_passed_count": 3,
+    "deduction_score": "1/7 (14.3%)",
+    "deduction_passed_count": 1,
+    "niah": {
+      "gap_250": {
+        "success": false,
+        "latency_s": 4.2,
+        "peak_vram_mb": 4125.4
+      },
+      "gap_1000": {
+        "success": false,
+        "latency_s": 5.29,
+        "peak_vram_mb": 4363.9
+      },
+      "gap_2000": {
+        "success": false,
+        "latency_s": 7.49,
+        "peak_vram_mb": 4833.6
+      },
+      "gap_4000": {
+        "success": false,
+        "latency_s": 13.74,
+        "peak_vram_mb": 6610.9
+      }
+    }
+  }
+}

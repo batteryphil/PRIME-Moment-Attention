@@ -12,6 +12,7 @@
 #include "prime_moment.h"
 #include "prime_server.h"
 #include "prime_weights.h"
+#include "prime_net.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +49,10 @@ static void print_usage(const char *prog_name) {
     printf("  --port <int>      Port for embedded server (default: 8080)\n");
     printf("  --test-mmap [name] Test zero-copy mmap of embedded ZIP weights\n");
     printf("  --verify          Run self-verification test\n");
+    printf("  --bench-math      Run native C 15-domain mathematical stress test\n");
+    printf("  --bench-niah      Run native C NIAH passkey retrieval stress test\n");
+    printf("  --bench-deduction Run native C 7-turn cognitive & commonsense deduction probe\n");
+    printf("  --prompt <string> Run neuro-symbolic reasoning on input string\n");
     printf("  --help            Show this help message\n");
 }
 
@@ -111,6 +116,10 @@ int main(int argc, char **argv) {
     int do_mmap = 0;
     const char *mmap_entry_name = NULL;
     int port = 8080;
+    int do_bench_math = 0;
+    int do_bench_niah = 0;
+    int do_bench_deduction = 0;
+    const char *user_prompt = NULL;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--heads") == 0 && i + 1 < argc) {
@@ -136,6 +145,14 @@ int main(int argc, char **argv) {
             }
         } else if (strcmp(argv[i], "--verify") == 0) {
             do_verify = 1;
+        } else if (strcmp(argv[i], "--bench-math") == 0) {
+            do_bench_math = 1;
+        } else if (strcmp(argv[i], "--bench-niah") == 0) {
+            do_bench_niah = 1;
+        } else if (strcmp(argv[i], "--bench-deduction") == 0) {
+            do_bench_deduction = 1;
+        } else if (strcmp(argv[i], "--prompt") == 0 && i + 1 < argc) {
+            user_prompt = argv[++i];
         } else if (strcmp(argv[i], "--help") == 0) {
             print_usage(argv[0]);
             return 0;
@@ -148,6 +165,26 @@ int main(int argc, char **argv) {
 
     if (do_verify) {
         return run_verification();
+    }
+
+    if (do_bench_math) {
+        return prime_net_run_math_benchmark();
+    }
+
+    if (do_bench_niah) {
+        return prime_net_run_niah_benchmark();
+    }
+
+    if (do_bench_deduction) {
+        return prime_net_run_deduction_benchmark();
+    }
+
+    if (user_prompt) {
+        printf("\n[PRIME-Net C Reasoning Engine]\n");
+        printf("User Prompt: %s\n\n", user_prompt);
+        prime_net_result_t res = prime_net_solve(user_prompt);
+        printf("%s\n\n", res.response_full);
+        return 0;
     }
 
     if (do_mmap) {

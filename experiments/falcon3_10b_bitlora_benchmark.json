@@ -1,0 +1,14 @@
+{
+  "Falcon3-10B + BitLoRA": {
+    "math_score": "7/15 (46.7%)",
+    "math_passed_count": 7,
+    "deduction_score": "4/7 (57.1%)",
+    "deduction_passed_count": 4
+  },
+  "Falcon3-10B + BitLoRA + PRIME-Net": {
+    "math_score": "14/15 (93.3%)",
+    "math_passed_count": 14,
+    "deduction_score": "2/7 (28.6%)",
+    "deduction_passed_count": 2
+  }
+}

@@ -8,8 +8,8 @@ COSMO_LDFLAGS ?=
 TMPDIR ?= /tmp
 
 BIN_DIR := bin
-SRC := prime_moment.c prime_server.c prime_weights.c main.c
-HEADERS := prime_moment.h prime_server.h prime_weights.h
+SRC := prime_moment.c prime_server.c prime_weights.c prime_net.c main.c
+HEADERS := prime_moment.h prime_server.h prime_weights.h prime_net.h
 
 .PHONY: all native cosmo shared zipalign test test-bundle bench clean help
 

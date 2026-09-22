@@ -7,6 +7,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "prime_server.h"
+#include "prime_net.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,6 +96,38 @@ static int parse_int_field(const char *json, const char *key, int default_val) {
     return atoi(p);
 }
 
+
+static void extract_json_content(const char *json, char *out, size_t out_size) {
+    out[0] = '\0';
+    if (!json) return;
+    const char *p = strstr(json, "\"content\":");
+    if (!p) p = strstr(json, "\"prompt\":");
+    if (!p) return;
+    p = strchr(p, ':');
+    if (!p) return;
+    p++;
+    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+    if (*p == '\"') {
+        p++;
+        size_t idx = 0;
+        while (*p && idx < out_size - 1) {
+            if (*p == '\\' && *(p + 1)) {
+                p++;
+                if (*p == 'n') out[idx++] = '\n';
+                else if (*p == 't') out[idx++] = '\t';
+                else if (*p == 'r') out[idx++] = '\r';
+                else out[idx++] = *p;
+                p++;
+            } else if (*p == '\"') {
+                break;
+            } else {
+                out[idx++] = *p++;
+            }
+        }
+        out[idx] = '\0';
+    }
+}
+
 static int parse_bool_field(const char *json, const char *key, int default_val) {
     char pattern[64];
     snprintf(pattern, sizeof(pattern), "\"%s\"", key);
@@ -139,6 +172,32 @@ static void handle_chat_completions(int client_fd, const prime_config_t *cfg, pr
 
     prime_state_reset(state);
 
+    char user_prompt[1024] = {0};
+    extract_json_content(body, user_prompt, sizeof(user_prompt));
+    if (user_prompt[0] == '\0') {
+        strncpy(user_prompt, "Calculate 50 - 4 * (8 - 3) + 12 / 4.", sizeof(user_prompt) - 1);
+    }
+
+    /* Run native C PRIME-Net symbolic reasoning engine */
+    prime_net_result_t net_res = prime_net_solve(user_prompt);
+
+    /* Split generated response into words for streaming and tokenization */
+    char resp_copy[2048];
+    strncpy(resp_copy, net_res.response_full, sizeof(resp_copy) - 1);
+    resp_copy[sizeof(resp_copy) - 1] = '\0';
+
+    char *words[256];
+    int word_count = 0;
+    char *token = strtok(resp_copy, " ");
+    while (token && word_count < 256) {
+        words[word_count++] = token;
+        token = strtok(NULL, " ");
+    }
+    if (word_count == 0) {
+        words[0] = "Done.";
+        word_count = 1;
+    }
+
     if (stream) {
         /* Server-Sent Events (SSE) streaming */
         const char *sse_header =
@@ -152,32 +211,27 @@ static void handle_chat_completions(int client_fd, const prime_config_t *cfg, pr
             return;
         }
 
-        const char *sample_words[] = {
-            "PRIME ", "Moment ", "Attention ", "processes ", "arbitrary ",
-            "context ", "lengths ", "using ", "strictly ", "constant ",
-            "O(1) ", "recurrent ", "memory ", "with ", "zero ", "latency ", "drift."
-        };
-        int num_words = sizeof(sample_words) / sizeof(sample_words[0]);
-
         struct timespec sleep_ts;
         sleep_ts.tv_sec = 0;
-        sleep_ts.tv_nsec = 10000000; /* 10ms pacing between tokens */
+        sleep_ts.tv_nsec = 5000000; /* 5ms pacing */
 
-        for (int step = 0; step < max_tokens; step++) {
+        int total_steps = (max_tokens < word_count) ? max_tokens : word_count;
+        for (int step = 0; step < total_steps; step++) {
             struct timespec t0, t1;
             clock_gettime(CLOCK_MONOTONIC, &t0);
             prime_step(cfg, state, q, k, v, out);
             clock_gettime(CLOCK_MONOTONIC, &t1);
 
             double us = (double)(t1.tv_sec - t0.tv_sec) * 1e6 + (double)(t1.tv_nsec - t0.tv_nsec) * 1e-3;
-            const char *word = sample_words[step % num_words];
+            char word_buf[128];
+            snprintf(word_buf, sizeof(word_buf), "%s ", words[step]);
 
             char chunk[512];
             int len = snprintf(chunk, sizeof(chunk),
                 "data: {\"id\":\"chatcmpl-prime\",\"object\":\"chat.completion.chunk\",\"created\":%ld,"
                 "\"choices\":[{\"index\":0,\"delta\":{\"content\":\"%s\"},\"finish_reason\":null}],"
                 "\"telemetry\":{\"step\":%d,\"latency_us\":%.2f,\"state_bytes\":%zu}}\n\n",
-                (long)time(NULL), word, step + 1, us, state->state_bytes);
+                (long)time(NULL), word_buf, step + 1, us, state->state_bytes);
 
             if (write(client_fd, chunk, (size_t)len) <= 0) break;
             nanosleep(&sleep_ts, NULL);
@@ -190,15 +244,28 @@ static void handle_chat_completions(int client_fd, const prime_config_t *cfg, pr
         struct timespec t_start, t_end;
         clock_gettime(CLOCK_MONOTONIC, &t_start);
 
-        for (int step = 0; step < max_tokens; step++) {
+        int total_steps = (max_tokens < word_count) ? max_tokens : word_count;
+        for (int step = 0; step < total_steps; step++) {
             prime_step(cfg, state, q, k, v, out);
         }
 
         clock_gettime(CLOCK_MONOTONIC, &t_end);
         double total_us = (double)(t_end.tv_sec - t_start.tv_sec) * 1e6 + (double)(t_end.tv_nsec - t_start.tv_nsec) * 1e-3;
-        double us_per_tok = total_us / (double)max_tokens;
+        double us_per_tok = (total_steps > 0) ? (total_us / (double)total_steps) : 0.0;
 
-        char resp[2048];
+        /* JSON escape response_full */
+        char escaped_content[4096];
+        size_t e_idx = 0;
+        for (size_t i = 0; net_res.response_full[i] != '\0' && e_idx < sizeof(escaped_content) - 4; i++) {
+            char c = net_res.response_full[i];
+            if (c == '\n') { escaped_content[e_idx++] = '\\'; escaped_content[e_idx++] = 'n'; }
+            else if (c == '\"') { escaped_content[e_idx++] = '\\'; escaped_content[e_idx++] = '\"'; }
+            else if (c == '\r') { }
+            else { escaped_content[e_idx++] = c; }
+        }
+        escaped_content[e_idx] = '\0';
+
+        char resp[6144];
         snprintf(resp, sizeof(resp),
             "{\n"
             "  \"id\": \"chatcmpl-prime-%ld\",\n"
@@ -210,7 +277,7 @@ static void handle_chat_completions(int client_fd, const prime_config_t *cfg, pr
             "      \"index\": 0,\n"
             "      \"message\": {\n"
             "        \"role\": \"assistant\",\n"
-            "        \"content\": \"PRIME Moment Attention successfully computed %d recurrent decoding steps with O(1) state memory.\"\n"
+            "        \"content\": \"%s\"\n"
             "      },\n"
             "      \"finish_reason\": \"stop\"\n"
             "    }\n"
@@ -227,8 +294,8 @@ static void handle_chat_completions(int client_fd, const prime_config_t *cfg, pr
             "    \"tokens_per_sec\": %.1f\n"
             "  }\n"
             "}\n",
-            (long)time(NULL), (long)time(NULL), max_tokens, max_tokens, max_tokens + 16,
-            state->state_bytes, us_per_tok, 1e6 / us_per_tok);
+            (long)time(NULL), (long)time(NULL), escaped_content, total_steps, total_steps + 16,
+            state->state_bytes, us_per_tok, (us_per_tok > 0) ? (1e6 / us_per_tok) : 0.0);
 
         send_response(client_fd, 200, "OK", "application/json", resp);
     }
