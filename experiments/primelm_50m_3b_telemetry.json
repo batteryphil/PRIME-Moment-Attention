@@ -1,15 +1,15 @@
 {
-  "step": 35250,
+  "step": 36450,
   "total_steps": 91553,
-  "tokens_trained": 1253408768,
+  "tokens_trained": 1292730368,
   "target_tokens": 3000000000,
-  "percent_complete": 41.78,
-  "loss": 22.6857,
-  "ce_loss": 5.6713,
-  "inv_loss": 0.0014,
-  "tokens_per_sec": 32047.3,
-  "lr": 0.00035038,
+  "percent_complete": 43.091,
+  "loss": 21.3911,
+  "ce_loss": 5.3476,
+  "inv_loss": 0.002,
+  "tokens_per_sec": 31899.5,
+  "lr": 0.00034124,
   "vram_gb": 2.18,
-  "eta_hours": 15.99,
-  "timestamp": "2026-09-22 16:23:20"
+  "eta_hours": 15.72,
+  "timestamp": "2026-09-22 16:43:39"
 }
