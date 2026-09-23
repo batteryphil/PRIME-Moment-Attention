@@ -269,18 +269,26 @@ class PrimeLM50M(nn.Module):
         return logits, pred_inv
 
     @torch.no_grad()
-    def generate(self, input_ids, max_new_tokens=50, temperature=0.7, top_k=50, inv_vec=None, eos_token_id=50256):
+    def generate(self, input_ids, max_new_tokens=50, temperature=0.7, top_k=50, repetition_penalty=1.0, inv_vec=None, gtrm_state=None, eos_token_id=50256):
         self.eval()
         curr = input_ids.clone()
+        generated = []
         for _ in range(max_new_tokens):
             L = curr.shape[1]
             if L >= 4096:
                 curr = curr[:, -2048:]
                 L = curr.shape[1]
             
-            logits, _ = self.forward(curr, inv_vec=inv_vec)
-            next_token_logits = logits[:, -1, :]
+            logits, _ = self.forward(curr, inv_vec=inv_vec, gtrm_state=gtrm_state)
+            next_token_logits = logits[:, -1, :].clone()
             
+            if repetition_penalty > 1.0 and generated:
+                for tok in set(generated):
+                    if next_token_logits[0, tok] > 0:
+                        next_token_logits[0, tok] /= repetition_penalty
+                    else:
+                        next_token_logits[0, tok] *= repetition_penalty
+
             if temperature > 0:
                 next_token_logits = next_token_logits / temperature
                 if top_k > 0:
@@ -292,6 +300,8 @@ class PrimeLM50M(nn.Module):
                 next_token = next_token_logits.argmax(dim=-1, keepdim=True)
                 
             curr = torch.cat([curr, next_token], dim=-1)
-            if next_token.item() == eos_token_id:
+            tok_id = next_token.item()
+            generated.append(tok_id)
+            if tok_id == eos_token_id:
                 break
         return curr

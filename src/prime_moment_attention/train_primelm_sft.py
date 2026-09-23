@@ -25,19 +25,19 @@ from prime_moment_attention.primenet_cothinker_bridge import PrimeNetCoThinker
 
 def parse_args():
     parser = argparse.ArgumentParser(description="PrimeLM-50M SFT Reasoning Trainer")
-    parser.add_argument("--checkpoint", type=str, default="checkpoints/primelm_50m_3b_best.pt",
+    parser.add_argument("--checkpoint", type=str, default="checkpoints/primelm_50m_sft_reasoning_best.pt",
                         help="Path to pretrained checkpoint")
-    parser.add_argument("--output_checkpoint", type=str, default="checkpoints/primelm_50m_sft_reasoning.pt",
+    parser.add_argument("--output_checkpoint", type=str, default="checkpoints/primelm_50m_sft_v2.pt",
                         help="Output checkpoint path")
-    parser.add_argument("--steps", type=int, default=2500, help="Number of SFT steps")
+    parser.add_argument("--steps", type=int, default=2000, help="Number of SFT steps")
     parser.add_argument("--batch_size", type=int, default=4, help="Micro-batch size")
     parser.add_argument("--grad_accum", type=int, default=4, help="Gradient accumulation steps")
     parser.add_argument("--seq_len", type=int, default=512, help="Sequence length")
-    parser.add_argument("--lr", type=float, default=5e-5, help="Peak learning rate")
-    parser.add_argument("--min_lr", type=float, default=5e-6, help="Minimum learning rate")
+    parser.add_argument("--lr", type=float, default=2.5e-5, help="Peak learning rate")
+    parser.add_argument("--min_lr", type=float, default=3e-6, help="Minimum learning rate")
     parser.add_argument("--warmup_steps", type=int, default=100, help="Linear warmup steps")
-    parser.add_argument("--eval_interval", type=int, default=250, help="Evaluation and sample interval")
-    parser.add_argument("--save_interval", type=int, default=500, help="Checkpoint save interval")
+    parser.add_argument("--eval_interval", type=int, default=200, help="Evaluation and sample interval")
+    parser.add_argument("--save_interval", type=int, default=400, help="Checkpoint save interval")
     parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu")
     return parser.parse_args()
 
@@ -107,7 +107,7 @@ def main():
 
     # 5. Optimizer & Loss
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01, betas=(0.9, 0.95))
-    ce_loss_fn = nn.CrossEntropyLoss(ignore_index=-100)
+    ce_loss_fn = nn.CrossEntropyLoss(ignore_index=-100, label_smoothing=0.05)
     cothinker = PrimeNetCoThinker()
 
     best_loss = float("inf")
@@ -169,15 +169,17 @@ def main():
             model.eval()
             print(f"\n--- [Evaluation & Reasoning Probe @ Step {step}] ---")
             probe_questions = [
-                "What is the access code of Project Apollo?",
-                "Calculate kinetic energy of an object of mass 4 kg moving at speed 5 m/s.",
-                "Solve for x: 3 * x + 7 = 31."
+                "A hydraulic cylinder on an excavator has a piston area of 5 square inches operating at 2000 PSI. Calculate the force produced using F = P * A.",
+                "Record this into your memory: The maintenance supervisor for Excavator Unit 7 is named Marcus, and the radio frequency is 462.55 MHz.",
+                "Solve this equation step-by-step: 4 * x + 16 = 40.",
+                "What is the maintenance supervisor for Excavator Unit 7, and what was the radio frequency?",
+                "Explain how your thinking process works inside <think> and what your 2nd-order memory does."
             ]
             for probe_q in probe_questions:
                 prompt_text = f"User: {probe_q}\n\nAssistant: "
                 p_tokens = tokenizer.encode(prompt_text, return_tensors="pt").to(device)
                 with torch.no_grad():
-                    gen_tokens = model.generate(p_tokens, max_new_tokens=80, temperature=0.3, top_k=20)
+                    gen_tokens = model.generate(p_tokens, max_new_tokens=90, temperature=0.6, top_k=25, repetition_penalty=1.2)
                 gen_text = tokenizer.decode(gen_tokens[0], skip_special_tokens=True)
                 
                 # Apply PRIME-Net Co-Thinker verification
@@ -201,17 +203,25 @@ def main():
                 }, best_path)
                 print(f"[+] Saved new best checkpoint to {best_path} (CE: {best_loss:.4f})")
 
-            model.train()
-
-        if step % args.save_interval == 0:
+            # Save step-specific checkpoint
+            step_path = args.output_checkpoint.replace(".pt", f"_step_{step:04d}.pt")
             torch.save({
                 "step": step,
                 "model": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
+                "ce_loss": accum_ce_loss,
+                "tokens_trained": tokens_trained
+            }, step_path)
+            print(f"[+] Saved step checkpoint to {step_path}")
+
+            torch.save({
+                "step": step,
+                "model": model.state_dict(),
                 "ce_loss": accum_ce_loss,
                 "tokens_trained": tokens_trained
             }, args.output_checkpoint)
             print(f"[+] Saved checkpoint to {args.output_checkpoint}")
+
+            model.train()
 
     print("\n[SUCCESS] SFT Reasoning Training Complete!")
     torch.save({
