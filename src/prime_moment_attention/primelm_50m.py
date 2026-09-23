@@ -19,6 +19,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+try:
+    from .thought_reconstruction_map import GenerativeThoughtReconstructionLayer
+except (ImportError, ValueError):
+    from thought_reconstruction_map import GenerativeThoughtReconstructionLayer
+
 class RMSNorm(nn.Module):
     def __init__(self, dim, eps=1e-6):
         super().__init__()
@@ -164,7 +169,9 @@ class PrimeLM50M(nn.Module):
         num_registers=4,
         use_registers=True,
         use_gating=True,
-        use_probe=True
+        use_probe=True,
+        use_reconstruction_layer=False,
+        d_map=32
     ):
         super().__init__()
         self.vocab_size = vocab_size
@@ -173,6 +180,8 @@ class PrimeLM50M(nn.Module):
         self.num_registers = num_registers
         self.use_registers = use_registers
         self.use_probe = use_probe
+        self.use_reconstruction_layer = use_reconstruction_layer
+        self.d_map = d_map
 
         # Token Embeddings
         self.tok_embed = nn.Embedding(vocab_size, d_model)
@@ -194,6 +203,12 @@ class PrimeLM50M(nn.Module):
             )
             for _ in range(n_layers)
         ])
+
+        # Generative Thought Reconstruction Layer (2nd-order biomimetic cognitive memory)
+        if use_reconstruction_layer:
+            self.gtrm = GenerativeThoughtReconstructionLayer(d_model=d_model, d_map=d_map)
+            # Zero-initialize reconstruction projection so initial forward pass strictly equals pretrained base
+            nn.init.zeros_(self.gtrm.recon_proj.weight)
 
         self.ln_f = RMSNorm(d_model)
         
@@ -222,7 +237,7 @@ class PrimeLM50M(nn.Module):
             return total
         return total
 
-    def forward(self, input_ids, inv_vec=None):
+    def forward(self, input_ids, inv_vec=None, gtrm_state=None, return_gtrm_state=False):
         B, L = input_ids.shape
         x = self.tok_embed(input_ids)
 
@@ -237,6 +252,11 @@ class PrimeLM50M(nn.Module):
         for layer in self.layers:
             x = layer(x, cos, sin, inv_registers=inv_regs)
 
+        # 2nd-order Generative Thought Reconstruction
+        new_gtrm_state = None
+        if self.use_reconstruction_layer:
+            x, new_gtrm_state = self.gtrm(x, state=gtrm_state, return_state=return_gtrm_state)
+
         h = self.ln_f(x)
         logits = self.lm_head(h)
 
@@ -244,6 +264,8 @@ class PrimeLM50M(nn.Module):
         if self.use_probe:
             pred_inv = self.inv_probe(h[:, -1, :])
 
+        if return_gtrm_state:
+            return logits, pred_inv, new_gtrm_state
         return logits, pred_inv
 
     @torch.no_grad()
