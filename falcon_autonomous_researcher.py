@@ -46,11 +46,11 @@ STATUS_FILE = os.path.join(VAULT_DIR, "live_status.json")
 DB_FILE = os.path.join(VAULT_DIR, "research_vault.sqlite3")
 DOSSIER_FILE = os.path.join(VAULT_DIR, "THEORY_DOSSIER.md")
 
-SNAPSHOT_PATH = "/home/phil/.cache/huggingface/hub/models--tiiuae--Falcon3-10B-Instruct-1.58bit/snapshots/4b61e8876b19bf7a4b271b757a1bd2974bf38913"
-MODEL_ID = SNAPSHOT_PATH if os.path.isdir(SNAPSHOT_PATH) else "tiiuae/Falcon3-10B-Instruct-1.58bit"
+SNAPSHOT_PATH = "/home/phil/.cache/huggingface/hub/models--unsloth--DeepSeek-R1-Distill-Qwen-14B-bnb-4bit/snapshots/c73c785bf86971fa5bfd0912ca383a714e925210"
+MODEL_ID = SNAPSHOT_PATH if os.path.isdir(SNAPSHOT_PATH) else "unsloth/DeepSeek-R1-Distill-Qwen-14B-bnb-4bit"
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-print(f"[*] Initializing Autonomous Research Daemon v2.0 on {DEVICE}...")
+print(f"[*] Initializing Autonomous Research Daemon (DeepSeek-R1-Distill-14B) on {DEVICE}...")
 print(f"[*] Vault Directory: {VAULT_DIR}")
 
 # ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ class TelemetryManager:
         os.replace(tmp_file, STATUS_FILE)
 
 telemetry = TelemetryManager()
-telemetry.update("INITIALIZING_MODEL", "System", "Loading Falcon3-10B-1.58bit", telemetry.theories_count + 1)
+telemetry.update("INITIALIZING_MODEL", "System", "Loading DeepSeek-R1-Distill-Qwen-14B", telemetry.theories_count + 1)
 
 # ---------------------------------------------------------------------------
 # Model & PRIME-Net Co-Thinker Initialization
@@ -603,14 +603,14 @@ Secondary Repository: {secondary_repo_name}
                 
             streamer = LiveThoughtStreamer(tokenizer, on_token_cb=stream_callback)
             
-            print(f"[*] Generating theoretical formulation (max 950 new tokens)...")
+            print(f"[*] Generating theoretical formulation with DeepSeek-R1-Distill-14B (max 1500 tokens)...")
             gen_start = time.time()
             with torch.no_grad():
                 out = model.generate(
                     **inputs,
-                    max_new_tokens=950,
-                    temperature=0.35,
-                    top_p=0.90,
+                    max_new_tokens=1500,
+                    temperature=0.6,
+                    top_p=0.95,
                     do_sample=True,
                     streamer=streamer
                 )
