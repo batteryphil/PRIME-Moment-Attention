@@ -26,10 +26,25 @@ prime_config_t prime_default_config(int num_heads, int head_dim) {
     cfg.use_delta_rule = 1;
     cfg.lyapunov_bound = 25.0f;
     cfg.use_harmonic_rope = 0;
+    cfg.use_gdn2_decoupled = 0;
+    cfg.use_differential = 0;
+    cfg.diff_lambda = 0.5f;
+    cfg.latent_dim = 0;
     return cfg;
 }
 
-prime_state_t* prime_state_create(int num_heads, int head_dim) {
+prime_config_t prime_wave3_config(int num_heads, int head_dim, int latent_dim) {
+    prime_config_t cfg = prime_default_config(num_heads, head_dim);
+    cfg.use_delta_rule = 1;
+    cfg.use_gdn2_decoupled = 1;
+    cfg.use_differential = 1;
+    cfg.diff_lambda = 0.5f;
+    cfg.latent_dim = latent_dim;
+    cfg.lyapunov_bound = 15.0f;
+    return cfg;
+}
+
+prime_state_t* prime_state_create_ext(int num_heads, int head_dim, int latent_dim) {
     if (num_heads <= 0 || head_dim <= 0) {
         return NULL;
     }
@@ -39,13 +54,15 @@ prime_state_t* prime_state_create(int num_heads, int head_dim) {
 
     state->num_heads = num_heads;
     state->head_dim = head_dim;
+    state->latent_dim = (latent_dim > 0) ? latent_dim : 0;
+    int k_dim = (state->latent_dim > 0) ? state->latent_dim : head_dim;
 
     size_t s0_size = (size_t)num_heads * head_dim * sizeof(float);
-    size_t s1_size = (size_t)num_heads * head_dim * head_dim * sizeof(float);
-    size_t s2_size = (size_t)num_heads * head_dim * head_dim * sizeof(float);
+    size_t s1_size = (size_t)num_heads * head_dim * k_dim * sizeof(float);
+    size_t s2_size = (size_t)num_heads * head_dim * k_dim * sizeof(float);
     size_t k0_size = (size_t)num_heads * sizeof(float);
-    size_t k1_size = (size_t)num_heads * head_dim * sizeof(float);
-    size_t k2_size = (size_t)num_heads * head_dim * sizeof(float);
+    size_t k1_size = (size_t)num_heads * k_dim * sizeof(float);
+    size_t k2_size = (size_t)num_heads * k_dim * sizeof(float);
 
     state->state_bytes = s0_size + s1_size + s2_size + k0_size + k1_size + k2_size;
 
@@ -56,7 +73,21 @@ prime_state_t* prime_state_create(int num_heads, int head_dim) {
     state->k1 = (float*)malloc(k1_size);
     state->k2 = (float*)malloc(k2_size);
 
-    if (!state->s0 || !state->s1 || !state->s2 || !state->k0 || !state->k1 || !state->k2) {
+    if (state->latent_dim > 0) {
+        state->w_mla_c = (float*)malloc((size_t)head_dim * k_dim * sizeof(float));
+        if (state->w_mla_c) {
+            float s_mla = 1.0f / sqrtf((float)head_dim);
+            for (size_t i = 0; i < (size_t)head_dim * k_dim; i++) {
+                float r = ((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f;
+                state->w_mla_c[i] = r * s_mla;
+            }
+        }
+    } else {
+        state->w_mla_c = NULL;
+    }
+
+    if (!state->s0 || !state->s1 || !state->s2 || !state->k0 || !state->k1 || !state->k2 ||
+        (state->latent_dim > 0 && !state->w_mla_c)) {
         prime_state_free(state);
         return NULL;
     }
@@ -65,17 +96,22 @@ prime_state_t* prime_state_create(int num_heads, int head_dim) {
     return state;
 }
 
+prime_state_t* prime_state_create(int num_heads, int head_dim) {
+    return prime_state_create_ext(num_heads, head_dim, 0);
+}
+
 void prime_state_reset(prime_state_t *state) {
     if (!state) return;
     int H = state->num_heads;
     int D = state->head_dim;
+    int K = (state->latent_dim > 0) ? state->latent_dim : D;
 
     memset(state->s0, 0, (size_t)H * D * sizeof(float));
-    memset(state->s1, 0, (size_t)H * D * D * sizeof(float));
-    memset(state->s2, 0, (size_t)H * D * D * sizeof(float));
+    memset(state->s1, 0, (size_t)H * D * K * sizeof(float));
+    memset(state->s2, 0, (size_t)H * D * K * sizeof(float));
     memset(state->k0, 0, (size_t)H * sizeof(float));
-    memset(state->k1, 0, (size_t)H * D * sizeof(float));
-    memset(state->k2, 0, (size_t)H * D * sizeof(float));
+    memset(state->k1, 0, (size_t)H * K * sizeof(float));
+    memset(state->k2, 0, (size_t)H * K * sizeof(float));
 }
 
 void prime_state_free(prime_state_t *state) {
@@ -86,6 +122,7 @@ void prime_state_free(prime_state_t *state) {
     if (state->k0) free(state->k0);
     if (state->k1) free(state->k1);
     if (state->k2) free(state->k2);
+    if (state->w_mla_c) free(state->w_mla_c);
     free(state);
 }
 
@@ -93,28 +130,29 @@ void prime_lyapunov_project(prime_state_t *state, float bound) {
     if (!state || bound <= 0.0f) return;
     int H = state->num_heads;
     int D = state->head_dim;
-    int D2 = D * D;
+    int K = (state->latent_dim > 0) ? state->latent_dim : D;
+    int DK = D * K;
 
     for (int h = 0; h < H; h++) {
-        float *s1_head = state->s1 + h * D2;
-        float *s2_head = state->s2 + h * D2;
+        float *s1_head = state->s1 + h * DK;
+        float *s2_head = state->s2 + h * DK;
 
         /* S1 Frobenius norm */
         float s1_sum = 0.0f;
-        for (int i = 0; i < D2; i++) s1_sum += s1_head[i] * s1_head[i];
+        for (int i = 0; i < DK; i++) s1_sum += s1_head[i] * s1_head[i];
         float s1_norm = sqrtf(s1_sum);
         if (s1_norm > bound) {
             float scale1 = bound / (s1_norm + 1e-6f);
-            for (int i = 0; i < D2; i++) s1_head[i] *= scale1;
+            for (int i = 0; i < DK; i++) s1_head[i] *= scale1;
         }
 
         /* S2 Frobenius norm */
         float s2_sum = 0.0f;
-        for (int i = 0; i < D2; i++) s2_sum += s2_head[i] * s2_head[i];
+        for (int i = 0; i < DK; i++) s2_sum += s2_head[i] * s2_head[i];
         float s2_norm = sqrtf(s2_sum);
         if (s2_norm > bound) {
             float scale2 = bound / (s2_norm + 1e-6f);
-            for (int i = 0; i < D2; i++) s2_head[i] *= scale2;
+            for (int i = 0; i < DK; i++) s2_head[i] *= scale2;
         }
     }
 }
@@ -183,14 +221,19 @@ void prime_step_delta(
 ) {
     int H = cfg->num_heads;
     int D = cfg->head_dim;
+    int K = (state->latent_dim > 0) ? state->latent_dim : D;
     float decay = cfg->decay;
     float eps = cfg->eps;
-    float inv_sqrt_d = 1.0f / sqrtf((float)D);
+    float inv_sqrt_k = 1.0f / sqrtf((float)K);
 
     float q_buf[MAX_STACK_HEAD_DIM];
     float k_buf[MAX_STACK_HEAD_DIM];
+    float q_k[MAX_STACK_HEAD_DIM];
+    float k_k[MAX_STACK_HEAD_DIM];
     float k_sq[MAX_STACK_HEAD_DIM];
     float q_sq[MAX_STACK_HEAD_DIM];
+    float k_hat[MAX_STACK_HEAD_DIM];
+    float k_hat2[MAX_STACK_HEAD_DIM];
     float num[MAX_STACK_HEAD_DIM];
     float error_t[MAX_STACK_HEAD_DIM];
 
@@ -201,11 +244,11 @@ void prime_step_delta(
         float *out_h = out + h * D;
 
         float *s0 = state->s0 + h * D;
-        float *s1 = state->s1 + h * D * D;
-        float *s2 = state->s2 + h * D * D;
+        float *s1 = state->s1 + h * D * K;
+        float *s2 = state->s2 + h * D * K;
         float *k0 = state->k0 + h;
-        float *k1 = state->k1 + h * D;
-        float *k2 = state->k2 + h * D;
+        float *k1 = state->k1 + h * K;
+        float *k2 = state->k2 + h * K;
 
         if (cfg->use_qk_norm) {
             apply_layer_norm(qh_in, q_buf, D);
@@ -215,59 +258,171 @@ void prime_step_delta(
             memcpy(k_buf, kh_in, D * sizeof(float));
         }
 
-        /* Scale queries */
-        for (int d = 0; d < D; d++) {
-            q_buf[d] *= inv_sqrt_d;
-            q_sq[d] = q_buf[d] * q_buf[d];
-            k_sq[d] = k_buf[d] * k_buf[d];
+        /* DeepSeek MLA Latent Projection (if latent_dim > 0) */
+        if (state->latent_dim > 0 && state->w_mla_c) {
+            for (int m = 0; m < K; m++) {
+                float q_sum = 0.0f;
+                float k_sum = 0.0f;
+                for (int d = 0; d < D; d++) {
+                    float w = state->w_mla_c[d * K + m];
+                    q_sum += w * q_buf[d];
+                    k_sum += w * k_buf[d];
+                }
+                q_k[m] = q_sum;
+                k_k[m] = k_sum;
+            }
+        } else {
+            memcpy(q_k, q_buf, D * sizeof(float));
+            memcpy(k_k, k_buf, D * sizeof(float));
+        }
+
+        /* Scale queries and compute moments */
+        float k_norm_sq = 0.0f;
+        float k2_norm_sq = 0.0f;
+        for (int m = 0; m < K; m++) {
+            q_k[m] *= inv_sqrt_k;
+            q_sq[m] = q_k[m] * q_k[m];
+            k_sq[m] = k_k[m] * k_k[m];
+            k_norm_sq += k_k[m] * k_k[m];
+            k2_norm_sq += k_sq[m] * k_sq[m];
+        }
+
+        /* L2 Normalization on Keys (strictly bounds operator spectral radius <= 1.0) */
+        float inv_k_norm = 1.0f / sqrtf(k_norm_sq + 1e-6f);
+        float inv_k2_norm = 1.0f / sqrtf(k2_norm_sq + 1e-6f);
+        for (int m = 0; m < K; m++) {
+            k_hat[m] = k_k[m] * inv_k_norm;
+            k_hat2[m] = k_sq[m] * inv_k2_norm;
         }
 
         /* -------------------------------------------------------------
-         * Mode 1: Gated Delta-PRIME Recurrence
+         * Mode 1: Gated Delta Recurrence (GDN-2 or Delta-PRIME)
          * ------------------------------------------------------------- */
         if (cfg->use_delta_rule) {
-            /* 1. Predict value: v_hat = S0 + S1 @ k + 0.5 * S2 @ (k^2) */
+            /* 1. Value prediction: v_hat = S0 + S1 @ k_hat + 0.5 * S2 @ k_hat2 */
             for (int d = 0; d < D; d++) {
                 float v_hat_d = s0[d];
-                const float *s1_row = s1 + d * D;
-                const float *s2_row = s2 + d * D;
+                const float *s1_row = s1 + d * K;
+                const float *s2_row = s2 + d * K;
                 float sum1 = 0.0f;
                 float sum2 = 0.0f;
-                for (int e = 0; e < D; e++) {
-                    sum1 += s1_row[e] * k_buf[e];
-                    sum2 += s2_row[e] * k_sq[e];
+                for (int m = 0; m < K; m++) {
+                    sum1 += s1_row[m] * k_hat[m];
+                    sum2 += s2_row[m] * k_hat2[m];
                 }
                 v_hat_d += sum1 + 0.5f * sum2;
                 error_t[d] = vh[d] - v_hat_d;
             }
 
-            /* 2. Decoupled Erase / Write Gate application */
-            for (int d = 0; d < D; d++) {
-                float b_d = b_gate ? b_gate[h * D + d] : 0.05f;
-                float w_d = w_gate ? w_gate[h * D + d] : 0.25f;
-                float erase_factor = (1.0f - b_d);
-                float gamma_b = decay * erase_factor;
-                float delta_payload = w_d * error_t[d] * 0.1f;
+            /* 2. NVIDIA Gated DeltaNet-2 Decoupled Erase / Write */
+            if (cfg->use_gdn2_decoupled) {
+                float alpha_vec[MAX_STACK_HEAD_DIM];
+                float b_k_hat[MAX_STACK_HEAD_DIM];
+                float b_k_hat2[MAX_STACK_HEAD_DIM];
+                float b_mean = 0.0f;
 
-                s0[d] = gamma_b * s0[d] + delta_payload;
+                for (int m = 0; m < K; m++) {
+                    float b_m = b_gate ? b_gate[h * K + m] : 0.05f;
+                    if (b_m < 0.0f) b_m = 0.0f;
+                    if (b_m > 0.99f) b_m = 0.99f;
+                    alpha_vec[m] = decay * (1.0f - b_m);
+                    b_k_hat[m] = b_m * k_hat[m];
+                    b_k_hat2[m] = b_m * k_hat2[m];
+                    b_mean += b_m;
+                }
+                b_mean /= (float)K;
 
-                float *s1_row = s1 + d * D;
-                float *s2_row = s2 + d * D;
-                for (int e = 0; e < D; e++) {
-                    s1_row[e] = gamma_b * s1_row[e] + delta_payload * k_buf[e];
-                    s2_row[e] = gamma_b * s2_row[e] + delta_payload * k_sq[e];
+                for (int d = 0; d < D; d++) {
+                    float w_d = w_gate ? w_gate[h * D + d] : 0.25f;
+                    if (w_d < 0.0f) w_d = 0.0f;
+                    float w_e_d = w_d * error_t[d];
+
+                    s0[d] = decay * (1.0f - b_mean) * s0[d] + w_e_d * 0.1f;
+
+                    float *s1_row = s1 + d * K;
+                    float *s2_row = s2 + d * K;
+
+                    float proj1_d = 0.0f;
+                    float proj2_d = 0.0f;
+                    for (int m = 0; m < K; m++) {
+                        proj1_d += b_k_hat[m] * (alpha_vec[m] * s1_row[m]);
+                        proj2_d += b_k_hat2[m] * (alpha_vec[m] * s2_row[m]);
+                    }
+
+                    float delta_res1 = (w_e_d - proj1_d);
+                    float delta_res2 = (w_e_d - proj2_d);
+
+                    for (int m = 0; m < K; m++) {
+                        s1_row[m] = alpha_vec[m] * s1_row[m] + k_hat[m] * delta_res1;
+                        s2_row[m] = alpha_vec[m] * s2_row[m] + k_hat2[m] * delta_res2;
+                    }
+                }
+            } else {
+                /* Standard Gated Delta-PRIME */
+                for (int d = 0; d < D; d++) {
+                    float b_d = b_gate ? b_gate[h * D + d] : 0.05f;
+                    float w_d = w_gate ? w_gate[h * D + d] : 0.25f;
+                    float erase_factor = (1.0f - b_d);
+                    float gamma_b = decay * erase_factor;
+                    float delta_payload = w_d * error_t[d] * 0.1f;
+
+                    s0[d] = gamma_b * s0[d] + delta_payload;
+
+                    float *s1_row = s1 + d * K;
+                    float *s2_row = s2 + d * K;
+                    for (int m = 0; m < K; m++) {
+                        s1_row[m] = gamma_b * s1_row[m] + delta_payload * k_hat[m];
+                        s2_row[m] = gamma_b * s2_row[m] + delta_payload * k_hat2[m];
+                    }
                 }
             }
 
-            /* 3. Output Readout: out = S0 + q @ S1 + 0.5 * q^2 @ S2 */
-            for (int d = 0; d < D; d++) {
-                float term1 = 0.0f;
-                float term2 = 0.0f;
-                for (int e = 0; e < D; e++) {
-                    term1 += q_buf[e] * s1[e * D + d];
-                    term2 += q_sq[e] * s2[e * D + d];
+            /* 3. Output Readout: Microsoft Differential Taylor Attention or Standard */
+            if (cfg->use_differential) {
+                float lambda_val = cfg->diff_lambda;
+                float diff_buf[MAX_STACK_HEAD_DIM];
+                float sum_sq = 0.0f;
+
+                for (int d = 0; d < D; d++) {
+                    float term1 = 0.0f;
+                    float term2 = 0.0f;
+                    float noise_term1 = 0.0f;
+                    float noise_term2 = 0.0f;
+                    for (int m = 0; m < K; m++) {
+                        float s1_val = s1[d * K + m];
+                        float s2_val = s2[d * K + m];
+                        float q_m = q_k[m];
+                        float q_m2 = q_sq[m];
+                        float q_noise = 0.5f * q_m;
+                        float q_noise2 = 0.25f * q_m2;
+
+                        term1 += q_m * s1_val;
+                        term2 += q_m2 * s2_val;
+                        noise_term1 += q_noise * s1_val;
+                        noise_term2 += q_noise2 * s2_val;
+                    }
+                    float read1 = s0[d] + term1 + 0.5f * term2;
+                    float read2 = s0[d] + noise_term1 + 0.5f * noise_term2;
+                    float d_val = read1 - lambda_val * read2;
+                    diff_buf[d] = d_val;
+                    sum_sq += d_val * d_val;
                 }
-                out_h[d] = s0[d] + term1 + 0.5f * term2;
+
+                /* Head-wise RMSNorm */
+                float rms = 1.0f / sqrtf(sum_sq / (float)D + 1e-5f);
+                for (int d = 0; d < D; d++) {
+                    out_h[d] = diff_buf[d] * rms;
+                }
+            } else {
+                for (int d = 0; d < D; d++) {
+                    float term1 = 0.0f;
+                    float term2 = 0.0f;
+                    for (int m = 0; m < K; m++) {
+                        term1 += q_k[m] * s1[d * K + m];
+                        term2 += q_sq[m] * s2[d * K + m];
+                    }
+                    out_h[d] = s0[d] + term1 + 0.5f * term2;
+                }
             }
 
         /* -------------------------------------------------------------
@@ -277,32 +432,37 @@ void prime_step_delta(
             *k0 = decay * (*k0) + 1.0f;
             for (int d = 0; d < D; d++) {
                 s0[d] = decay * s0[d] + vh[d];
-                k1[d] = decay * k1[d] + k_buf[d];
-                k2[d] = decay * k2[d] + k_sq[d];
-
-                float *s1_col = s1 + d * D;
-                float *s2_col = s2 + d * D;
+            }
+            for (int m = 0; m < K; m++) {
+                k1[m] = decay * k1[m] + k_k[m];
+                k2[m] = decay * k2[m] + k_sq[m];
+            }
+            for (int d = 0; d < D; d++) {
+                float *s1_row = s1 + d * K;
+                float *s2_row = s2 + d * K;
                 float v_val = vh[d];
-                for (int e = 0; e < D; e++) {
-                    s1_col[e] = decay * s1_col[e] + k_buf[e] * v_val;
-                    s2_col[e] = decay * s2_col[e] + k_sq[e] * v_val;
+                for (int m = 0; m < K; m++) {
+                    s1_row[m] = decay * s1_row[m] + k_k[m] * v_val;
+                    s2_row[m] = decay * s2_row[m] + k_sq[m] * v_val;
                 }
             }
 
             for (int d = 0; d < D; d++) num[d] = s0[d];
             for (int d = 0; d < D; d++) {
-                float qd = q_buf[d];
-                float q2d = 0.5f * q_sq[d];
-                const float *s1_row = s1 + d * D;
-                const float *s2_row = s2 + d * D;
-                for (int e = 0; e < D; e++) {
-                    num[e] += qd * s1_row[e] + q2d * s2_row[e];
+                float term1 = 0.0f;
+                float term2 = 0.0f;
+                const float *s1_row = s1 + d * K;
+                const float *s2_row = s2 + d * K;
+                for (int m = 0; m < K; m++) {
+                    term1 += q_k[m] * s1_row[m];
+                    term2 += 0.5f * q_sq[m] * s2_row[m];
                 }
+                num[d] += term1 + term2;
             }
 
             float den = *k0;
-            for (int d = 0; d < D; d++) {
-                den += q_buf[d] * k1[d] + 0.5f * q_sq[d] * k2[d];
+            for (int m = 0; m < K; m++) {
+                den += q_k[m] * k1[m] + 0.5f * q_sq[m] * k2[m];
             }
             if (den < eps) den = eps;
             float inv_den = 1.0f / den;

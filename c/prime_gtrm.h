@@ -28,6 +28,12 @@ typedef struct {
     /* Second-order quadratic memory manifold M^(2): [d_map, d_model] */
     float *m2_state;
 
+    /* Google Titans Neural Memory: Historical Surprise-Momentum Buffer S: [d_map, d_model] */
+    float *s_momentum;
+    float momentum_decay;   /* Titans momentum discount factor eta (default: 0.90f) */
+    int use_titans_surprise;/* 1 for Titans surprise-momentum consolidation, 0 for legacy */
+    float last_surprise;    /* Diagnostic telemetry: magnitude of last surprise error */
+
     /* Projections (stored as row-major flat buffers or initialized randomly) */
     float *w_map;       /* [d_map, d_model] */
     float *w_salience;  /* [d_model] */
@@ -38,6 +44,12 @@ typedef struct {
 
 /* Allocate and initialize GTRM layer */
 prime_gtrm_t* prime_gtrm_create(int d_model, int d_map, float decay);
+
+/* Configure Google Titans surprise-momentum memory consolidation */
+void prime_gtrm_set_titans_mode(prime_gtrm_t *gtrm, int enabled, float momentum_decay);
+
+/* Get current surprise metric magnitude from last step */
+float prime_gtrm_get_last_surprise(const prime_gtrm_t *gtrm);
 
 /* Reset quadratic memory manifold to zero */
 void prime_gtrm_reset(prime_gtrm_t *gtrm);

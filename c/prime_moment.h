@@ -35,20 +35,27 @@ typedef struct {
     int use_delta_rule;     /* 1 for Gated Delta-PRIME error correction, 0 for additive */
     float lyapunov_bound;   /* Maximum Frobenius norm ceiling (e.g. 25.0f, 0 to disable) */
     int use_harmonic_rope;  /* 1 for 2nd-order harmonic phasor rotation, 0 otherwise */
+
+    /* Wave 3 Frontier Advancements */
+    int use_gdn2_decoupled; /* 1 for NVIDIA Gated DeltaNet-2 decoupled channel erase/write */
+    int use_differential;   /* 1 for Microsoft Differential Taylor Attention (noise cancellation) */
+    float diff_lambda;      /* Differential noise subtraction factor lambda (default: 0.5f) */
+    int latent_dim;         /* DeepSeek MLA latent key dimension d_c (e.g. 16; 0 for full D) */
 } prime_config_t;
 
 typedef struct {
     int num_heads;
     int head_dim;
+    int latent_dim;         /* 0 for full D x D, >0 for DeepSeek MLA compressed D x d_c */
     size_t state_bytes;     /* Total allocated bytes for recurrent state */
     
     /* Recurrent state tensors (flattened contiguous arrays):
-     * S0: [H, D]       (0th value moment: sum v_j)
-     * S1: [H, D, D]    (1st covariance tensor: sum k_j v_j^T)
-     * S2: [H, D, D]    (2nd diagonal curvature moment: sum (k_j^2) v_j^T)
-     * K0: [H]          (0th key count: sum 1)
-     * K1: [H, D]       (1st key sum: sum k_j)
-     * K2: [H, D]       (2nd key square sum: sum k_j^2)
+     * S0: [H, D]          (0th value moment: sum v_j)
+     * S1: [H, D, K_DIM]   (1st covariance tensor, where K_DIM = latent_dim ? latent_dim : head_dim)
+     * S2: [H, D, K_DIM]   (2nd curvature moment)
+     * K0: [H]             (0th key count: sum 1)
+     * K1: [H, K_DIM]      (1st key sum)
+     * K2: [H, K_DIM]      (2nd key square sum)
      */
     float *s0;
     float *s1;
@@ -56,12 +63,21 @@ typedef struct {
     float *k0;
     float *k1;
     float *k2;
+
+    /* DeepSeek MLA Projection Weight: W_c [head_dim, latent_dim] */
+    float *w_mla_c;
 } prime_state_t;
 
 /* Create default configuration */
 prime_config_t prime_default_config(int num_heads, int head_dim);
 
-/* Allocate and initialize recurrent state memory */
+/* Create Wave 3 frontier configuration */
+prime_config_t prime_wave3_config(int num_heads, int head_dim, int latent_dim);
+
+/* Allocate recurrent state memory (latent_dim == 0 for standard full D x D) */
+prime_state_t* prime_state_create_ext(int num_heads, int head_dim, int latent_dim);
+
+/* Backward-compatible state allocator (calls prime_state_create_ext with latent_dim=0) */
 prime_state_t* prime_state_create(int num_heads, int head_dim);
 
 /* Reset all state tensors to zero */

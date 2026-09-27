@@ -35,6 +35,12 @@ prime_gtrm_t* prime_gtrm_create(int d_model, int d_map, float decay) {
     /* Allocate state buffer */
     gtrm->m2_state = (float*)calloc((size_t)d_map * d_model, sizeof(float));
 
+    /* Allocate Titans Surprise-Momentum buffer S */
+    gtrm->s_momentum = (float*)calloc((size_t)d_map * d_model, sizeof(float));
+    gtrm->momentum_decay = 0.90f;
+    gtrm->use_titans_surprise = 1;
+    gtrm->last_surprise = 0.0f;
+
     /* Allocate weight projections */
     gtrm->w_map = (float*)malloc((size_t)d_map * d_model * sizeof(float));
     gtrm->w_salience = (float*)malloc((size_t)d_model * sizeof(float));
@@ -42,7 +48,7 @@ prime_gtrm_t* prime_gtrm_create(int d_model, int d_map, float decay) {
     gtrm->w_q = (float*)malloc((size_t)d_map * d_model * sizeof(float));
     gtrm->w_recon = (float*)malloc((size_t)d_model * d_model * sizeof(float));
 
-    if (!gtrm->m2_state || !gtrm->w_map || !gtrm->w_salience || !gtrm->w_v || !gtrm->w_q || !gtrm->w_recon) {
+    if (!gtrm->m2_state || !gtrm->s_momentum || !gtrm->w_map || !gtrm->w_salience || !gtrm->w_v || !gtrm->w_q || !gtrm->w_recon) {
         prime_gtrm_free(gtrm);
         return NULL;
     }
@@ -58,14 +64,29 @@ prime_gtrm_t* prime_gtrm_create(int d_model, int d_map, float decay) {
     return gtrm;
 }
 
+void prime_gtrm_set_titans_mode(prime_gtrm_t *gtrm, int enabled, float momentum_decay) {
+    if (!gtrm) return;
+    gtrm->use_titans_surprise = enabled;
+    if (momentum_decay >= 0.0f && momentum_decay < 1.0f) {
+        gtrm->momentum_decay = momentum_decay;
+    }
+}
+
+float prime_gtrm_get_last_surprise(const prime_gtrm_t *gtrm) {
+    return gtrm ? gtrm->last_surprise : 0.0f;
+}
+
 void prime_gtrm_reset(prime_gtrm_t *gtrm) {
     if (!gtrm || !gtrm->m2_state) return;
     memset(gtrm->m2_state, 0, gtrm->state_bytes);
+    if (gtrm->s_momentum) memset(gtrm->s_momentum, 0, gtrm->state_bytes);
+    gtrm->last_surprise = 0.0f;
 }
 
 void prime_gtrm_free(prime_gtrm_t *gtrm) {
     if (!gtrm) return;
     if (gtrm->m2_state) free(gtrm->m2_state);
+    if (gtrm->s_momentum) free(gtrm->s_momentum);
     if (gtrm->w_map) free(gtrm->w_map);
     if (gtrm->w_salience) free(gtrm->w_salience);
     if (gtrm->w_v) free(gtrm->w_v);
@@ -137,14 +158,59 @@ void prime_gtrm_step(
     }
     float inv_q_norm = 1.0f / (q_norm_sum + eps);
 
-    /* 5. Update 64 KB Quadratic Manifold M^(2):
-     * M^(2) <- decay * M^(2) + (gamma_t * m_sq) @ v_t^T
-     */
-    for (int i = 0; i < M; i++) {
-        float gated_m_i = m_sq[i] * gamma_t;
-        float *m2_row = gtrm->m2_state + i * D;
+    /* 5. Update 64 KB Quadratic Manifold M^(2) */
+    if (gtrm->use_titans_surprise) {
+        /* 5a. Google Titans Neural Memory: Test-time surprise error
+         * Forward Associative Recall: v_hat = m_sq^T @ M^(2) / (sum m_sq + eps)
+         */
+        float m_norm_sum = 0.0f;
+        for (int i = 0; i < M; i++) m_norm_sum += m_sq[i];
+        float inv_m_norm = 1.0f / (m_norm_sum + eps);
+
+        float v_hat[1024];
+        float err_sq_sum = 0.0f;
         for (int j = 0; j < D; j++) {
-            m2_row[j] = decay * m2_row[j] + gated_m_i * v_vec[j];
+            float sum = 0.0f;
+            for (int i = 0; i < M; i++) {
+                sum += m_sq[i] * gtrm->m2_state[i * D + j];
+            }
+            v_hat[j] = sum * inv_m_norm;
+            float diff = v_vec[j] - v_hat[j];
+            err_sq_sum += diff * diff;
+        }
+        float surprise_norm = sqrtf(err_sq_sum / (float)D);
+        gtrm->last_surprise = surprise_norm;
+
+        /* Surprise-driven dynamic learning rate:
+         * Familiar token -> error ~ 0 -> theta_t ~ 0 (skip consolidation).
+         * Surprising token -> error > 0 -> theta_t ~ gamma_t (consolidate).
+         */
+        float surprise_factor = tanhf(surprise_norm * 2.0f);
+        float eta = gtrm->momentum_decay;
+        float theta_t = gamma_t * surprise_factor;
+
+        /* Historical Momentum Matrix S_t & Manifold Consolidation M_t:
+         * S_t = eta * S_{t-1} + theta_t * (m_sq @ error^T)
+         * M_t = decay * M_{t-1} + S_t
+         */
+        for (int i = 0; i < M; i++) {
+            float *m2_row = gtrm->m2_state + i * D;
+            float *s_row = gtrm->s_momentum + i * D;
+            float m_i = m_sq[i];
+            for (int j = 0; j < D; j++) {
+                float err_j = v_vec[j] - v_hat[j];
+                s_row[j] = eta * s_row[j] + theta_t * m_i * err_j;
+                m2_row[j] = decay * m2_row[j] + s_row[j];
+            }
+        }
+    } else {
+        gtrm->last_surprise = 1.0f;
+        for (int i = 0; i < M; i++) {
+            float gated_m_i = m_sq[i] * gamma_t;
+            float *m2_row = gtrm->m2_state + i * D;
+            for (int j = 0; j < D; j++) {
+                m2_row[j] = decay * m2_row[j] + gated_m_i * v_vec[j];
+            }
         }
     }
 

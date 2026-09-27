@@ -40,7 +40,8 @@ cosmo: $(BIN_DIR)/prime.com
 
 $(BIN_DIR)/prime.com: $(SRC) $(HEADERS)
 	@mkdir -p $(BIN_DIR)
-	$(COSMOCC) $(COSMO_CFLAGS) -o $@ $(SRC) $(COSMO_LDFLAGS)
+	@mkdir -p /home/phil/.gemini/antigravity/scratch/tmp
+	HOME=/home/phil/.gemini/antigravity/scratch TMPDIR=/home/phil/.gemini/antigravity/scratch/tmp $(COSMOCC) $(COSMO_CFLAGS) -o $@ $(SRC) $(COSMO_LDFLAGS)
 	@echo "Built Cosmopolitan APE binary: $@"
 
 test: native
