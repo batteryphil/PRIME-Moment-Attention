@@ -469,6 +469,27 @@ Calculate Tier 1 buffer memory in KB: [calc: 256 * 64 * 4 / 1024] KB.
 Calculate total combined 3-tier memory in KB: [calc: 73816 / 1024] KB.
 Provide the full mathematical derivation and verification script.
 """
+    },
+    {
+        "domain": "Continual Lifelong Learning & Online Test-Time Training (TTT) As It Runs",
+        "primary_repo": "PRIME-Moment-Attention",
+        "secondary_repo": "PRIME-Net",
+        "web_search": "online test-time training continual lifelong learning catastrophic forgetting dual memory systems TTT linear attention",
+        "target_formulas": ["1024 * 64 * 4 / 1024", "(1.0 - 0.0001)**10000"],
+        "problem_prompt": """
+Wave 5 successfully verified 1-bit bipolar XNOR GEMM, 8-octave fractal power-law memory horizons, and SU(2) isometric rotations in C99.
+How can our PRIME architecture perform TRUE CONTINUAL LEARNING directly during inference as the AI runs, learning from new data without catastrophic forgetting?
+Investigate:
+1. Online Test-Time Training (TTT): formulating autoregressive token processing as an online self-supervised reconstruction step that continuously updates recurrent memory states.
+2. Elastic Synaptic Plasticity & Online Fisher Information: penalizing parameter drift on critical foundational knowledge while allowing fluid, rapid plastic updates on new conversational or domain facts.
+3. Complementary Learning Systems (CLS): multi-rate consolidation where immediate facts absorbed into the Tier 1 ring buffer and 8-octave fractal memory are continuously distilled into the slower synaptic weight projections during idle cycles.
+4. Hebbian & Surprise-Modulated Plasticity: mathematically ensuring that zero updates occur on expected tokens, while highly surprising or novel information triggers localized weight adaptations.
+
+MANDATORY NUMERICAL EVALUATION (Section 3):
+Calculate the online gradient buffer memory in KB for D=64, K=1024: [calc: 1024 * 64 * 4 / 1024] KB.
+Calculate the parameter retention factor under continuous regularized decay over 10,000 steps with lambda=0.0001: [calc: (1.0 - 0.0001)**10000].
+Provide a complete, runnable C99 implementation blueprint for online continual learning as it runs.
+"""
     }
 ]
 
