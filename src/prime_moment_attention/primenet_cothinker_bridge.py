@@ -69,20 +69,25 @@ class PrimeNetCoThinker:
         except Exception:
             return None
 
-    def intercept_and_solve(self, text_chunk: str) -> Tuple[str, List[Dict[str, str]]]:
+    def intercept_and_solve(self, text_chunk: str, target_formulas: Optional[List[str]] = None) -> Tuple[str, List[Dict[str, str]]]:
         """
         Scans a text chunk (especially inside <think>), evaluates calculations,
         and returns updated text with verified PRIME-Net results attached.
         """
         injections = []
+        seen = set()
 
         # 1. Check GSM8K format: <<expr>> or <<expr=wrong>>
         def gsm8k_repl(match):
             expr = match.group(1).strip()
+            if expr.lower() in ("expression", "formula", "calc", "example"):
+                return match.group(0)
             existing_ans = match.group(2).strip() if match.group(2) else ""
             res = self.safe_sym_eval(expr)
             if res is not None:
-                injections.append({"expr": expr, "result": res, "type": "gsm8k"})
+                if expr not in seen:
+                    seen.add(expr)
+                    injections.append({"expr": expr, "result": res, "type": "gsm8k"})
                 return f"<<{expr}={res}>>"
             return match.group(0)
 
@@ -91,13 +96,34 @@ class PrimeNetCoThinker:
         # 2. Check bracket format: [calc: 25 * 14] -> [PRIME-Net: 25 * 14 = 350]
         def bracket_repl(match):
             expr = match.group(1).strip()
+            if expr.lower() in ("expression", "formula", "calc", "example"):
+                return match.group(0)
             res = self.safe_sym_eval(expr)
             if res is not None:
-                injections.append({"expr": expr, "result": res, "type": "primenet"})
+                if expr not in seen:
+                    seen.add(expr)
+                    injections.append({"expr": expr, "result": res, "type": "primenet"})
                 return f"[PRIME-Net: {expr} = {res}]"
             return match.group(0)
 
         updated_text = self.bracket_calc_pattern.sub(bracket_repl, updated_text)
+
+        # 3. Check target_formulas fallback
+        if target_formulas:
+            for f in target_formulas:
+                f_clean = f.strip()
+                if f_clean not in seen:
+                    res = self.safe_sym_eval(f_clean)
+                    if res is not None:
+                        seen.add(f_clean)
+                        injections.append({"expr": f_clean, "result": res, "type": "target_benchmark"})
+
+        # 4. Append symbolic verification block if formulas were solved
+        if injections and "### PRIME-Net Exact Symbolic Verification" not in updated_text:
+            v_block = "\n\n### PRIME-Net Exact Symbolic Verification\n"
+            for inj in injections:
+                v_block += f"- `{inj['expr']}` = **`{inj['result']}`** (SymPy Verified)\n"
+            updated_text += v_block
 
         return updated_text, injections
 

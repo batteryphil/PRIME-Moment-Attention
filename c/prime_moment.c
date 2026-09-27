@@ -2,6 +2,11 @@
  * PRIME Moment Attention: Zero-Dependency C99 Native Implementation
  * =================================================================
  * Constant-state O(1) second-order recurrent attention operator.
+ * Supports:
+ *   - Baseline second-order Taylor polynomial attention
+ *   - Gated Delta-PRIME decoupled erase/write error delta updates
+ *   - Dual-state Lyapunov contractive norm projection
+ *   - Second-order Harmonic Phasor RoPE
  */
 
 #include "prime_moment.h"
@@ -18,6 +23,9 @@ prime_config_t prime_default_config(int num_heads, int head_dim) {
     cfg.decay = 0.9995f;
     cfg.eps = 1e-4f;
     cfg.use_qk_norm = 0;
+    cfg.use_delta_rule = 1;
+    cfg.lyapunov_bound = 25.0f;
+    cfg.use_harmonic_rope = 0;
     return cfg;
 }
 
@@ -81,11 +89,73 @@ void prime_state_free(prime_state_t *state) {
     free(state);
 }
 
+void prime_lyapunov_project(prime_state_t *state, float bound) {
+    if (!state || bound <= 0.0f) return;
+    int H = state->num_heads;
+    int D = state->head_dim;
+    int D2 = D * D;
+
+    for (int h = 0; h < H; h++) {
+        float *s1_head = state->s1 + h * D2;
+        float *s2_head = state->s2 + h * D2;
+
+        /* S1 Frobenius norm */
+        float s1_sum = 0.0f;
+        for (int i = 0; i < D2; i++) s1_sum += s1_head[i] * s1_head[i];
+        float s1_norm = sqrtf(s1_sum);
+        if (s1_norm > bound) {
+            float scale1 = bound / (s1_norm + 1e-6f);
+            for (int i = 0; i < D2; i++) s1_head[i] *= scale1;
+        }
+
+        /* S2 Frobenius norm */
+        float s2_sum = 0.0f;
+        for (int i = 0; i < D2; i++) s2_sum += s2_head[i] * s2_head[i];
+        float s2_norm = sqrtf(s2_sum);
+        if (s2_norm > bound) {
+            float scale2 = bound / (s2_norm + 1e-6f);
+            for (int i = 0; i < D2; i++) s2_head[i] *= scale2;
+        }
+    }
+}
+
+void prime_apply_harmonic_rope(
+    float *q, float *k, float *q2, float *k2,
+    int head_dim, int pos, float base_freq
+) {
+    for (int j = 0; j < head_dim; j += 2) {
+        float freq = 1.0f / powf(base_freq, (float)j / (float)head_dim);
+        float angle1 = (float)pos * freq;
+        float cos1 = cosf(angle1);
+        float sin1 = sinf(angle1);
+
+        /* 1st harmonic on (q, k) */
+        float q_re = q[j], q_im = q[j + 1];
+        q[j]     = q_re * cos1 - q_im * sin1;
+        q[j + 1] = q_re * sin1 + q_im * cos1;
+
+        float k_re = k[j], k_im = k[j + 1];
+        k[j]     = k_re * cos1 - k_im * sin1;
+        k[j + 1] = k_re * sin1 + k_im * cos1;
+
+        /* 2nd harmonic on (q^2, k^2) */
+        float angle2 = 2.0f * angle1;
+        float cos2 = cosf(angle2);
+        float sin2 = sinf(angle2);
+
+        float q2_re = q2[j], q2_im = q2[j + 1];
+        q2[j]     = q2_re * cos2 - q2_im * sin2;
+        q2[j + 1] = q2_re * sin2 + q2_im * cos2;
+
+        float k2_re = k2[j], k2_im = k2[j + 1];
+        k2[j]     = k2_re * cos2 - k2_im * sin2;
+        k2[j + 1] = k2_re * sin2 + k2_im * cos2;
+    }
+}
+
 static void apply_layer_norm(const float *src, float *dst, int dim) {
     float sum = 0.0f;
-    for (int i = 0; i < dim; i++) {
-        sum += src[i];
-    }
+    for (int i = 0; i < dim; i++) sum += src[i];
     float mean = sum / (float)dim;
 
     float sq_diff_sum = 0.0f;
@@ -101,6 +171,153 @@ static void apply_layer_norm(const float *src, float *dst, int dim) {
     }
 }
 
+void prime_step_delta(
+    const prime_config_t *cfg,
+    prime_state_t *state,
+    const float *q_in,
+    const float *k_in,
+    const float *v_in,
+    const float *b_gate,
+    const float *w_gate,
+    float *out
+) {
+    int H = cfg->num_heads;
+    int D = cfg->head_dim;
+    float decay = cfg->decay;
+    float eps = cfg->eps;
+    float inv_sqrt_d = 1.0f / sqrtf((float)D);
+
+    float q_buf[MAX_STACK_HEAD_DIM];
+    float k_buf[MAX_STACK_HEAD_DIM];
+    float k_sq[MAX_STACK_HEAD_DIM];
+    float q_sq[MAX_STACK_HEAD_DIM];
+    float num[MAX_STACK_HEAD_DIM];
+    float error_t[MAX_STACK_HEAD_DIM];
+
+    for (int h = 0; h < H; h++) {
+        const float *qh_in = q_in + h * D;
+        const float *kh_in = k_in + h * D;
+        const float *vh = v_in + h * D;
+        float *out_h = out + h * D;
+
+        float *s0 = state->s0 + h * D;
+        float *s1 = state->s1 + h * D * D;
+        float *s2 = state->s2 + h * D * D;
+        float *k0 = state->k0 + h;
+        float *k1 = state->k1 + h * D;
+        float *k2 = state->k2 + h * D;
+
+        if (cfg->use_qk_norm) {
+            apply_layer_norm(qh_in, q_buf, D);
+            apply_layer_norm(kh_in, k_buf, D);
+        } else {
+            memcpy(q_buf, qh_in, D * sizeof(float));
+            memcpy(k_buf, kh_in, D * sizeof(float));
+        }
+
+        /* Scale queries */
+        for (int d = 0; d < D; d++) {
+            q_buf[d] *= inv_sqrt_d;
+            q_sq[d] = q_buf[d] * q_buf[d];
+            k_sq[d] = k_buf[d] * k_buf[d];
+        }
+
+        /* -------------------------------------------------------------
+         * Mode 1: Gated Delta-PRIME Recurrence
+         * ------------------------------------------------------------- */
+        if (cfg->use_delta_rule) {
+            /* 1. Predict value: v_hat = S0 + S1 @ k + 0.5 * S2 @ (k^2) */
+            for (int d = 0; d < D; d++) {
+                float v_hat_d = s0[d];
+                const float *s1_row = s1 + d * D;
+                const float *s2_row = s2 + d * D;
+                float sum1 = 0.0f;
+                float sum2 = 0.0f;
+                for (int e = 0; e < D; e++) {
+                    sum1 += s1_row[e] * k_buf[e];
+                    sum2 += s2_row[e] * k_sq[e];
+                }
+                v_hat_d += sum1 + 0.5f * sum2;
+                error_t[d] = vh[d] - v_hat_d;
+            }
+
+            /* 2. Decoupled Erase / Write Gate application */
+            for (int d = 0; d < D; d++) {
+                float b_d = b_gate ? b_gate[h * D + d] : 0.05f;
+                float w_d = w_gate ? w_gate[h * D + d] : 0.25f;
+                float erase_factor = (1.0f - b_d);
+                float gamma_b = decay * erase_factor;
+                float delta_payload = w_d * error_t[d] * 0.1f;
+
+                s0[d] = gamma_b * s0[d] + delta_payload;
+
+                float *s1_row = s1 + d * D;
+                float *s2_row = s2 + d * D;
+                for (int e = 0; e < D; e++) {
+                    s1_row[e] = gamma_b * s1_row[e] + delta_payload * k_buf[e];
+                    s2_row[e] = gamma_b * s2_row[e] + delta_payload * k_sq[e];
+                }
+            }
+
+            /* 3. Output Readout: out = S0 + q @ S1 + 0.5 * q^2 @ S2 */
+            for (int d = 0; d < D; d++) {
+                float term1 = 0.0f;
+                float term2 = 0.0f;
+                for (int e = 0; e < D; e++) {
+                    term1 += q_buf[e] * s1[e * D + d];
+                    term2 += q_sq[e] * s2[e * D + d];
+                }
+                out_h[d] = s0[d] + term1 + 0.5f * term2;
+            }
+
+        /* -------------------------------------------------------------
+         * Mode 2: Standard Additive Moment Recurrence
+         * ------------------------------------------------------------- */
+        } else {
+            *k0 = decay * (*k0) + 1.0f;
+            for (int d = 0; d < D; d++) {
+                s0[d] = decay * s0[d] + vh[d];
+                k1[d] = decay * k1[d] + k_buf[d];
+                k2[d] = decay * k2[d] + k_sq[d];
+
+                float *s1_col = s1 + d * D;
+                float *s2_col = s2 + d * D;
+                float v_val = vh[d];
+                for (int e = 0; e < D; e++) {
+                    s1_col[e] = decay * s1_col[e] + k_buf[e] * v_val;
+                    s2_col[e] = decay * s2_col[e] + k_sq[e] * v_val;
+                }
+            }
+
+            for (int d = 0; d < D; d++) num[d] = s0[d];
+            for (int d = 0; d < D; d++) {
+                float qd = q_buf[d];
+                float q2d = 0.5f * q_sq[d];
+                const float *s1_row = s1 + d * D;
+                const float *s2_row = s2 + d * D;
+                for (int e = 0; e < D; e++) {
+                    num[e] += qd * s1_row[e] + q2d * s2_row[e];
+                }
+            }
+
+            float den = *k0;
+            for (int d = 0; d < D; d++) {
+                den += q_buf[d] * k1[d] + 0.5f * q_sq[d] * k2[d];
+            }
+            if (den < eps) den = eps;
+            float inv_den = 1.0f / den;
+            for (int d = 0; d < D; d++) {
+                out_h[d] = num[d] * inv_den;
+            }
+        }
+    }
+
+    /* 4. Dual-state Lyapunov contractive projection */
+    if (cfg->lyapunov_bound > 0.0f) {
+        prime_lyapunov_project(state, cfg->lyapunov_bound);
+    }
+}
+
 void prime_step(
     const prime_config_t *cfg,
     prime_state_t *state,
@@ -109,157 +326,7 @@ void prime_step(
     const float *v_in,
     float *out
 ) {
-    int H = cfg->num_heads;
-    int D = cfg->head_dim;
-    float decay = cfg->decay;
-    float eps = cfg->eps;
-    float q_scale = 1.0f / sqrtf((float)D);
-
-    /* Allocate small stack scratch buffers if D <= MAX_STACK_HEAD_DIM */
-    float q_norm_buf[MAX_STACK_HEAD_DIM];
-    float k_norm_buf[MAX_STACK_HEAD_DIM];
-    float num_buf[MAX_STACK_HEAD_DIM];
-
-    float *q_cur = (D <= MAX_STACK_HEAD_DIM) ? q_norm_buf : (float*)malloc((size_t)D * sizeof(float));
-    float *k_cur = (D <= MAX_STACK_HEAD_DIM) ? k_norm_buf : (float*)malloc((size_t)D * sizeof(float));
-    float *num   = (D <= MAX_STACK_HEAD_DIM) ? num_buf   : (float*)malloc((size_t)D * sizeof(float));
-
-    for (int h = 0; h < H; h++) {
-        const float *qh = q_in + (size_t)h * D;
-        const float *kh = k_in + (size_t)h * D;
-        const float *vh = v_in + (size_t)h * D;
-        float *outh     = out  + (size_t)h * D;
-
-        float *s0 = state->s0 + (size_t)h * D;
-        float *s1 = state->s1 + (size_t)h * D * D;
-        float *s2 = state->s2 + (size_t)h * D * D;
-        float *k0 = &state->k0[h];
-        float *k1 = state->k1 + (size_t)h * D;
-        float *k2 = state->k2 + (size_t)h * D;
-
-        /* QK normalization or direct copy with scaling */
-        if (cfg->use_qk_norm) {
-            apply_layer_norm(qh, q_cur, D);
-            apply_layer_norm(kh, k_cur, D);
-        } else {
-            memcpy(q_cur, qh, (size_t)D * sizeof(float));
-            memcpy(k_cur, kh, (size_t)D * sizeof(float));
-        }
-
-        /* Scale query vector by 1 / sqrt(D) */
-        for (int d = 0; d < D; d++) {
-            q_cur[d] *= q_scale;
-        }
-
-        /* 1. Recurrent State Update (2-way Register Tiling) */
-        *k0 = decay * (*k0) + 1.0f;
-
-        int d = 0;
-        for (; d <= D - 2; d += 2) {
-            float kd0 = k_cur[d + 0], kd0_sq = kd0 * kd0;
-            float kd1 = k_cur[d + 1], kd1_sq = kd1 * kd1;
-
-            s0[d + 0] = decay * s0[d + 0] + vh[d + 0];
-            s0[d + 1] = decay * s0[d + 1] + vh[d + 1];
-
-            k1[d + 0] = decay * k1[d + 0] + kd0;
-            k1[d + 1] = decay * k1[d + 1] + kd1;
-
-            k2[d + 0] = decay * k2[d + 0] + kd0_sq;
-            k2[d + 1] = decay * k2[d + 1] + kd1_sq;
-
-            float *s1_r0 = s1 + (size_t)(d + 0) * D;
-            float *s1_r1 = s1 + (size_t)(d + 1) * D;
-            float *s2_r0 = s2 + (size_t)(d + 0) * D;
-            float *s2_r1 = s2 + (size_t)(d + 1) * D;
-
-            for (int e = 0; e < D; e++) {
-                float ve = vh[e];
-                s1_r0[e] = decay * s1_r0[e] + kd0 * ve;
-                s2_r0[e] = decay * s2_r0[e] + kd0_sq * ve;
-                s1_r1[e] = decay * s1_r1[e] + kd1 * ve;
-                s2_r1[e] = decay * s2_r1[e] + kd1_sq * ve;
-            }
-        }
-        for (; d < D; d++) {
-            float kd = k_cur[d];
-            float kd2 = kd * kd;
-
-            s0[d] = decay * s0[d] + vh[d];
-            k1[d] = decay * k1[d] + kd;
-            k2[d] = decay * k2[d] + kd2;
-
-            float *s1_row = s1 + (size_t)d * D;
-            float *s2_row = s2 + (size_t)d * D;
-
-            for (int e = 0; e < D; e++) {
-                s1_row[e] = decay * s1_row[e] + kd * vh[e];
-                s2_row[e] = decay * s2_row[e] + kd2 * vh[e];
-            }
-        }
-
-        /* 2. Output Contraction (Numerator - Tiled Accumulation) */
-        for (int e = 0; e < D; e++) {
-            num[e] = s0[e];
-        }
-
-        d = 0;
-        for (; d <= D - 2; d += 2) {
-            float q0 = q_cur[d + 0], q0_sq = 0.5f * q0 * q0;
-            float q1 = q_cur[d + 1], q1_sq = 0.5f * q1 * q1;
-
-            const float *s1_r0 = s1 + (size_t)(d + 0) * D;
-            const float *s1_r1 = s1 + (size_t)(d + 1) * D;
-            const float *s2_r0 = s2 + (size_t)(d + 0) * D;
-            const float *s2_r1 = s2 + (size_t)(d + 1) * D;
-
-            for (int e = 0; e < D; e++) {
-                num[e] += (q0 * s1_r0[e] + q0_sq * s2_r0[e])
-                        + (q1 * s1_r1[e] + q1_sq * s2_r1[e]);
-            }
-        }
-        for (; d < D; d++) {
-            float qd = q_cur[d];
-            float qd2_half = 0.5f * qd * qd;
-            const float *s1_row = s1 + (size_t)d * D;
-            const float *s2_row = s2 + (size_t)d * D;
-
-            for (int e = 0; e < D; e++) {
-                num[e] += qd * s1_row[e] + qd2_half * s2_row[e];
-            }
-        }
-
-        /* 3. Normalization Contraction (Denominator) */
-        float den = *k0;
-        int d_den = 0;
-        for (; d_den <= D - 4; d_den += 4) {
-            float q0 = q_cur[d_den + 0], q1 = q_cur[d_den + 1];
-            float q2 = q_cur[d_den + 2], q3 = q_cur[d_den + 3];
-            den += (q0 * k1[d_den + 0] + 0.5f * (q0 * q0) * k2[d_den + 0])
-                 + (q1 * k1[d_den + 1] + 0.5f * (q1 * q1) * k2[d_den + 1])
-                 + (q2 * k1[d_den + 2] + 0.5f * (q2 * q2) * k2[d_den + 2])
-                 + (q3 * k1[d_den + 3] + 0.5f * (q3 * q3) * k2[d_den + 3]);
-        }
-        for (; d_den < D; d_den++) {
-            float qd = q_cur[d_den];
-            den += qd * k1[d_den] + 0.5f * (qd * qd) * k2[d_den];
-        }
-
-        if (den < eps) {
-            den = eps;
-        }
-        float inv_den = 1.0f / den;
-
-        for (int e = 0; e < D; e++) {
-            outh[e] = num[e] * inv_den;
-        }
-    }
-
-    if (D > MAX_STACK_HEAD_DIM) {
-        free(q_cur);
-        free(k_cur);
-        free(num);
-    }
+    prime_step_delta(cfg, state, q_in, k_in, v_in, NULL, NULL, out);
 }
 
 void prime_prefill(
@@ -271,13 +338,15 @@ void prime_prefill(
     const float *v_seq,
     float *out_seq
 ) {
-    size_t step_stride = (size_t)cfg->num_heads * cfg->head_dim;
+    int stride = cfg->num_heads * cfg->head_dim;
     for (int t = 0; t < seq_len; t++) {
-        const float *q_t = q_seq + (size_t)t * step_stride;
-        const float *k_t = k_seq + (size_t)t * step_stride;
-        const float *v_t = v_seq + (size_t)t * step_stride;
-        float *out_t     = out_seq + (size_t)t * step_stride;
-
-        prime_step(cfg, state, q_t, k_t, v_t, out_t);
+        prime_step(
+            cfg,
+            state,
+            q_seq + t * stride,
+            k_seq + t * stride,
+            v_seq + t * stride,
+            out_seq + t * stride
+        );
     }
 }

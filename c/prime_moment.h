@@ -4,10 +4,16 @@
  * Constant-state O(1) second-order recurrent attention operator.
  *
  * Implements:
- *   exp( (q_t^T k_j) / sqrt(D) ) ~ 1 + s_tj + 0.5 * s_tj^2
+ *   1. Second-order Taylor polynomial recurrence:
+ *      exp( (q_t^T k_j) / sqrt(D) ) ~ 1 + s_tj + 0.5 * s_tj^2
+ *   2. Gated Delta-PRIME decoupled erase/write error delta updates:
+ *      e_t = v_t - (S_1 k_t + 0.5 S_2 k_t^2)
+ *      S_1 <- (1 - b_t) S_1 + w_t e_t k_t^T
+ *   3. Dual-state Lyapunov contractive norm projection (||S_1||_F, ||S_2||_F <= C_max)
+ *   4. Second-order Harmonic Phasor RoPE (fundamental theta and 2nd harmonic 2*theta)
  *
  * Memory Complexity:
- *   - O(1) in sequence length L.
+ *   - Strictly O(1) in sequence length L.
  *   - Exactly (2*D^2 + 3*D + 1) * sizeof(float) per attention head.
  */
 
@@ -23,15 +29,18 @@ extern "C" {
 typedef struct {
     int num_heads;
     int head_dim;
-    float decay;        /* e.g. 0.9995f */
-    float eps;          /* e.g. 1e-4f */
-    int use_qk_norm;    /* 1 to apply LayerNorm to Q and K, 0 otherwise */
+    float decay;            /* e.g. 0.9995f */
+    float eps;              /* e.g. 1e-4f */
+    int use_qk_norm;        /* 1 to apply LayerNorm to Q and K, 0 otherwise */
+    int use_delta_rule;     /* 1 for Gated Delta-PRIME error correction, 0 for additive */
+    float lyapunov_bound;   /* Maximum Frobenius norm ceiling (e.g. 25.0f, 0 to disable) */
+    int use_harmonic_rope;  /* 1 for 2nd-order harmonic phasor rotation, 0 otherwise */
 } prime_config_t;
 
 typedef struct {
     int num_heads;
     int head_dim;
-    size_t state_bytes; /* Total allocated bytes for recurrent state */
+    size_t state_bytes;     /* Total allocated bytes for recurrent state */
     
     /* Recurrent state tensors (flattened contiguous arrays):
      * S0: [H, D]       (0th value moment: sum v_j)
@@ -61,19 +70,40 @@ void prime_state_reset(prime_state_t *state);
 /* Free allocated state memory */
 void prime_state_free(prime_state_t *state);
 
+/* Apply dual-state Lyapunov contractive projection */
+void prime_lyapunov_project(prime_state_t *state, float bound);
+
+/* Apply Second-Order Harmonic Phasor RoPE */
+void prime_apply_harmonic_rope(
+    float *q, float *k, float *q2, float *k2,
+    int head_dim, int pos, float base_freq
+);
+
 /*
- * Single-step autoregressive decode:
- * Computes recurrent update and output contraction for one token across all heads.
- *
+ * Single-step autoregressive decode (Additive or Gated Delta-PRIME):
  * Inputs:
- *   cfg   : Attention configuration
- *   state : Pointer to recurrent state (updated in-place)
- *   q_in  : Query tensor  [num_heads, head_dim]
- *   k_in  : Key tensor    [num_heads, head_dim]
- *   v_in  : Value tensor  [num_heads, head_dim]
+ *   cfg    : Attention configuration
+ *   state  : Pointer to recurrent state (updated in-place)
+ *   q_in   : Query tensor  [num_heads, head_dim]
+ *   k_in   : Key tensor    [num_heads, head_dim]
+ *   v_in   : Value tensor  [num_heads, head_dim]
+ *   b_gate : Optional erase gate [num_heads, head_dim] (NULL defaults to 0.05)
+ *   w_gate : Optional write gate [num_heads, head_dim] (NULL defaults to 0.25)
  * Outputs:
- *   out   : Output tensor [num_heads, head_dim]
+ *   out    : Output tensor [num_heads, head_dim]
  */
+void prime_step_delta(
+    const prime_config_t *cfg,
+    prime_state_t *state,
+    const float *q_in,
+    const float *k_in,
+    const float *v_in,
+    const float *b_gate,
+    const float *w_gate,
+    float *out
+);
+
+/* Backward-compatible standard step (calls prime_step_delta with NULL gates) */
 void prime_step(
     const prime_config_t *cfg,
     prime_state_t *state,
@@ -83,20 +113,7 @@ void prime_step(
     float *out
 );
 
-/*
- * Multi-token prefill:
- * Processes a sequence of L tokens sequentially, updating state and producing outputs.
- *
- * Inputs:
- *   cfg     : Attention configuration
- *   state   : Pointer to recurrent state (updated in-place)
- *   seq_len : Length of the sequence (L)
- *   q_seq   : Query sequence  [seq_len, num_heads, head_dim]
- *   k_seq   : Key sequence    [seq_len, num_heads, head_dim]
- *   v_seq   : Value sequence  [seq_len, num_heads, head_dim]
- * Outputs:
- *   out_seq : Output sequence [seq_len, num_heads, head_dim]
- */
+/* Multi-token prefill sequence */
 void prime_prefill(
     const prime_config_t *cfg,
     prime_state_t *state,
