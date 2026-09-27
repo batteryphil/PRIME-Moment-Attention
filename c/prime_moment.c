@@ -30,6 +30,9 @@ prime_config_t prime_default_config(int num_heads, int head_dim) {
     cfg.use_differential = 0;
     cfg.diff_lambda = 0.5f;
     cfg.latent_dim = 0;
+    cfg.use_rwkv7_curvature_delta = 0;
+    cfg.use_symplectic_integrator = 0;
+    cfg.symplectic_theta = 0.01f;
     return cfg;
 }
 
@@ -42,6 +45,30 @@ prime_config_t prime_wave3_config(int num_heads, int head_dim, int latent_dim) {
     cfg.latent_dim = latent_dim;
     cfg.lyapunov_bound = 15.0f;
     return cfg;
+}
+
+prime_config_t prime_wave4_config(int num_heads, int head_dim, int latent_dim) {
+    prime_config_t cfg = prime_wave3_config(num_heads, head_dim, latent_dim);
+    cfg.use_rwkv7_curvature_delta = 1;
+    cfg.use_symplectic_integrator = 1;
+    cfg.symplectic_theta = 0.01f;
+    return cfg;
+}
+
+float prime_state_frobenius_energy(const prime_state_t *state) {
+    if (!state) return 0.0f;
+    int H = state->num_heads;
+    int D = state->head_dim;
+    int K = (state->latent_dim > 0) ? state->latent_dim : D;
+    size_t total_elements = (size_t)H * D * K;
+
+    float energy = 0.0f;
+    for (size_t i = 0; i < total_elements; i++) {
+        float val1 = state->s1[i];
+        float val2 = state->s2[i];
+        energy += val1 * val1 + val2 * val2;
+    }
+    return energy;
 }
 
 prime_state_t* prime_state_create_ext(int num_heads, int head_dim, int latent_dim) {
@@ -352,6 +379,19 @@ void prime_step_delta(
                     float delta_res1 = (w_e_d - proj1_d);
                     float delta_res2 = (w_e_d - proj2_d);
 
+                    if (cfg->use_rwkv7_curvature_delta) {
+                        /* RWKV-7 Error-Correcting Curvature Update:
+                         * Curvature target is (v_d * k_hat_d), predicted curvature is S2 @ k_hat2 */
+                        float curv_target_d = vh[d] * k_hat[d % K];
+                        float curv_pred_d = 0.0f;
+                        for (int m = 0; m < K; m++) {
+                            curv_pred_d += s2_row[m] * k_hat2[m];
+                        }
+                        float curv_error_d = curv_target_d - curv_pred_d;
+                        float w_e2_d = w_d * curv_error_d;
+                        delta_res2 = (w_e2_d - proj2_d);
+                    }
+
                     for (int m = 0; m < K; m++) {
                         s1_row[m] = alpha_vec[m] * s1_row[m] + k_hat[m] * delta_res1;
                         s2_row[m] = alpha_vec[m] * s2_row[m] + k_hat2[m] * delta_res2;
@@ -373,6 +413,22 @@ void prime_step_delta(
                     for (int m = 0; m < K; m++) {
                         s1_row[m] = gamma_b * s1_row[m] + delta_payload * k_hat[m];
                         s2_row[m] = gamma_b * s2_row[m] + delta_payload * k_hat2[m];
+                    }
+                }
+            }
+
+            /* 2b. Symplectic Hamiltonian Phase-Space Flow (Wave 4) */
+            if (cfg->use_symplectic_integrator) {
+                float cos_th = cosf(cfg->symplectic_theta);
+                float sin_th = sinf(cfg->symplectic_theta);
+                for (int d = 0; d < D; d++) {
+                    float *s1_row = s1 + d * K;
+                    float *s2_row = s2 + d * K;
+                    for (int m = 0; m < K; m++) {
+                        float q_pos = s1_row[m];
+                        float p_mom = s2_row[m];
+                        s1_row[m] = cos_th * q_pos + sin_th * p_mom;
+                        s2_row[m] = -sin_th * q_pos + cos_th * p_mom;
                     }
                 }
             }

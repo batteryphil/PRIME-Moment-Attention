@@ -41,6 +41,11 @@ typedef struct {
     int use_differential;   /* 1 for Microsoft Differential Taylor Attention (noise cancellation) */
     float diff_lambda;      /* Differential noise subtraction factor lambda (default: 0.5f) */
     int latent_dim;         /* DeepSeek MLA latent key dimension d_c (e.g. 16; 0 for full D) */
+
+    /* Wave 4 Frontier Advancements */
+    int use_rwkv7_curvature_delta; /* 1 for RWKV-7 2nd-order curvature error delta update */
+    int use_symplectic_integrator; /* 1 for Symplectic Hamiltonian phase-space volume preservation */
+    float symplectic_theta;        /* Symplectic rotation angle theta (default: 0.01f) */
 } prime_config_t;
 
 typedef struct {
@@ -73,6 +78,12 @@ prime_config_t prime_default_config(int num_heads, int head_dim);
 
 /* Create Wave 3 frontier configuration */
 prime_config_t prime_wave3_config(int num_heads, int head_dim, int latent_dim);
+
+/* Create Wave 4 frontier configuration (RWKV-7 curvature delta + Symplectic flow + MLA) */
+prime_config_t prime_wave4_config(int num_heads, int head_dim, int latent_dim);
+
+/* Compute total state Frobenius energy: sum(||S_1||_F^2 + ||S_2||_F^2) */
+float prime_state_frobenius_energy(const prime_state_t *state);
 
 /* Allocate recurrent state memory (latent_dim == 0 for standard full D x D) */
 prime_state_t* prime_state_create_ext(int num_heads, int head_dim, int latent_dim);
