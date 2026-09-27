@@ -596,25 +596,28 @@ Secondary Repository: {secondary_repo_name}
             else:
                 prompt_text = f"System: {system_prompt}\nUser: {user_prompt}\nAssistant: <think>\n"
                 
-            inputs = tokenizer(prompt_text, return_tensors="pt").to(DEVICE)
+            inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1536, truncation=True).to(DEVICE)
             
             def stream_callback(accumulated_text: str, is_end: bool):
                 telemetry.update("THINKING", domain, topic_title, cycle, live_thought=accumulated_text)
                 
             streamer = LiveThoughtStreamer(tokenizer, on_token_cb=stream_callback)
             
-            print(f"[*] Generating theoretical formulation with DeepSeek-R1-Distill-14B (max 1500 tokens)...")
+            print(f"[*] Generating theoretical formulation with DeepSeek-R1-Distill-14B (max 1000 tokens)...")
             gen_start = time.time()
             with torch.no_grad():
                 out = model.generate(
                     **inputs,
-                    max_new_tokens=1500,
+                    max_new_tokens=1000,
                     temperature=0.6,
                     top_p=0.95,
                     do_sample=True,
                     streamer=streamer
                 )
             raw_response = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True).strip()
+            del inputs, out
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             
             # Sanitize output (removes any accidental JSON schema leakage)
             clean_response = sanitize_output(raw_response)
@@ -697,6 +700,8 @@ Secondary Repository: {secondary_repo_name}
         except Exception as e:
             print(f"[!] Exception in research cycle: {e}")
             traceback.print_exc()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             time.sleep(10)
             track_idx += 1
 
