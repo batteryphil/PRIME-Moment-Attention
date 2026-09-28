@@ -35,6 +35,7 @@ os.makedirs(os.environ["TORCH_EXTENSIONS_DIR"], exist_ok=True)
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 from prime_moment_attention.primenet_cothinker_bridge import PrimeNetCoThinker
+from prime_moment_attention.deepseek_671b_oracle import DeepSeek671BOracle
 
 # Paths
 BASE_DIR = "/home/phil/.gemini/antigravity/scratch"
@@ -193,6 +194,8 @@ model = AutoModelForCausalLM.from_pretrained(
 model.eval()
 
 cothinker = PrimeNetCoThinker()
+oracle = DeepSeek671BOracle()
+print(f"[*] DeepSeek-R1 671B Senior Oracle: {'ONLINE (' + oracle.provider + ')' if oracle.is_available() else 'STANDBY (Awaiting Key in api_keys.json)'}")
 vram_boot = torch.cuda.memory_allocated() / (1024**3) if torch.cuda.is_available() else 0.0
 print(f"[+] Model loaded successfully! VRAM: {vram_boot:.2f} GB")
 telemetry.update("MODEL_READY", "System", "Model loaded in VRAM", telemetry.theories_count + 1)
@@ -550,10 +553,11 @@ Provide a complete, runnable Python/C99 verification script for adjoint memory d
 # ---------------------------------------------------------------------------
 # Socratic Inquiry & Clarification Engine
 # ---------------------------------------------------------------------------
-def answer_pending_socratic_inquiries(model, tokenizer, cothinker):
+def answer_pending_socratic_inquiries(model, tokenizer, cothinker, oracle=None):
     """
-    Checks for pending mathematical inquiries from the Student Model (PRIME-125M).
-    Generates step-by-step cognitive derivations with <think> traces using DeepSeek-R1,
+    Checks for pending mathematical inquiries from the Student Model (PRIME-152M).
+    Generates step-by-step cognitive derivations with <think> traces using
+    either Level 3 Senior Oracle (DeepSeek-R1 671B) or Level 2 Local Teacher (DeepSeek-R1-Distill-14B),
     verifies arithmetic symbolically with PRIME-Net, and writes clarifications to the vault.
     """
     try:
@@ -576,8 +580,8 @@ def answer_pending_socratic_inquiries(model, tokenizer, cothinker):
         print(f"    Context:  {context_snippet[:120]}...")
         
         system_prompt = (
-            "You are the Lead Theoretical Architect and Teacher (DeepSeek-R1-Distill-14B). "
-            "Your apprentice model (PRIME-125M) is studying your theoretical papers and needs guidance. "
+            "You are the Lead Theoretical Architect and Teacher (DeepSeek-R1 671B / 14B). "
+            "Your apprentice model (PRIME-152M) is studying your theoretical papers and needs guidance. "
             "First, engage in your step-by-step cognitive reasoning inside <think>...</think>, analyzing the exact mathematical derivation and intuitive physics. "
             "Then, provide the complete, crystal-clear derivation with explicit intermediate steps so the student can absorb the exact reasoning trajectory."
         )
@@ -587,28 +591,45 @@ def answer_pending_socratic_inquiries(model, tokenizer, cothinker):
             f"Student Question:\n\"{question_text}\"\n\n"
             "Please provide a rigorous mathematical derivation and clear physical intuition to clarify this concept."
         )
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ]
-        if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
-            prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        else:
-            prompt_text = f"System: {system_prompt}\nUser: {user_prompt}\nAssistant: <think>\n"
-            
-        inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1280, truncation=True).to(DEVICE)
-        with torch.no_grad():
-            out = model.generate(
-                **inputs,
-                max_new_tokens=450,
-                temperature=0.6,
-                top_p=0.95,
-                do_sample=True
-            )
-        raw_ans = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True).strip()
-        del inputs, out
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+
+        raw_ans = None
+        mentor_name = "DeepSeek-R1-Distill-14B"
+
+        # 1. Attempt Level 3 Senior Oracle (DeepSeek-R1 671B) if active
+        if oracle and oracle.is_available():
+            print(f"[*] Querying Level 3 Senior Oracle (DeepSeek-R1 671B via {oracle.provider}) for Socratic Inquiry #{inquiry_id}...")
+            oracle_res = oracle.query_derivation(user_prompt, system_prompt=system_prompt, timeout=45)
+            if oracle_res and oracle_res.get("full_output"):
+                raw_ans = oracle_res["full_output"]
+                mentor_name = f"DeepSeek-R1 671B ({oracle_res['provider']})"
+                print(f"[+] Received Socratic clarification from DeepSeek-R1 671B ({len(raw_ans)} chars)!")
+
+        # 2. Seamless Fallback to Level 2 Local Teacher (DeepSeek-R1-Distill-14B)
+        if not raw_ans:
+            if oracle and oracle.is_available():
+                print("[-] Oracle request failed or timed out; falling back to local DeepSeek-R1-Distill-14B...")
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+            if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
+                prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            else:
+                prompt_text = f"System: {system_prompt}\nUser: {user_prompt}\nAssistant: <think>\n"
+                
+            inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1280, truncation=True).to(DEVICE)
+            with torch.no_grad():
+                out = model.generate(
+                    **inputs,
+                    max_new_tokens=450,
+                    temperature=0.6,
+                    top_p=0.95,
+                    do_sample=True
+                )
+            raw_ans = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True).strip()
+            del inputs, out
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             
         clean_ans = sanitize_output(raw_ans)
         verified_ans, _ = cothinker.intercept_and_solve(clean_ans)
@@ -620,10 +641,11 @@ def answer_pending_socratic_inquiries(model, tokenizer, cothinker):
         """, (verified_ans, inquiry_id))
         conn.commit()
         conn.close()
-        print(f"[+] Socratic Clarification generated ({len(verified_ans)} chars) and recorded in SQLite!")
+        print(f"[+] Socratic Clarification generated via {mentor_name} ({len(verified_ans)} chars) and recorded in SQLite!")
         
         with open(DOSSIER_FILE, "a", encoding="utf-8") as f:
             f.write(f"\n### Socratic Clarification for Student (Inquiry #{inquiry_id} on Cycle {inq_cycle})\n\n")
+            f.write(f"**Mentor Model**: `{mentor_name}`  \n")
             f.write(f"**Student Inquiry**: *{question_text}*\n\n")
             f.write(f"**Teacher Response & Derivation**:\n\n{verified_ans}\n\n---\n\n")
     except Exception as e:
@@ -727,30 +749,50 @@ Secondary Repository: {secondary_repo_name}
                 {"role": "user", "content": user_prompt}
             ]
             
-            if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
-                prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            else:
-                prompt_text = f"System: {system_prompt}\nUser: {user_prompt}\nAssistant: <think>\n"
+            # Step 3: Upgraded Deep Formulation (Tri-Level Hierarchy)
+            telemetry.update("THINKING", domain, topic_title, cycle)
+
+            raw_response = None
+            formulator_name = "DeepSeek-R1-Distill-14B"
+
+            # 1. Attempt Level 3 Senior Oracle (DeepSeek-R1 671B) if active
+            if oracle and oracle.is_available():
+                print(f"[*] Querying Level 3 Senior Oracle (DeepSeek-R1 671B via {oracle.provider}) for Cycle {cycle} formulation...")
+                telemetry.update("THINKING", domain, topic_title, cycle, live_thought="Synthesizing frontier theorems via DeepSeek-R1 671B Oracle...")
+                oracle_res = oracle.query_derivation(user_prompt, system_prompt=system_prompt, timeout=60)
+                if oracle_res and oracle_res.get("full_output"):
+                    raw_response = oracle_res["full_output"]
+                    formulator_name = f"DeepSeek-R1 671B ({oracle_res['provider']})"
+                    print(f"[+] Successfully received 671B frontier formulation from {oracle_res['model']} ({len(raw_response)} chars)!")
+
+            # 2. Seamless Fallback to Level 2 Local Teacher (DeepSeek-R1-Distill-14B)
+            if not raw_response:
+                if oracle and oracle.is_available():
+                    print("[-] Oracle unavailable or rate-limited; falling back to local DeepSeek-R1-Distill-14B...")
+                if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
+                    prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+                else:
+                    prompt_text = f"System: {system_prompt}\nUser: {user_prompt}\nAssistant: <think>\n"
+                    
+                inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1280, truncation=True).to(DEVICE)
                 
-            inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1280, truncation=True).to(DEVICE)
-            
-            telemetry.update("THINKING", domain, topic_title, cycle, live_thought="Synthesizing rigorous mathematical derivation and C99 blueprints...")
-            print(f"[*] Generating theoretical formulation with DeepSeek-R1-Distill-14B (prompt: {inputs.input_ids.shape[1]} tokens, max 1000 tokens)...")
-            gen_start = time.time()
-            with torch.no_grad():
-                out = model.generate(
-                    **inputs,
-                    max_new_tokens=1000,
-                    temperature=0.6,
-                    top_p=0.95,
-                    do_sample=True
-                )
-            gen_duration = time.time() - gen_start
-            raw_response = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True).strip()
-            print(f"[+] Generation finished in {gen_duration:.2f}s ({len(raw_response)} chars).")
-            del inputs, out
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+                telemetry.update("THINKING", domain, topic_title, cycle, live_thought="Synthesizing rigorous mathematical derivation and C99 blueprints...")
+                print(f"[*] Generating theoretical formulation with DeepSeek-R1-Distill-14B (prompt: {inputs.input_ids.shape[1]} tokens, max 1000 tokens)...")
+                gen_start = time.time()
+                with torch.no_grad():
+                    out = model.generate(
+                        **inputs,
+                        max_new_tokens=1000,
+                        temperature=0.6,
+                        top_p=0.95,
+                        do_sample=True
+                    )
+                gen_duration = time.time() - gen_start
+                raw_response = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True).strip()
+                print(f"[+] Local generation finished in {gen_duration:.2f}s ({len(raw_response)} chars).")
+                del inputs, out
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
             
             # Sanitize output (removes any accidental JSON schema leakage)
             clean_response = sanitize_output(raw_response)
@@ -807,6 +849,7 @@ Secondary Repository: {secondary_repo_name}
             with open(DOSSIER_FILE, "a", encoding="utf-8") as f:
                 f.write(f"## Cycle {cycle}: {domain}\n\n")
                 f.write(f"**Timestamp**: {time.strftime('%Y-%m-%d %H:%M:%S')}  \n")
+                f.write(f"**Theoretical Architect**: `{formulator_name}`  \n")
                 f.write(f"**Synthesized Repos**: `{primary_repo_name}` & `{secondary_repo_name}`  \n")
                 f.write(f"**External Literature Found**: {len(all_literature)} sources  \n")
                 if injections:
@@ -821,8 +864,8 @@ Secondary Repository: {secondary_repo_name}
                 
             print(f"[+] Cycle {cycle} complete! Theory saved to {DOSSIER_FILE}")
             
-            # Step 5b: Socratic Mentorship of Student Model (PRIME-125M)
-            answer_pending_socratic_inquiries(model, tokenizer, cothinker)
+            # Step 5b: Socratic Mentorship of Student Model (PRIME-152M)
+            answer_pending_socratic_inquiries(model, tokenizer, cothinker, oracle=oracle)
             
             # Step 6: Advance & Cleanup
             cycle += 1
