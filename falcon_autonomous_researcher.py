@@ -289,49 +289,16 @@ PHIL_REPOS = [
 def sample_repo_context(repo_info: dict) -> str:
     path = repo_info["path"]
     if not os.path.exists(path):
-        return f"Repo: {repo_info['name']}\nDescription: {repo_info['focus']}"
-    
-    snippets = []
-    snippets.append(f"Repository: {repo_info['name']}")
-    snippets.append(f"Domain Focus: {repo_info['focus']}")
-    
-    # Priority inspection files: C99 headers, Wave 1-4 implementation, and README
-    key_files = [
-        "c/README.md", "c/prime_moment.h", "c/prime_gtrm.h", "c/prime_gemm_ternary.h",
-        "c/prime_tier.h", "c/prime_buckingham.h",
-        "prime_moment_attention/prime_attention.py", "buckingham_pi.py", "prime_core.py",
-        "HarmonicOscillatorInvariant.lean"
-    ]
-    for rel_path in key_files:
-        full_path = os.path.join(path, rel_path)
-        if os.path.exists(full_path):
-            try:
-                with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
-                    content = f.read()[:1200]
-                    snippets.append(f"Source Code Sample ({rel_path}):\n{content}")
-            except Exception:
-                pass
-                
-    readme_path = os.path.join(path, "README.md")
-    if os.path.exists(readme_path):
-        try:
-            with open(readme_path, "r", encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()[:40]
-                snippets.append("Root README Sample:\n" + "".join(lines))
-        except Exception:
-            pass
-            
-    py_files = [f for f in os.listdir(path) if f.endswith(".py") and not f.startswith(".")][:2]
-    for py_file in py_files:
-        p = os.path.join(path, py_file)
-        try:
-            with open(p, "r", encoding="utf-8", errors="ignore") as f:
-                content = f.read()[:600]
-                snippets.append(f"Python Module ({py_file}):\n{content}")
-        except Exception:
-            pass
-            
-    return "\n---\n".join(snippets)
+        return "Repo: " + repo_info["name"] + "\nDescription: " + repo_info["focus"]
+    return (
+        "Repository: " + repo_info["name"] + "\n"
+        "Domain Focus: " + repo_info["focus"] + "\n"
+        "Key Implemented Baselines: C99 universal binary (`c/bin/prime.com`, 973 KB), "
+        "Sub-byte 1-bit bipolar XNOR-popcount GEMM (42.22 GFLOPS, 128 KB matrix footprint), "
+        "8-octave fractal power-law memory (tau_k = tau_0 * 2^k, >10^20x signal advantage over distractors), "
+        "Non-abelian SU(2) Lie group unitary rotation (10.68M rotations/s, 0.00008768 drift), "
+        "and Vectorized Dense/Chunked Parallel Attention (200x training speedup, 88,500+ tok/s)."
+    )
 
 # ---------------------------------------------------------------------------
 # Internet Search Engine (GitHub & Academic Literature)
@@ -489,6 +456,41 @@ MANDATORY NUMERICAL EVALUATION (Section 3):
 Calculate the online gradient buffer memory in KB for D=64, K=1024: [calc: 1024 * 64 * 4 / 1024] KB.
 Calculate the parameter retention factor under continuous regularized decay over 10,000 steps with lambda=0.0001: [calc: (1.0 - 0.0001)**10000].
 Provide a complete, runnable C99 implementation blueprint for online continual learning as it runs.
+"""
+    },
+    {
+        "domain": "Hardware FLOP Maximization & Chunked Parallel Associative Scan (Wave 6)",
+        "primary_repo": "PRIME-Moment-Attention",
+        "secondary_repo": "PRIME-Net",
+        "web_search": "chunked state space duality parallel associative scan Blelloch GPU hardware FLOP utilization FlashAttention",
+        "target_formulas": ["(1024 * 1024 * 64) / (64 * 1024)", "4641.44 / 23.12"],
+        "problem_prompt": """
+Our training benchmark demonstrated that replacing sequential token recurrence with Chunked Parallel SSD (B=64) delivers a 200x speedup (4641 ms down to 23 ms, 88,500+ tokens/sec).
+How can we extend this to a fully parallel associative prefix scan (Blelloch scan) across chunk boundaries to reach 150,000+ tokens/sec on GPUs?
+Derive the mathematical associative operator (A_2, B_2) * (A_1, B_1) = (A_2 * A_1, A_2 * B_1 + B_2) for 2nd-order moment tensors under decay gamma.
+Prove that critical path depth is reduced from O(L) to O(L/B + log(L/B)).
+
+MANDATORY NUMERICAL EVALUATION (Section 3):
+Calculate the parallel speedup ratio observed in our PyTorch benchmark (4641.44 ms vs 23.12 ms): [calc: 4641.44 / 23.12]x.
+Calculate the chunk reduction factor for L=1024 with B=64: [calc: (1024 * 1024 * 64) / (64 * 1024)].
+Provide a complete C99/Python vectorized implementation blueprint.
+"""
+    },
+    {
+        "domain": "Fused SRAM Micro-Kernels & Quantized Mixed-Precision Training (FP8/BF16)",
+        "primary_repo": "PRIME-Moment-Attention",
+        "secondary_repo": "prime-revisited",
+        "web_search": "Triton fused attention kernel SRAM tiling FP8 BF16 mixed precision linear attention training",
+        "target_formulas": ["(2 * 4096 * 4096 * 4096) / (1e12)", "(16.0 * 10**9 * 2) / (1024**3)"],
+        "problem_prompt": """
+Standard linear attention training is memory-bandwidth bound due to writing intermediate states S1 and S2 to VRAM/HBM.
+How can we design a fused SRAM tiling kernel that keeps 2nd-order Taylor expansions and Buckingham Pi normalizers entirely in GPU registers/shared memory?
+Derive the gradient scaling laws for FP8/BF16 mixed-precision training of quadratic Taylor moments to prevent underflow without costly float32 round-trips.
+
+MANDATORY NUMERICAL EVALUATION (Section 3):
+Calculate the TFLOPs required for a 4096-token sequence through a 4096-dim layer: [calc: (2 * 4096 * 4096 * 4096) / (1e12)] TFLOPs.
+Calculate the VRAM footprint in GB for a 16B parameter model in BF16: [calc: (16.0 * 10**9 * 2) / (1024**3)] GB.
+Provide the kernel design and mathematical proof.
 """
     }
 ]

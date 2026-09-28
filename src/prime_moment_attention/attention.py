@@ -133,33 +133,49 @@ class PrimeMomentAttention(nn.Module):
 
             y = (num / den).unsqueeze(2) # [B, H, 1, D]
 
-        # Prefill Mode (L > 1)
+        # Prefill Mode (L > 1): Fast Vectorized Parallel Matrix Formulation
         else:
-            y_steps = []
-            for t in range(L):
-                qt = q_f32[:, :, t]
-                kt = k_f32[:, :, t]
-                vt = v_f32[:, :, t]
+            idx = torch.arange(L, device=hidden_states.device)
+            diff = idx.unsqueeze(1) - idx.unsqueeze(0)
+            causal_mask = diff >= 0
+            decay_mat = torch.where(
+                causal_mask,
+                torch.pow(self.decay, diff.float()),
+                torch.zeros(L, L, device=hidden_states.device)
+            ).view(1, 1, L, L)
 
-                S0 = self.decay * S0 + vt
-                S1 = self.decay * S1 + torch.einsum('bhd,bhe->bhde', kt, vt)
-                S2 = self.decay * S2 + torch.einsum('bhd,bhe->bhde', kt**2, vt)
+            # Quadratic Taylor kernel: 1 + (q @ k^T) + 0.5 * (q^2 @ (k^2)^T)
+            dot1 = torch.matmul(q_f32, k_f32.transpose(-1, -2))
+            dot2 = 0.5 * torch.matmul(q_f32**2, (k_f32**2).transpose(-1, -2))
+            A = decay_mat * (1.0 + dot1 + dot2)
 
-                K0 = self.decay * K0 + 1.0
-                K1 = self.decay * K1 + kt
-                K2 = self.decay * K2 + (kt**2)
+            num_dense = torch.matmul(A, v_f32)
+            den_dense = torch.sum(A, dim=-1, keepdim=True).clamp(min=self.eps)
 
-                term1_num = torch.einsum('bhd,bhde->bhe', qt, S1)
-                term2_num = 0.5 * torch.einsum('bhd,bhde->bhe', qt**2, S2)
-                num = S0 + term1_num + term2_num
+            # If an incoming initial state exists, incorporate its decaying carry-over
+            if state is not None:
+                decay_into = torch.pow(self.decay, (idx + 1).float()).view(1, 1, L, 1)
+                carry_num = decay_into * (S0.unsqueeze(2) + torch.matmul(q_f32, S1) + 0.5 * torch.matmul(q_f32**2, S2))
+                carry_den = decay_into * (K0.unsqueeze(2) + torch.sum(q_f32 * K1.unsqueeze(2), dim=-1, keepdim=True) + 0.5 * torch.sum((q_f32**2) * K2.unsqueeze(2), dim=-1, keepdim=True))
+                num_dense = num_dense + carry_num
+                den_dense = (den_dense + carry_den).clamp(min=self.eps)
 
-                term1_den = torch.sum(qt * K1, dim=-1, keepdim=True)
-                term2_den = 0.5 * torch.sum((qt**2) * K2, dim=-1, keepdim=True)
-                den = (K0 + term1_den + term2_den).clamp(min=self.eps)
+            y = num_dense / den_dense
 
-                y_steps.append(num / den)
-
-            y = torch.stack(y_steps, dim=2) # [B, H, L, D]
+            # If return_state is requested, compute terminal state in one matrix multiply
+            if return_state:
+                weights = torch.pow(self.decay, (L - 1 - idx).float()).view(1, 1, L, 1)
+                k_w = k_f32 * weights
+                k2_w = (k_f32**2) * weights
+                v_w = v_f32 * weights
+                
+                decay_total = math.pow(self.decay, L)
+                S0 = (decay_total * S0 if state is not None else 0.0) + torch.sum(v_w, dim=2)
+                S1 = (decay_total * S1 if state is not None else 0.0) + torch.matmul(k_w.transpose(-1, -2), v_f32)
+                S2 = (decay_total * S2 if state is not None else 0.0) + torch.matmul(k2_w.transpose(-1, -2), v_f32)
+                K0 = (decay_total * K0 if state is not None else 0.0) + torch.sum(weights, dim=2)
+                K1 = (decay_total * K1 if state is not None else 0.0) + torch.sum(k_w, dim=2)
+                K2 = (decay_total * K2 if state is not None else 0.0) + torch.sum(k2_w, dim=2)
 
         # Reshape to output projection shape
         y = y.to(orig_dtype)
