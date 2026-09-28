@@ -84,6 +84,19 @@ def init_db():
         snippet TEXT
     )
     """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS socratic_inquiries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cycle INTEGER,
+        timestamp TEXT,
+        question_text TEXT,
+        context_snippet TEXT,
+        teacher_response TEXT,
+        status TEXT DEFAULT 'PENDING',
+        student_loss_before REAL,
+        student_loss_after REAL
+    )
+    """)
     conn.commit()
     conn.close()
 
@@ -496,6 +509,88 @@ Provide the kernel design and mathematical proof.
 ]
 
 # ---------------------------------------------------------------------------
+# Socratic Inquiry & Clarification Engine
+# ---------------------------------------------------------------------------
+def answer_pending_socratic_inquiries(model, tokenizer, cothinker):
+    """
+    Checks for pending mathematical inquiries from the Student Model (PRIME-125M).
+    Generates step-by-step cognitive derivations with <think> traces using DeepSeek-R1,
+    verifies arithmetic symbolically with PRIME-Net, and writes clarifications to the vault.
+    """
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, cycle, question_text, context_snippet 
+            FROM socratic_inquiries 
+            WHERE status = 'PENDING' 
+            ORDER BY id ASC LIMIT 1
+        """)
+        row = cur.fetchone()
+        if not row:
+            conn.close()
+            return
+            
+        inquiry_id, inq_cycle, question_text, context_snippet = row
+        print(f"\n[?] >>> TEACHER SOCRATIC MENTORSHIP: Addressing Student Inquiry #{inquiry_id} (Cycle {inq_cycle}) <<<")
+        print(f"    Question: {question_text}")
+        print(f"    Context:  {context_snippet[:120]}...")
+        
+        system_prompt = (
+            "You are the Lead Theoretical Architect and Teacher (DeepSeek-R1-Distill-14B). "
+            "Your apprentice model (PRIME-125M) is studying your theoretical papers and needs guidance. "
+            "First, engage in your step-by-step cognitive reasoning inside <think>...</think>, analyzing the exact mathematical derivation and intuitive physics. "
+            "Then, provide the complete, crystal-clear derivation with explicit intermediate steps so the student can absorb the exact reasoning trajectory."
+        )
+        user_prompt = (
+            f"Regarding Research Paper Cycle {inq_cycle}:\n"
+            f"Context Snippet:\n\"{context_snippet}\"\n\n"
+            f"Student Question:\n\"{question_text}\"\n\n"
+            "Please provide a rigorous mathematical derivation and clear physical intuition to clarify this concept."
+        )
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+        if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template:
+            prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        else:
+            prompt_text = f"System: {system_prompt}\nUser: {user_prompt}\nAssistant: <think>\n"
+            
+        inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1280, truncation=True).to(DEVICE)
+        with torch.no_grad():
+            out = model.generate(
+                **inputs,
+                max_new_tokens=450,
+                temperature=0.6,
+                top_p=0.95,
+                do_sample=True
+            )
+        raw_ans = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True).strip()
+        del inputs, out
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            
+        clean_ans = sanitize_output(raw_ans)
+        verified_ans, _ = cothinker.intercept_and_solve(clean_ans)
+        
+        cur.execute("""
+            UPDATE socratic_inquiries 
+            SET teacher_response = ?, status = 'ANSWERED' 
+            WHERE id = ?
+        """, (verified_ans, inquiry_id))
+        conn.commit()
+        conn.close()
+        print(f"[+] Socratic Clarification generated ({len(verified_ans)} chars) and recorded in SQLite!")
+        
+        with open(DOSSIER_FILE, "a", encoding="utf-8") as f:
+            f.write(f"\n### Socratic Clarification for Student (Inquiry #{inquiry_id} on Cycle {inq_cycle})\n\n")
+            f.write(f"**Student Inquiry**: *{question_text}*\n\n")
+            f.write(f"**Teacher Response & Derivation**:\n\n{verified_ans}\n\n---\n\n")
+    except Exception as e:
+        print(f"[-] Error answering socratic inquiry: {e}")
+
+# ---------------------------------------------------------------------------
 # Main Autonomous Loop v2.0
 # ---------------------------------------------------------------------------
 def run_autonomous_research_loop():
@@ -686,6 +781,9 @@ Secondary Repository: {secondary_repo_name}
                 f.write("---\n\n")
                 
             print(f"[+] Cycle {cycle} complete! Theory saved to {DOSSIER_FILE}")
+            
+            # Step 5b: Socratic Mentorship of Student Model (PRIME-125M)
+            answer_pending_socratic_inquiries(model, tokenizer, cothinker)
             
             # Step 6: Advance & Cleanup
             cycle += 1
