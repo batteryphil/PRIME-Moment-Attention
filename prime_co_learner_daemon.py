@@ -314,19 +314,23 @@ def main():
     print(f"[+] Foundational calibration complete! Baseline Anchor Loss: {baseline_anchor_loss:.4f}")
 
     # 4. Determine Starting Cycle
-    last_cycle_processed = 0
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute("SELECT MAX(cycle) FROM theories")
-        row = cur.fetchone()
-        if row and row[0] is not None:
-            last_cycle_processed = max(0, row[0] - 2)
-        conn.close()
-    except Exception as e:
-        print(f"[-] Warning reading initial cycle: {e}")
+    import argparse
+    parser = argparse.ArgumentParser(description="PRIME Autonomous Co-Learner Daemon")
+    parser.add_argument("--start-cycle", type=int, default=0, help="Cycle number to start after (default 0 for full vault sweep)")
+    args, _ = parser.parse_known_args()
 
-    print(f"[*] Starting streaming ingestion from Cycle {last_cycle_processed + 1} onward...")
+    last_cycle_processed = args.start_cycle
+
+    conn_init = sqlite3.connect(DB_PATH)
+    cur_init = conn_init.cursor()
+    cur_init.execute("SELECT MAX(cycle), COUNT(*) FROM theories")
+    max_c_row = cur_init.fetchone()
+    vault_max_cycle = max_c_row[0] if (max_c_row and max_c_row[0] is not None) else 0
+    vault_total_theories = max_c_row[1] if max_c_row else 0
+    conn_init.close()
+
+    print(f"[*] Research Vault contains {vault_total_theories} theories (up to Cycle {vault_max_cycle}).")
+    print(f"[*] Initiating Ingestion starting after Cycle {last_cycle_processed} (target: Cycle {last_cycle_processed + 1} -> {vault_max_cycle}+)...")
 
     total_ingested = 0
     start_time = time.time()
@@ -338,12 +342,17 @@ def main():
     while True:
         try:
             conn = sqlite3.connect(DB_PATH)
+            cur = conn.cursor()
+
+            # Query current max cycle in vault
+            cur.execute("SELECT MAX(cycle) FROM theories")
+            max_c_row = cur.fetchone()
+            current_max_db_cycle = max_c_row[0] if (max_c_row and max_c_row[0] is not None) else vault_max_cycle
 
             # Check if teacher clarified any past inquiries
             clarif = check_and_absorb_teacher_clarifications(conn, tok, learner)
 
             # Fetch next research theory
-            cur = conn.cursor()
             cur.execute("""
                 SELECT cycle, domain, topic, summary, thought_trace, timestamp 
                 FROM theories 
@@ -357,9 +366,13 @@ def main():
                 vram_now = torch.cuda.memory_allocated() / (1024**2) if torch.cuda.is_available() else 0.0
                 status_dict = {
                     "status": "WAITING_FOR_NEXT_THEORY",
+                    "phase": "LIVE_STREAMING",
                     "uptime_seconds": int(time.time() - start_time),
                     "last_cycle_processed": last_cycle_processed,
                     "total_theories_ingested": total_ingested,
+                    "theories_remaining": 0,
+                    "max_vault_cycle": current_max_db_cycle,
+                    "catchup_progress_percent": 100.0,
                     "baseline_anchor_loss": round(baseline_anchor_loss, 4),
                     "vram_mb": round(vram_now, 1),
                     "latest_intelligence_index": latest_intel.get("imitation_intelligence_index", 0.0),
@@ -369,11 +382,13 @@ def main():
                 }
                 update_status(status_dict)
                 conn.close()
-                time.sleep(6)
+                time.sleep(5)
                 continue
 
             cycle, domain, topic, summary, thought_trace, theory_ts = new_row
-            print(f"\n[+] [{time.strftime('%H:%M:%S')}] >>> INGESTING NEW RESEARCH CYCLE {cycle}: {domain} <<<")
+            is_catching_up = cycle < (current_max_db_cycle - 2)
+            phase_str = "CATCHING_UP" if is_catching_up else "LIVE_STREAMING"
+            progress_pct = round((cycle / max(1, current_max_db_cycle)) * 100.0, 1)
 
             # Format training sequence including DeepSeek-R1 <think> cognitive trace
             if thought_trace and len(thought_trace.strip()) > 50:
@@ -403,8 +418,9 @@ def main():
             cur_anchor_loss = sum(cur_anchor_losses) / len(cur_anchor_losses)
             anchor_drift = abs(cur_anchor_loss - baseline_anchor_loss)
 
-            # Formulate Socratic inquiry for confusing concept
-            formulate_and_submit_inquiry(conn, cycle, topic, summary, thought_trace, tok, learner)
+            # Formulate Socratic inquiry only when live or near live head (to prevent 700+ backlogged inquiries)
+            if not is_catching_up:
+                formulate_and_submit_inquiry(conn, cycle, topic, summary, thought_trace, tok, learner)
 
             conn.close()
 
@@ -412,22 +428,40 @@ def main():
             total_ingested += 1
             last_cycle_processed = cycle
 
-            print(f"    - Pre-Adaptation Loss:    {loss_before:.4f}")
-            print(f"    - Post-Adaptation Loss:   {loss_after:.4f} (-{loss_reduction:.4f}, +{pct_improvement:.2f}%)")
-            print(f"    - Anchor Loss & Drift:    {cur_anchor_loss:.4f} (drift: {anchor_drift:.5f})")
-            print(f"    - Total Ingested:         {total_ingested} theories")
-            print(f"    - Student VRAM Footprint: {vram_now:.1f} MB")
+            if is_catching_up:
+                if total_ingested % 10 == 0 or total_ingested == 1:
+                    print(f"[+] [{time.strftime('%H:%M:%S')}] [CATCHUP {cycle}/{current_max_db_cycle} ({progress_pct}%)] "
+                          f"Domain: {domain[:35]} | Loss: {loss_before:.4f}->{loss_after:.4f} (-{pct_improvement:.1f}%) | Drift: {anchor_drift:.5f}")
+            else:
+                print(f"\n[+] [{time.strftime('%H:%M:%S')}] >>> INGESTED LIVE RESEARCH CYCLE {cycle}: {domain} <<<")
+                print(f"    - Pre-Adaptation Loss:    {loss_before:.4f}")
+                print(f"    - Post-Adaptation Loss:   {loss_after:.4f} (-{loss_reduction:.4f}, +{pct_improvement:.2f}%)")
+                print(f"    - Anchor Loss & Drift:    {cur_anchor_loss:.4f} (drift: {anchor_drift:.5f})")
+                print(f"    - Total Ingested:         {total_ingested} theories")
+                print(f"    - Student VRAM Footprint: {vram_now:.1f} MB")
 
-            # Run periodic intelligence probe every 3 cycles
-            if total_ingested % 3 == 0:
+            # Periodic intelligence probe
+            run_probe = False
+            if is_catching_up:
+                if total_ingested % 50 == 0:
+                    run_probe = True
+            else:
+                if total_ingested % 3 == 0:
+                    run_probe = True
+
+            if run_probe:
                 latest_intel = run_intelligence_and_imitation_evaluation(model, tok, learner, cycle)
 
             status_dict = {
-                "status": "ABSORBED_THEORY",
+                "status": "ABSORBING_VAULT" if is_catching_up else "ABSORBED_THEORY",
+                "phase": phase_str,
                 "uptime_seconds": int(time.time() - start_time),
                 "last_cycle_processed": cycle,
                 "last_domain_learned": domain,
                 "total_theories_ingested": total_ingested,
+                "max_vault_cycle": current_max_db_cycle,
+                "catchup_progress_percent": progress_pct,
+                "theories_remaining": max(0, current_max_db_cycle - cycle),
                 "loss_before": round(loss_before, 4),
                 "loss_after": round(loss_after, 4),
                 "loss_reduction": round(loss_reduction, 4),
@@ -445,11 +479,14 @@ def main():
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-            time.sleep(2)
+            if is_catching_up:
+                time.sleep(0.01)
+            else:
+                time.sleep(2)
 
         except Exception as e:
             print(f"[-] Error in co-learning loop: {e}")
-            time.sleep(8)
+            time.sleep(5)
 
 
 if __name__ == "__main__":
