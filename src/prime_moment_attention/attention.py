@@ -34,6 +34,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+try:
+    from .chunked_ssd import chunked_prime_ssd_core
+except (ImportError, ValueError):
+    from chunked_ssd import chunked_prime_ssd_core
+
 class PrimeMomentAttention(nn.Module):
     def __init__(
         self,
@@ -44,6 +49,8 @@ class PrimeMomentAttention(nn.Module):
         decay: float = 0.9995,
         use_qk_norm: bool = False,
         eps: float = 1.0,
+        chunk_size: int = 64,
+        chunk_threshold: int = 512,
     ):
         super().__init__()
         self.hidden_size = hidden_size
@@ -55,6 +62,8 @@ class PrimeMomentAttention(nn.Module):
         self.scaling = 1.0 / math.sqrt(head_dim)
         self.eps = eps
         self.use_qk_norm = use_qk_norm
+        self.chunk_size = chunk_size
+        self.chunk_threshold = chunk_threshold
 
         self.q_proj = nn.Linear(hidden_size, num_heads * head_dim, bias=False)
         self.k_proj = nn.Linear(hidden_size, self.num_kv_heads * head_dim, bias=False)
@@ -133,7 +142,22 @@ class PrimeMomentAttention(nn.Module):
 
             y = (num / den).unsqueeze(2) # [B, H, 1, D]
 
-        # Prefill Mode (L > 1): Fast Vectorized Parallel Matrix Formulation
+        # Chunked Parallel SSD Mode (L > chunk_threshold): Linear O(L) Scaling with 3D Batch GEMM Scan
+        elif L > self.chunk_threshold:
+            y, next_state_chunk = chunked_prime_ssd_core(
+                q=q_f32,
+                k=k_f32,
+                v=v_f32,
+                state=state,
+                decay=self.decay,
+                eps=self.eps,
+                chunk_size=self.chunk_size,
+                return_state=return_state,
+            )
+            if return_state:
+                S0, S1, S2, K0, K1, K2 = next_state_chunk
+
+        # Prefill Mode (1 < L <= chunk_threshold): Fast Vectorized Dense 2nd-order Taylor Attention
         else:
             idx = torch.arange(L, device=hidden_states.device)
             diff = idx.unsqueeze(1) - idx.unsqueeze(0)
@@ -173,7 +197,7 @@ class PrimeMomentAttention(nn.Module):
                 S0 = (decay_total * S0 if state is not None else 0.0) + torch.sum(v_w, dim=2)
                 S1 = (decay_total * S1 if state is not None else 0.0) + torch.matmul(k_w.transpose(-1, -2), v_f32)
                 S2 = (decay_total * S2 if state is not None else 0.0) + torch.matmul(k2_w.transpose(-1, -2), v_f32)
-                K0 = (decay_total * K0 if state is not None else 0.0) + torch.sum(weights, dim=2)
+                K0 = ((decay_total * K0 if state is not None else 0.0) + torch.sum(weights, dim=2)).expand(B, self.num_heads, 1)
                 K1 = (decay_total * K1 if state is not None else 0.0) + torch.sum(k_w, dim=2)
                 K2 = (decay_total * K2 if state is not None else 0.0) + torch.sum(k2_w, dim=2)
 

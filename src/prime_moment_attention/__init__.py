@@ -17,8 +17,10 @@ from .gumbel import gumbel_softmax_ste, GumbelHeadRouter, GumbelAnnealingSchedul
 from .distillation import GumbelPrimeQwen2Attention, convert_qwen_to_stage7_hybrid
 from .model import PrimeConfig, PrimeBlock, PrimeForCausalLM
 from .primenet import PrimeNetCoThinker, generate_with_primenet_cothinker
+from .chunked_ssd import ChunkedPrimeSSD, chunked_prime_ssd_core
+from .continual_ttt import OnlineTTTContinualLearner
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 def load(
     model_name_or_path: str,
@@ -71,4 +73,7 @@ __all__ = [
     "PrimeForCausalLM",
     "PrimeNetCoThinker",
     "generate_with_primenet_cothinker",
+    "ChunkedPrimeSSD",
+    "chunked_prime_ssd_core",
+    "OnlineTTTContinualLearner",
 ]

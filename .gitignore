@@ -66,3 +66,9 @@ ghp_*
 triton_cache/
 miopen_db/
 torchinductor_*/
+
+# Local databases & live daemon status
+*.sqlite3
+*.sqlite
+research_vault/*.sqlite3
+research_vault/live_status.json
