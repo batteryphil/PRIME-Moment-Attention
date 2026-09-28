@@ -82,5 +82,215 @@
         "output_preview": "User: Why is cumulative state accumulation in linear attention associative? Assistant: <think> The user is asking: \"What is linear state in "
       }
     ]
+  },
+  {
+    "timestamp": "2026-09-28 09:57:46",
+    "cycle": 749,
+    "average_reasoning_loss": 4.0666,
+    "average_reasoning_perplexity": 58.36,
+    "think_tag_adherence_percent": 100.0,
+    "cognitive_keyword_count": 7,
+    "imitation_intelligence_index": 100.0,
+    "sample_generation": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step.\nAssistant: <think>\nThe user is asking: \" Solve for x: 4 * - 7 = 4 * - 6 = 8.\nI will organize my response clearly, providing a direct, helpful, and polite explanation.\n</think>\n\nTo solve the problem, we need to consider the following steps:\n\n1.",
+    "probes": [
+      {
+        "probe_id": "algebra_gsm8k",
+        "category": "Mathematics",
+        "reasoning_loss": 2.9233,
+        "reasoning_perplexity": 18.6,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 3,
+        "output_preview": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step. Assistant: <think> The user is asking: \" Solve for x: 4 * - 7 = 4 * - 6 = 8. I "
+      },
+      {
+        "probe_id": "logic_syllogism",
+        "category": "Deductive Logic",
+        "reasoning_loss": 4.3272,
+        "reasoning_perplexity": 75.73,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 3,
+        "output_preview": "User: All planets orbit stars. Jupiter is a planet. What can we deduce? Assistant: <think> The user is asking: \"To calculate planets. But I "
+      },
+      {
+        "probe_id": "prime_linear_attention",
+        "category": "Linear Attention Theory",
+        "reasoning_loss": 4.9494,
+        "reasoning_perplexity": 141.09,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 1,
+        "output_preview": "User: Why is cumulative state accumulation in linear attention associative? Assistant: <think> The user is asking: \"What is linear state in "
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 10:03:43",
+    "cycle": 752,
+    "average_reasoning_loss": 4.081,
+    "average_reasoning_perplexity": 59.21,
+    "think_tag_adherence_percent": 100.0,
+    "cognitive_keyword_count": 4,
+    "imitation_intelligence_index": 95.5,
+    "sample_generation": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step.\nAssistant: <think>\nThe user is asking: \" Solve for x - 6 = 5. Solve for x - 8 = 15. Solve for x...\".\nI will organize my response clearly, providing a direct, helpful, and polite explanation.\n</think>\n\nTo solve this problem, let's break it down",
+    "probes": [
+      {
+        "probe_id": "algebra_gsm8k",
+        "category": "Mathematics",
+        "reasoning_loss": 2.9244,
+        "reasoning_perplexity": 18.62,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 3,
+        "output_preview": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step. Assistant: <think> The user is asking: \" Solve for x - 6 = 5. Solve for x - 8 ="
+      },
+      {
+        "probe_id": "logic_syllogism",
+        "category": "Deductive Logic",
+        "reasoning_loss": 4.3328,
+        "reasoning_perplexity": 76.16,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 0,
+        "output_preview": "User: All planets orbit stars. Jupiter is a planet. What can we deduce? Assistant: <think> The user is asking: \"All planets planets are star"
+      },
+      {
+        "probe_id": "prime_linear_attention",
+        "category": "Linear Attention Theory",
+        "reasoning_loss": 4.9859,
+        "reasoning_perplexity": 146.33,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 1,
+        "output_preview": "User: Why is cumulative state accumulation in linear attention associative? Assistant: <think> The user is asking: \"What is linear state sto"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 10:09:35",
+    "cycle": 755,
+    "average_reasoning_loss": 4.0542,
+    "average_reasoning_perplexity": 57.64,
+    "think_tag_adherence_percent": 100.0,
+    "cognitive_keyword_count": 5,
+    "imitation_intelligence_index": 100.0,
+    "sample_generation": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step.\nAssistant: <think>\nThe user is asking: \" Solve for x - 8 = 6. Solve for x - 6 = 14. What can I do? ...\".\nI will organize my response clearly, providing a direct, helpful, and polite explanation.\n</think>\n\nTo solve this problem, let's break it",
+    "probes": [
+      {
+        "probe_id": "algebra_gsm8k",
+        "category": "Mathematics",
+        "reasoning_loss": 2.9005,
+        "reasoning_perplexity": 18.18,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 3,
+        "output_preview": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step. Assistant: <think> The user is asking: \" Solve for x - 8 = 6. Solve for x - 6 ="
+      },
+      {
+        "probe_id": "logic_syllogism",
+        "category": "Deductive Logic",
+        "reasoning_loss": 4.3081,
+        "reasoning_perplexity": 74.3,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 1,
+        "output_preview": "User: All planets orbit stars. Jupiter is a planet. What can we deduce? Assistant: <think> The user is asking: \"All planets planets are star"
+      },
+      {
+        "probe_id": "prime_linear_attention",
+        "category": "Linear Attention Theory",
+        "reasoning_loss": 4.954,
+        "reasoning_perplexity": 141.74,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 1,
+        "output_preview": "User: Why is cumulative state accumulation in linear attention associative? Assistant: <think> The user is asking: \"What is linear state sta"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 10:15:32",
+    "cycle": 758,
+    "average_reasoning_loss": 4.0538,
+    "average_reasoning_perplexity": 57.62,
+    "think_tag_adherence_percent": 100.0,
+    "cognitive_keyword_count": 5,
+    "imitation_intelligence_index": 100.0,
+    "sample_generation": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step.\nAssistant: <think>\nThe user is asking: \" Solve for x - 7 - 6 = 6. How more than x can be...\".\nI will organize my response clearly, providing a direct, helpful, and polite explanation.\n</think>\n\nTo solve this problem, we need to first determine the total number of times",
+    "probes": [
+      {
+        "probe_id": "algebra_gsm8k",
+        "category": "Mathematics",
+        "reasoning_loss": 2.8974,
+        "reasoning_perplexity": 18.13,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 4,
+        "output_preview": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step. Assistant: <think> The user is asking: \" Solve for x - 7 - 6 = 6. How more than"
+      },
+      {
+        "probe_id": "logic_syllogism",
+        "category": "Deductive Logic",
+        "reasoning_loss": 4.3412,
+        "reasoning_perplexity": 76.8,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 0,
+        "output_preview": "User: All planets orbit stars. Jupiter is a planet. What can we deduce? Assistant: <think> The user is asking: \"All planets orbit stars....\""
+      },
+      {
+        "probe_id": "prime_linear_attention",
+        "category": "Linear Attention Theory",
+        "reasoning_loss": 4.9229,
+        "reasoning_perplexity": 137.39,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 1,
+        "output_preview": "User: Why is cumulative state accumulation in linear attention associative? Assistant: <think> The user is asking: \"What is linear state pro"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28 10:21:24",
+    "cycle": 761,
+    "average_reasoning_loss": 4.039,
+    "average_reasoning_perplexity": 56.77,
+    "think_tag_adherence_percent": 100.0,
+    "cognitive_keyword_count": 8,
+    "imitation_intelligence_index": 100.0,
+    "sample_generation": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step.\nAssistant: <think>\nThe user is asking: \" Solve for x - 8 = 3 * x - 6 = 6 * - 8 = 2.   \nPlease go to the first step.\n</think>\n\nThe final answer is 2.\ufffd is the state of the world?. In the world of the",
+    "probes": [
+      {
+        "probe_id": "algebra_gsm8k",
+        "category": "Mathematics",
+        "reasoning_loss": 2.9081,
+        "reasoning_perplexity": 18.32,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 4,
+        "output_preview": "User: Solve for x: 4 * x - 8 = 24. Let's think step by step. Assistant: <think> The user is asking: \" Solve for x - 8 = 3 * x - 6 = 6 * - 8 "
+      },
+      {
+        "probe_id": "logic_syllogism",
+        "category": "Deductive Logic",
+        "reasoning_loss": 4.2757,
+        "reasoning_perplexity": 71.93,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 3,
+        "output_preview": "User: All planets orbit stars. Jupiter is a planet. What can we deduce? Assistant: <think> The user is asking: \"All planets are planets. A p"
+      },
+      {
+        "probe_id": "prime_linear_attention",
+        "category": "Linear Attention Theory",
+        "reasoning_loss": 4.9331,
+        "reasoning_perplexity": 138.81,
+        "think_tag_generated": true,
+        "think_tag_closed": true,
+        "cognitive_keywords_found": 1,
+        "output_preview": "User: Why is cumulative state accumulation in linear attention associative? Assistant: <think> The user is asking: \"What is linear state pro"
+      }
+    ]
   }
 ]

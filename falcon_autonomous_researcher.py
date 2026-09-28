@@ -505,6 +505,25 @@ Calculate the TFLOPs required for a 4096-token sequence through a 4096-dim layer
 Calculate the VRAM footprint in GB for a 16B parameter model in BF16: [calc: (16.0 * 10**9 * 2) / (1024**3)] GB.
 Provide the kernel design and mathematical proof.
 """
+    },
+    {
+        "domain": "Hydrodynamic Information Dynamics: Bernoulli Pressure Drops & Venturi Entrainment",
+        "primary_repo": "PRIME-Moment-Attention",
+        "secondary_repo": "PRIME-Net",
+        "web_search": "Bernoulli principle information theory fluid dynamics associative memory Venturi entrainment suction",
+        "target_formulas": ["0.5 * 1.25 * 4.0**2", "100.0 * (1.0 - 0.36787944117144233)"],
+        "problem_prompt": """
+In fluid mechanics, Bernoulli's principle states that along an informational streamline, an increase in velocity creates a simultaneous drop in static pressure: P + 0.5 * rho * v^2 = C. This generates a Venturi vacuum that entrains and drags adjacent fluid.
+How can we mathematically map this hydrodynamic principle to high-velocity information injection in recurrent 2nd-order Taylor moment attention?
+1. Define Information Velocity v_t = ||k_t - mu_context||_2 * (1.0 + Delta_t) and Information Density rho = Tr(Fisher_Information).
+2. Derive the Bernoulli Informational Vacuum Delta P_t = 0.5 * rho * v_t^2, and prove that high-surprise injections collapse the activation energy barrier for semantically adjacent memory clusters.
+3. Formulate the Venturi Entrainment Operator F_drag = rho * (k_inj^T k_stored) * v_t, demonstrating that injecting a novel anchor fact drags correlated background memories into active working state without brute-force search.
+
+MANDATORY NUMERICAL EVALUATION (Section 3):
+Calculate the Bernoulli dynamic pressure drop Delta P for rho=1.25, v=4.0: [calc: 0.5 * 1.25 * 4.0**2].
+Calculate the entrainment suction percentage for exponent tau_p=1.0: [calc: 100.0 * (1.0 - 0.36787944117144233)] %.
+Provide a complete, standalone C99/Python implementation blueprint for a VenturiEntrainmentGate.
+"""
     }
 ]
 

@@ -19,6 +19,7 @@ from .model import PrimeConfig, PrimeBlock, PrimeForCausalLM
 from .primenet import PrimeNetCoThinker, generate_with_primenet_cothinker
 from .chunked_ssd import ChunkedPrimeSSD, chunked_prime_ssd_core
 from .continual_ttt import OnlineTTTContinualLearner
+from .venturi_entrainment import VenturiInformationGate
 
 __version__ = "0.5.0"
 
@@ -76,4 +77,5 @@ __all__ = [
     "ChunkedPrimeSSD",
     "chunked_prime_ssd_core",
     "OnlineTTTContinualLearner",
+    "VenturiInformationGate",
 ]
