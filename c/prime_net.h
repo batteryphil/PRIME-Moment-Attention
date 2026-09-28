@@ -34,7 +34,6 @@ int prime_net_eval_expr(const char *expr, double *out_val);
 /* Comprehensive C test benchmarks */
 int prime_net_run_math_benchmark(void);
 int prime_net_run_niah_benchmark(void);
-int prime_net_run_deduction_benchmark(void);
 
 #ifdef __cplusplus
 }

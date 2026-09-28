@@ -45,6 +45,7 @@ env/
 *.safetensors
 *.gguf
 *.onnx
+checkpoints
 checkpoints/
 checkpoints_3tb
 

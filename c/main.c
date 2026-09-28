@@ -72,7 +72,6 @@ static void print_usage(const char *prog_name) {
     printf("  --bench-buckingham Run native C Buckingham Pi dimensional guard benchmark\n");
     printf("  --bench-math      Run native C 15-domain mathematical stress test\n");
     printf("  --bench-niah      Run native C NIAH passkey retrieval stress test\n");
-    printf("  --bench-deduction Run native C 7-turn cognitive & commonsense deduction probe\n");
     printf("  --prompt <string> Run neuro-symbolic reasoning on input string\n");
     printf("  --help            Show this help message\n");
 }
@@ -829,7 +828,6 @@ int main(int argc, char **argv) {
     int port = 8080;
     int do_bench_math = 0;
     int do_bench_niah = 0;
-    int do_bench_deduction = 0;
     int do_bench_gtrm = 0;
     int do_bench_titans = 0;
     int do_bench_wave3 = 0;
@@ -902,8 +900,6 @@ int main(int argc, char **argv) {
             do_bench_math = 1;
         } else if (strcmp(argv[i], "--bench-niah") == 0) {
             do_bench_niah = 1;
-        } else if (strcmp(argv[i], "--bench-deduction") == 0) {
-            do_bench_deduction = 1;
         } else if (strcmp(argv[i], "--prompt") == 0 && i + 1 < argc) {
             user_prompt = argv[++i];
         } else if (strcmp(argv[i], "--help") == 0) {
@@ -982,10 +978,6 @@ int main(int argc, char **argv) {
 
     if (do_bench_niah) {
         return prime_net_run_niah_benchmark();
-    }
-
-    if (do_bench_deduction) {
-        return prime_net_run_deduction_benchmark();
     }
 
     if (user_prompt) {
