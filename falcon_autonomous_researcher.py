@@ -596,14 +596,10 @@ Secondary Repository: {secondary_repo_name}
             else:
                 prompt_text = f"System: {system_prompt}\nUser: {user_prompt}\nAssistant: <think>\n"
                 
-            inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1536, truncation=True).to(DEVICE)
+            inputs = tokenizer(prompt_text, return_tensors="pt", max_length=1280, truncation=True).to(DEVICE)
             
-            def stream_callback(accumulated_text: str, is_end: bool):
-                telemetry.update("THINKING", domain, topic_title, cycle, live_thought=accumulated_text)
-                
-            streamer = LiveThoughtStreamer(tokenizer, on_token_cb=stream_callback)
-            
-            print(f"[*] Generating theoretical formulation with DeepSeek-R1-Distill-14B (max 1000 tokens)...")
+            telemetry.update("THINKING", domain, topic_title, cycle, live_thought="Synthesizing rigorous mathematical derivation and C99 blueprints...")
+            print(f"[*] Generating theoretical formulation with DeepSeek-R1-Distill-14B (prompt: {inputs.input_ids.shape[1]} tokens, max 1000 tokens)...")
             gen_start = time.time()
             with torch.no_grad():
                 out = model.generate(
@@ -611,10 +607,11 @@ Secondary Repository: {secondary_repo_name}
                     max_new_tokens=1000,
                     temperature=0.6,
                     top_p=0.95,
-                    do_sample=True,
-                    streamer=streamer
+                    do_sample=True
                 )
+            gen_duration = time.time() - gen_start
             raw_response = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True).strip()
+            print(f"[+] Generation finished in {gen_duration:.2f}s ({len(raw_response)} chars).")
             del inputs, out
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
