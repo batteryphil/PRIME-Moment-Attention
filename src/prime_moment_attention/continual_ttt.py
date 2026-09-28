@@ -40,13 +40,17 @@ class OnlineTTTContinualLearner:
         fisher_beta: float = 0.99,
         elastic_lambda: float = 100.0,
         eps: float = 1e-5,
-        adapted_modules: Optional[List[str]] = None,
+        max_grad_norm: float = 1.0,
+        surprise_threshold: Optional[float] = None,
+        adapted_modules: Optional[Any] = None,
     ):
         self.model = model
         self.lr = learning_rate
         self.fisher_beta = fisher_beta
         self.elastic_lambda = elastic_lambda
         self.eps = eps
+        self.max_grad_norm = max_grad_norm
+        self.surprise_threshold = surprise_threshold
         
         # Modules eligible for plastic adaptation (default: value and output projections)
         self.adapted_params: Dict[str, nn.Parameter] = {}
@@ -56,7 +60,9 @@ class OnlineTTTContinualLearner:
             if adapted_modules is None:
                 if any(k in name for k in ["v_proj", "o_proj", "write_proj"]):
                     self.adapted_params[name] = param
-            else:
+            elif adapted_modules == "all":
+                self.adapted_params[name] = param
+            elif isinstance(adapted_modules, (list, tuple)):
                 if any(m in name for m in adapted_modules):
                     self.adapted_params[name] = param
 
@@ -70,10 +76,11 @@ class OnlineTTTContinualLearner:
             name: torch.zeros_like(param, device=param.device) for name, param in self.adapted_params.items()
         }
         
-        # Diagnostics
+        # Diagnostics & Guardrails
         self.total_tokens_learned = 0
         self.running_loss = 0.0
         self.total_plastic_updates = 0
+        self.initial_anchor_loss: Optional[float] = None
 
     def compute_fisher_initialization(self, calibration_tokens: torch.Tensor, steps: int = 20):
         """
@@ -136,35 +143,48 @@ class OnlineTTTContinualLearner:
                 surprise = -torch.log(probs[0, actual_target].clamp(min=1e-7))
                 loss_val = surprise.item()
 
-                # Elastic regularization penalty: sum(F_i * (theta_i - theta_0)^2)
-                elastic_penalty = 0.0
-                for name, param in self.adapted_params.items():
-                    diff = param - self.anchor_weights[name]
-                    elastic_penalty = elastic_penalty + torch.sum(self.fisher_diag[name] * (diff ** 2))
+                # Gating: only learn if prediction surprise exceeds threshold (if configured)
+                should_update = (self.surprise_threshold is None) or (loss_val > self.surprise_threshold)
 
-                total_loss = surprise + 0.5 * self.elastic_lambda * elastic_penalty
+                if should_update:
+                    # Elastic regularization penalty: sum(F_i * (theta_i - theta_0)^2)
+                    elastic_penalty = 0.0
+                    for name, param in self.adapted_params.items():
+                        diff = param - self.anchor_weights[name]
+                        elastic_penalty = elastic_penalty + torch.sum(self.fisher_diag[name] * (diff ** 2))
 
-                # Compute online gradient
-                grads = torch.autograd.grad(
-                    total_loss,
-                    self.adapted_params.values(),
-                    retain_graph=False,
-                    create_graph=False,
-                    allow_unused=True
-                )
+                    total_loss = surprise + 0.5 * self.elastic_lambda * elastic_penalty
 
-                # Plastic parameter update with Fisher-damped inverse scaling
-                with torch.no_grad():
-                    for (name, param), grad in zip(self.adapted_params.items(), grads):
-                        if grad is not None:
-                            self.fisher_diag[name] = (
-                                self.fisher_beta * self.fisher_diag[name] + (1.0 - self.fisher_beta) * (grad.detach() ** 2)
-                            )
-                            # Bounded effective learning rate: lr / (1.0 + sqrt(F))
-                            effective_lr = self.lr / (1.0 + torch.sqrt(self.fisher_diag[name]))
-                            param.sub_(effective_lr * grad)
+                    # Compute online gradient
+                    grads = torch.autograd.grad(
+                        total_loss,
+                        self.adapted_params.values(),
+                        retain_graph=False,
+                        create_graph=False,
+                        allow_unused=True
+                    )
 
-                self.total_plastic_updates += 1
+                    # Global gradient norm clipping
+                    if self.max_grad_norm > 0:
+                        valid_grads = [g for g in grads if g is not None]
+                        if valid_grads:
+                            total_norm = torch.norm(torch.stack([torch.norm(g) for g in valid_grads]))
+                            clip_coef = self.max_grad_norm / (total_norm + 1e-6)
+                            if clip_coef < 1.0:
+                                grads = tuple(g * clip_coef if g is not None else None for g in grads)
+
+                    # Plastic parameter update with Fisher-damped inverse scaling
+                    with torch.no_grad():
+                        for (name, param), grad in zip(self.adapted_params.items(), grads):
+                            if grad is not None:
+                                self.fisher_diag[name] = (
+                                    self.fisher_beta * self.fisher_diag[name] + (1.0 - self.fisher_beta) * (grad.detach() ** 2)
+                                )
+                                # Bounded effective learning rate: lr / (1.0 + sqrt(F))
+                                effective_lr = self.lr / (1.0 + torch.sqrt(self.fisher_diag[name]))
+                                param.sub_(effective_lr * grad)
+
+                    self.total_plastic_updates += 1
                 self.total_tokens_learned += 1
                 self.running_loss = 0.95 * self.running_loss + 0.05 * loss_val
 
@@ -203,6 +223,15 @@ class OnlineTTTContinualLearner:
                     allow_unused=True
                 )
 
+                # Gradient norm clipping
+                if self.max_grad_norm > 0:
+                    valid_grads = [g for g in grads if g is not None]
+                    if valid_grads:
+                        total_norm = torch.norm(torch.stack([torch.norm(g) for g in valid_grads]))
+                        clip_coef = self.max_grad_norm / (total_norm + 1e-6)
+                        if clip_coef < 1.0:
+                            grads = tuple(g * clip_coef if g is not None else None for g in grads)
+
                 with torch.no_grad():
                     for (name, param), grad in zip(self.adapted_params.items(), grads):
                         if grad is not None:
@@ -226,6 +255,26 @@ class OnlineTTTContinualLearner:
             logits = out["logits"]
             loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
         return loss.item()
+
+    def check_and_rollback_if_drifted(
+        self,
+        anchor_tokens: torch.Tensor,
+        max_allowed_drift: float = 0.05
+    ) -> Tuple[bool, float]:
+        """
+        Evaluates current loss on anchor tokens against initial anchor baseline loss.
+        If loss increased by more than max_allowed_drift, automatically rolls back to anchor.
+        Returns: (safe: bool, drift: float)
+        """
+        curr_loss = self.evaluate_loss(anchor_tokens)
+        if self.initial_anchor_loss is None:
+            self.initial_anchor_loss = curr_loss
+            return True, 0.0
+        drift = curr_loss - self.initial_anchor_loss
+        if drift > max_allowed_drift:
+            self.reset_to_anchor()
+            return False, drift
+        return True, drift
 
     def reset_to_anchor(self):
         """Restores model weights to the original anchor state (forgetting transient session)."""

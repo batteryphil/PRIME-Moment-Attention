@@ -1,0 +1,62 @@
+[
+  {
+    "condition": "1. Frozen Baseline",
+    "pre_novel_loss": 8.932007789611816,
+    "post_novel_loss": 8.932007789611816,
+    "loss_reduction_pct": 0.0,
+    "pre_anchor_loss": 7.114660739898682,
+    "post_anchor_loss": 7.114660739898682,
+    "anchor_drift": 0.0,
+    "pre_ling_acc": 63.63636363636363,
+    "post_ling_acc": 63.63636363636363,
+    "ling_delta": 0.0,
+    "pre_probe_acc": 50.0,
+    "post_probe_acc": 50.0,
+    "adapt_time_s": 0.0
+  },
+  {
+    "condition": "2. Unconstrained Full SGD",
+    "pre_novel_loss": 8.932007789611816,
+    "post_novel_loss": 8.048924446105957,
+    "loss_reduction_pct": 9.886728318048613,
+    "pre_anchor_loss": 7.114660739898682,
+    "post_anchor_loss": 6.990338325500488,
+    "anchor_drift": -0.12432241439819336,
+    "pre_ling_acc": 63.63636363636363,
+    "post_ling_acc": 63.63636363636363,
+    "ling_delta": 0.0,
+    "pre_probe_acc": 50.0,
+    "post_probe_acc": 50.0,
+    "adapt_time_s": 5.189411640167236
+  },
+  {
+    "condition": "3. Restricted v_proj SGD",
+    "pre_novel_loss": 8.932007789611816,
+    "post_novel_loss": 8.498919486999512,
+    "loss_reduction_pct": 4.848722849480706,
+    "pre_anchor_loss": 7.114660739898682,
+    "post_anchor_loss": 7.054811000823975,
+    "anchor_drift": -0.05984973907470703,
+    "pre_ling_acc": 63.63636363636363,
+    "post_ling_acc": 63.63636363636363,
+    "ling_delta": 0.0,
+    "pre_probe_acc": 50.0,
+    "post_probe_acc": 50.0,
+    "adapt_time_s": 2.4909214973449707
+  },
+  {
+    "condition": "4. Elastic Synaptic (EWC)",
+    "pre_novel_loss": 8.932007789611816,
+    "post_novel_loss": 8.477385520935059,
+    "loss_reduction_pct": 5.089810481418262,
+    "pre_anchor_loss": 7.114660739898682,
+    "post_anchor_loss": 7.047807216644287,
+    "anchor_drift": -0.06685352325439453,
+    "pre_ling_acc": 63.63636363636363,
+    "post_ling_acc": 63.63636363636363,
+    "ling_delta": 0.0,
+    "pre_probe_acc": 50.0,
+    "post_probe_acc": 50.0,
+    "adapt_time_s": 2.5512502193450928
+  }
+]
