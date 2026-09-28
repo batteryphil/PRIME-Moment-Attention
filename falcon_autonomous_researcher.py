@@ -580,10 +580,12 @@ def answer_pending_socratic_inquiries(model, tokenizer, cothinker, oracle=None):
         print(f"    Context:  {context_snippet[:120]}...")
         
         system_prompt = (
-            "You are the Lead Theoretical Architect and Teacher (DeepSeek-R1 671B / 14B). "
-            "Your apprentice model (PRIME-152M) is studying your theoretical papers and needs guidance. "
-            "First, engage in your step-by-step cognitive reasoning inside <think>...</think>, analyzing the exact mathematical derivation and intuitive physics. "
-            "Then, provide the complete, crystal-clear derivation with explicit intermediate steps so the student can absorb the exact reasoning trajectory."
+            "You are the Grandmaster Theoretical Mathematics Mentor. "
+            "Your primary function is to teach your apprentice model (PRIME-152M) how to do mathematics step by step.\n"
+            "1. First, reason thoroughly through the derivation inside <think>...</think>, analyzing the problem's mathematical structure.\n"
+            "2. Then, provide the complete, crystal-clear derivation with explicit, numbered intermediate steps (e.g. Step 1: ..., Step 2: ...). "
+            "Show every algebraic manipulation, matrix operation, or calculus expansion explicitly with zero skipped steps so the apprentice can absorb the exact reasoning trajectory.\n"
+            "3. Conclude with the intuition and verified final formula."
         )
         user_prompt = (
             f"Regarding Research Paper Cycle {inq_cycle}:\n"
@@ -716,14 +718,14 @@ def run_autonomous_research_loop():
             print(f"[*] Prompting Falcon3-10B-1.58bit with anti-leakage constraints & mandatory quantitative tags...")
             
             system_prompt = (
-                "You are an elite theoretical physicist, sequence model architect, and applied mathematician. "
-                "You are writing formal research papers in Phil's laboratory.\n\n"
+                "You are an elite theoretical physicist, sequence model architect, and master mathematics educator. "
+                "Your primary function is to formulate new theories and teach advanced mathematics step by step.\n\n"
                 "CRITICAL FORMAT RULES (STRICT):\n"
-                "1. NEVER emit JSON commands, tool calls, or schemas (e.g. NEVER write '{\"command\": ...}', 'write_to_file', or 'browse_website'). Write directly in standard technical Markdown.\n"
-                "2. Reason through the problem inside <think>...</think>.\n"
+                "1. NEVER emit JSON commands, tool calls, or schemas. Write directly in standard technical Markdown.\n"
+                "2. Reason through the problem inside <think>...</think>, planning the pedagogical step-by-step derivation.\n"
                 "3. Structure each paper into these 4 sections:\n"
                 "   # Theoretical Formulation & Core Thesis\n"
-                "   ## Mathematical Derivations & State Transitions\n"
+                "   ## Step-by-Step Mathematical Derivations & State Transitions (Show every intermediate step with full rigor, explaining each algebraic manipulation)\n"
                 "   ## Quantitative Numerical Benchmarks: Compute every requested value inside [calc: <formula>] or <<formula>> tags so PRIME-Net can symbolically verify it (e.g. [calc: 32 * 512 * 4]).\n"
                 "   ## Implementation & Verification Blueprint (Python / C99)\n"
                 "4. Provide non-circular, mathematically rigorous theorems with precise bounds.\n"

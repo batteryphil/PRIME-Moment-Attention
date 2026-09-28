@@ -69,7 +69,7 @@ class DeepSeek671BOracle:
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        timeout: int = 45
+        timeout: int = 90
     ) -> Optional[Dict[str, Any]]:
         """
         Queries DeepSeek-R1 671B for a step-by-step mathematical derivation and reasoning trace.
@@ -114,10 +114,8 @@ class DeepSeek671BOracle:
             "model": model_name,
             "messages": messages,
             "temperature": 0.6,
-            "max_tokens": 1500
+            "max_tokens": 1200
         }
-        if self.provider == "openrouter":
-            data["include_reasoning"] = True
 
         try:
             req = urllib.request.Request(
@@ -131,8 +129,14 @@ class DeepSeek671BOracle:
 
             choice = resp_json.get("choices", [{}])[0]
             message = choice.get("message", {})
-            content = message.get("content", "")
-            reasoning = message.get("reasoning_content", "") or message.get("reasoning", "") or ""
+            content = message.get("content") or ""
+            reasoning = message.get("reasoning_content") or message.get("reasoning") or ""
+
+            # Check reasoning_details if reasoning is empty
+            if not reasoning:
+                r_details = message.get("reasoning_details", [])
+                if r_details and isinstance(r_details, list) and isinstance(r_details[0], dict):
+                    reasoning = r_details[0].get("text", "") or ""
 
             # If reasoning was enclosed inside <think> in content
             if not reasoning and "<think>" in content:
@@ -140,13 +144,20 @@ class DeepSeek671BOracle:
                 reasoning = parts[0].replace("<think>", "").strip()
                 content = parts[1].strip() if len(parts) > 1 else content
 
+            if reasoning and content:
+                full_output = f"<think>\n{reasoning}\n</think>\n\n{content}"
+            elif reasoning:
+                full_output = f"<think>\n{reasoning}\n</think>"
+            else:
+                full_output = content
+
             return {
                 "status": "SUCCESS",
                 "provider": self.provider,
                 "model": model_name,
                 "content": content,
                 "reasoning_trace": reasoning,
-                "full_output": f"<think>\n{reasoning}\n</think>\n\n{content}" if reasoning else content
+                "full_output": full_output
             }
         except urllib.error.HTTPError as he:
             err_body = ""
@@ -170,7 +181,8 @@ if __name__ == "__main__":
         res = oracle.query_derivation("State the Euler-Lagrange equation for a classical scalar field and provide the 1-line proof.")
         if res:
             print(f"[+] Success! Received response from {res['model']}:")
-            print(res['content'][:200])
+            print(f"    Reasoning trace: {len(res['reasoning_trace'])} chars | Content: {len(res['content'])} chars")
+            print(res['full_output'][:400] + "...")
         else:
             print("[-] Test query failed.")
     else:
