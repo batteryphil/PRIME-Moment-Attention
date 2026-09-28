@@ -524,6 +524,25 @@ Calculate the Bernoulli dynamic pressure drop Delta P for rho=1.25, v=4.0: [calc
 Calculate the entrainment suction percentage for exponent tau_p=1.0: [calc: 100.0 * (1.0 - 0.36787944117144233)] %.
 Provide a complete, standalone C99/Python implementation blueprint for a VenturiEntrainmentGate.
 """
+    },
+    {
+        "domain": "Unitary Information Conservation, Neural Spin-Echo & Spectral Deconvolution",
+        "primary_repo": "PRIME-Moment-Attention",
+        "secondary_repo": "PRIME-Net",
+        "web_search": "quantum information conservation no-hiding theorem spin echo adjoint time reversal linear attention deconvolution",
+        "target_formulas": ["2.0**(-24)", "-16.635532 / (-0.0050125)"],
+        "problem_prompt": """
+By the No-Hiding Theorem and quantum unitarity (U^dagger U = I), information cannot be destroyed; in recurrent neural states S_t = sum_{j=1}^t lambda^{t-j} k_j v_j^T, 'overwritten' memories are not erased, but attenuated and superposed across higher-order tensor coordinates.
+1. Formulate the Adjoint Time-Reversal Operator (Neural Spin Echo): S_{j-1} = (1 / lambda) * (S_j - k_j v_j^T) to demonstrate exact historical state reconstruction in reverse time with drift < 1e-4.
+2. Derive the Dual-Basis Moore-Penrose Spectral Deconvolution Operator V_recovered = (K_attenuated^dagger)^T S_T to extract historical facts directly from compressed recurrent matrices S_T with 1.000000 cosine similarity.
+3. Calculate the Numerical Landauer Event Horizon: the exact number of tokens tau_crit before exponential decay lambda^tau drops below IEEE-754 float32 machine epsilon (2^-24 = 5.96e-8).
+4. Prove that in a 2nd-order moment manifold S_2 in R^{D x D}, the D^2 orthogonal channels delay subspace collision by a factor of D over standard linear vectors.
+
+MANDATORY NUMERICAL EVALUATION (Section 3):
+Calculate IEEE-754 float32 single-precision machine epsilon (2^-24): [calc: 2.0**(-24)].
+Calculate the exact token horizon limit tau_crit for decay lambda=0.995 before signal hits float32 epsilon: [calc: -16.635532 / (-0.0050125)].
+Provide a complete, standalone C99/Python implementation blueprint for an AdjointSpinEchoMemoryRecoverer.
+"""
     }
 ]
 
