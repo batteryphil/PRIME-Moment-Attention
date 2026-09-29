@@ -158,9 +158,12 @@ def generate_reasoning_rollout(
         total_tokens = final_output_ids.shape[1] - prompt_len
         full_output = tokenizer.decode(final_output_ids[0][prompt_len:], skip_special_tokens=False)
     else:
-        # </think> was generated; ensure answer text has enough runway
+        # </think> was generated; ensure answer text has enough runway to produce a boxed answer or reach EOS
         parts = full_output.split("</think>", 1)
-        if len(parts[1].strip()) < 30:
+        ans_cand = parts[1].strip()
+        has_boxed = "\\boxed" in ans_cand
+        has_eos = any(tok in ans_cand for tok in ["<｜end of sentence｜>", "<|im_end|>", "</s>", "####"])
+        if not has_boxed and not has_eos:
             with torch.no_grad():
                 final_output_ids = model.generate(
                     output_ids,
@@ -199,21 +202,77 @@ def generate_reasoning_rollout(
     }
 
 
+def symbolic_equal(ans1: Optional[str], ans2: Optional[str]) -> bool:
+    """Checks exact string or symbolic mathematical equivalence using SymPy."""
+    if ans1 is None or ans2 is None:
+        return False
+    str1 = str(ans1).strip().replace("$", "")
+    str2 = str(ans2).strip().replace("$", "")
+    if str1 == str2:
+        return True
+    try:
+        import sympy as sp
+        sym1 = sp.sympify(str1)
+        sym2 = sp.sympify(str2)
+        if sp.simplify(sym1 - sym2) == 0:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def cluster_votes(votes: List[Optional[str]]) -> Counter:
+    """Clusters votes by symbolic mathematical equivalence."""
+    clusters = Counter()
+    canonical_map = {}
+    for v in votes:
+        if v is None:
+            clusters[None] += 1
+            continue
+        matched_canonical = None
+        for canonical in canonical_map:
+            if symbolic_equal(v, canonical):
+                matched_canonical = canonical
+                break
+        if matched_canonical is not None:
+            clusters[matched_canonical] += 1
+        else:
+            canonical_map[v] = v
+            clusters[v] += 1
+    return clusters
+
+
 def run_voting_consensus(
     prompt: str,
     ground_truth: str,
     num_rollouts: int = 3,
     min_think_tokens: int = 800,
     max_answer_tokens: int = 400,
+    early_exit: bool = True,
+    use_primenet: bool = True,
     device: str = "cuda",
 ):
     max_think_tokens = min_think_tokens + 400 if min_think_tokens > 0 else 1200
+    majority_threshold = (num_rollouts // 2) + 1
 
     print("=" * 90)
     print(f"  DEEPSEEK-R1-DISTILL-QWEN-7B: EXTENDED REASONING & VOTING CONSENSUS")
     print(f"  Forced Thinking Budget: {min_think_tokens} tokens (Max Think: {max_think_tokens}) | Rollouts: N={num_rollouts}")
+    print(f"  Early-Exit Threshold: >= {majority_threshold}/{num_rollouts} agreement | PRIME-Net: {'ENABLED' if use_primenet else 'DISABLED'}")
     print(f"  Target Device: {device} | 4-bit NF4 Quantization")
     print("=" * 90)
+
+    # PRIME-Net prompt invariant extraction
+    injected_invariant = None
+    if use_primenet:
+        try:
+            from prime_moment_attention.primenet_harness import PrimeNetMathHarness
+            harness = PrimeNetMathHarness()
+            injected_invariant = harness.extract_prompt_invariants(prompt)
+            if injected_invariant:
+                print(f"[*] PRIME-Net Invariant Extracted: {injected_invariant}")
+        except Exception as e:
+            print(f"[!] PRIME-Net warning: {e}")
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
     if tokenizer.pad_token is None:
@@ -232,18 +291,23 @@ def run_voting_consensus(
     )
     model.eval()
 
-    print(f"\n[Problem Prompt]:\n{prompt}\n")
+    eval_prompt = prompt
+    if injected_invariant:
+        eval_prompt = f"{injected_invariant}\n{prompt}"
+
+    print(f"\n[Problem Prompt]:\n{eval_prompt}\n")
     print(f"Expected Ground Truth: {ground_truth}\n")
 
     rollouts = []
     votes = []
+    early_exited = False
 
     for i in range(num_rollouts):
         print(f"--- [Rollout {i+1}/{num_rollouts}] (Thinking >= {min_think_tokens}, Cap {max_think_tokens} tokens)... ---")
         res = generate_reasoning_rollout(
             model=model,
             tokenizer=tokenizer,
-            prompt=prompt,
+            prompt=eval_prompt,
             min_think_tokens=min_think_tokens,
             max_think_tokens=max_think_tokens,
             max_answer_tokens=max_answer_tokens,
@@ -259,19 +323,40 @@ def run_voting_consensus(
         print(f"  • Extracted Candidate Answer: {ans}")
         print(f"  • Answer Text:\n    {res['answer_text'][:300].strip()}...\n")
 
-    # Tally votes
-    vote_counter = Counter(votes)
+        # Check early exit condition
+        if early_exit and len(votes) >= 2:
+            current_clusters = cluster_votes(votes)
+            top_cand, top_count = current_clusters.most_common(1)[0]
+            if top_cand is not None and top_count >= majority_threshold:
+                print(f">>> [EARLY EXIT TRIGGERED]: Candidate '{top_cand}' secured majority ({top_count}/{num_rollouts})!")
+                print(f">>> Skipping remaining {num_rollouts - (i + 1)} rollout(s). Compute saved: {((num_rollouts - (i + 1)) / num_rollouts) * 100:.1f}%")
+                early_exited = True
+                break
+
+    # Tally votes with symbolic clustering
+    vote_counter = cluster_votes(votes)
     winner, win_count = vote_counter.most_common(1)[0]
-    confidence_pct = (win_count / num_rollouts) * 100.0
+    total_evaluated = len(votes)
+    confidence_pct = (win_count / total_evaluated) * 100.0
+    matches_gt = symbolic_equal(winner, ground_truth)
 
     print("=" * 90)
     print("  CONSENSUS & DECISION REPORT")
     print("=" * 90)
-    print(f"Vote Tally: {dict(vote_counter)}")
+    print(f"Vote Tally (Symbolic Clusters): {dict(vote_counter)}")
     print(f"Consensus Decision: {winner}")
-    print(f"Consensus Confidence: {win_count}/{num_rollouts} ({confidence_pct:.1f}%)")
-    print(f"Ground Truth Match: {'CORRECT [PASS]' if str(winner).strip() == str(ground_truth).strip() else 'DISCREPANCY'}")
+    print(f"Consensus Confidence: {win_count}/{total_evaluated} ({confidence_pct:.1f}%)" + (" [EARLY-EXIT]" if early_exited else ""))
+    print(f"Ground Truth Match: {'CORRECT [PASS]' if matches_gt else 'DISCREPANCY'}")
     print("=" * 90 + "\n")
+
+    return {
+        "decision": winner,
+        "confidence_pct": confidence_pct,
+        "rollouts_evaluated": total_evaluated,
+        "early_exited": early_exited,
+        "correct": matches_gt,
+        "vote_tally": dict(vote_counter),
+    }
 
 
 if __name__ == "__main__":
@@ -279,6 +364,8 @@ if __name__ == "__main__":
     parser.add_argument("--min-think-tokens", type=int, default=800, help="Forced minimum thinking tokens")
     parser.add_argument("--max-answer-tokens", type=int, default=400, help="Maximum answer generation tokens")
     parser.add_argument("--rollouts", type=int, default=3, help="Number of voting consensus rollouts")
+    parser.add_argument("--no-early-exit", action="store_true", help="Disable early exit majority stopping")
+    parser.add_argument("--no-primenet", action="store_true", help="Disable PRIME-Net prompt invariant injection")
     args = parser.parse_args()
 
     # Challenging Combinatorial Probability Problem
@@ -295,4 +382,6 @@ if __name__ == "__main__":
         num_rollouts=args.rollouts,
         min_think_tokens=args.min_think_tokens,
         max_answer_tokens=args.max_answer_tokens,
+        early_exit=not args.no_early_exit,
+        use_primenet=not args.no_primenet,
     )

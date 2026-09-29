@@ -122,14 +122,16 @@ class PrimeNetMathHarness:
             return f"[PRIME-Net Invariant: {pct_match.group(1)}% of {pct_match.group(2)} = {res_str}]"
 
         # 3. Direct calculation prompt: "Calculate 25 * 16" or "What is 80000 + 50000"
-        calc_match = re.search(r'(?:calculate|what is|compute|find)\s+([\d\.\,\s\+\-\*\/\^\(\)]+[\+\-\*\/\^][\d\.\,\s\+\-\*\/\^\(\)]+)', prompt, re.IGNORECASE)
-        if not calc_match:
-            calc_match = re.search(r'(\b\d+(?:\.\d+)?\s*[\+\-\*\/]\s*\d+(?:\.\d+)?(?:\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)*\b)', prompt)
-        if calc_match:
-            expr = calc_match.group(1).strip().rstrip('?.')
-            res = self.safe_eval(expr)
-            if res is not None:
-                return f"[PRIME-Net Invariant: {expr} = {res}]"
+        # Guard: Do not extract partial arithmetic if exponents (^) or modular expressions are present
+        if "^" not in prompt and "**" not in prompt and "remainder" not in prompt.lower() and "mod" not in prompt.lower():
+            calc_match = re.search(r'(?:calculate|what is|compute|find)\s+([\d\.\,\s\+\-\*\/\(\)]+[\+\-\*\/][\d\.\,\s\+\-\*\/\(\)]+)', prompt, re.IGNORECASE)
+            if not calc_match:
+                calc_match = re.search(r'(\b\d+(?:\.\d+)?\s*[\+\-\*\/]\s*\d+(?:\.\d+)?(?:\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)*\b)', prompt)
+            if calc_match:
+                expr = calc_match.group(1).strip().rstrip('?.')
+                res = self.safe_eval(expr)
+                if res is not None:
+                    return f"[PRIME-Net Invariant: {expr} = {res}]"
 
         # 4. Multi-Item Unit Pricing: "3 books for 15 dollars each and 2 pens for 4 dollars each"
         unit_matches = re.findall(r"(\d+(?:\.\d+)?)\s+[a-zA-Z]+\s+(?:for|at)\s+\$?(\d+(?:\.\d+)?)\s*(?:dollars?|cents?)?\s*each", prompt, re.I)
