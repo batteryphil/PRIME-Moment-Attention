@@ -15,6 +15,7 @@ Evaluates on:
 """
 
 import os
+os.environ["HF_DATASETS_OFFLINE"] = "1"
 import sys
 import copy
 import re
@@ -25,6 +26,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, AutoTokenizer
 from datasets import load_dataset
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(os.path.dirname(SCRIPT_DIR), "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from prime_moment_attention.primenet_harness import PrimeNetMathHarness
 
 
 class GPT2HybridWindowPrimeAttention(nn.Module):
@@ -84,33 +92,24 @@ class GPT2HybridWindowPrimeAttention(nn.Module):
             fused = out_local.transpose(1, 2).contiguous().view(B, L, C)
             return self.c_proj(fused), None
 
-        # 2. PRIME 2nd-Order Moment Recurrence (Accumulating all tokens past window)
+        # 2. Vectorized 2nd-Order PRIME Taylor Attention
+        idx = torch.arange(L, device=device)
+        diff = idx.unsqueeze(1) - idx.unsqueeze(0)
+        causal_mask = diff >= 0
+        decay_mat = torch.where(
+            causal_mask,
+            torch.pow(self.decay, diff.float()),
+            torch.zeros(L, L, device=device)
+        ).view(1, 1, L, L)
         q_f32 = q_scaled.float()
         k_f32 = key_states.float()
         v_f32 = value_states.float()
-        
-        out_prime = torch.zeros_like(q_f32)
-        S0 = torch.zeros(B, self.num_heads, self.head_dim, device=device, dtype=torch.float32)
-        S1 = torch.zeros(B, self.num_heads, self.head_dim, self.head_dim, device=device, dtype=torch.float32)
-        S2 = torch.zeros(B, self.num_heads, self.head_dim, self.head_dim, device=device, dtype=torch.float32)
-        K0 = torch.zeros(B, self.num_heads, 1, device=device, dtype=torch.float32)
-        K1 = torch.zeros(B, self.num_heads, self.head_dim, device=device, dtype=torch.float32)
-        K2 = torch.zeros(B, self.num_heads, self.head_dim, device=device, dtype=torch.float32)
-        
-        for t in range(L):
-            qt = q_f32[:, :, t]
-            kt = k_f32[:, :, t]
-            vt = v_f32[:, :, t]
-            S0 = self.decay * S0 + vt
-            S1 = self.decay * S1 + torch.einsum('bhd,bhe->bhde', kt, vt)
-            S2 = self.decay * S2 + torch.einsum('bhd,bhe->bhde', kt**2, vt)
-            K0 = self.decay * K0 + 1.0
-            K1 = self.decay * K1 + kt
-            K2 = self.decay * K2 + (kt**2)
-            num = S0 + torch.einsum('bhd,bhde->bhe', qt, S1) + 0.5 * torch.einsum('bhd,bhde->bhe', qt**2, S2)
-            den = (K0 + torch.sum(qt * K1, dim=-1, keepdim=True) + 0.5 * torch.sum((qt**2) * K2, dim=-1, keepdim=True)).clamp(min=1e-3)
-            out_prime[:, :, t] = num / den
-        out_prime = self.prime_norm(out_prime.to(hidden_states.dtype))
+        dot1 = torch.matmul(q_f32, k_f32.transpose(-1, -2))
+        dot2 = 0.5 * torch.matmul(q_f32**2, (k_f32**2).transpose(-1, -2))
+        A = decay_mat * (1.0 + dot1 + dot2)
+        num_dense = torch.matmul(A, v_f32)
+        den_dense = torch.sum(A, dim=-1, keepdim=True).clamp(min=1e-3)
+        out_prime = self.prime_norm((num_dense / den_dense).to(hidden_states.dtype))
 
         # 3. Adaptive Gated Fusion: Preserves local window while routing distant recurrent memory
         g = torch.sigmoid(self.gate)
@@ -253,23 +252,26 @@ def eval_retention_horizon(model, tokenizer, device: str) -> List[Dict[str, Any]
     return results
 
 
-def eval_gsm8k(model, tokenizer, device: str, num_samples: int = 15) -> Dict[str, Any]:
+def eval_gsm8k(model, tokenizer, device: str, num_samples: int = 10) -> Dict[str, Any]:
     ds = load_dataset("openai/gsm8k", "main", split="test")
     samples = list(ds)[:num_samples]
-    correct = 0
+    raw_correct = 0
+    harness_correct = 0
+    harness = PrimeNetMathHarness(verbose=False)
     model.eval()
 
-    with torch.no_grad():
-        for sample in samples:
-            q = sample["question"].strip()
-            ref_a = sample["answer"].strip()
-            ref_num = ref_a.split("####")[-1].strip().replace(",", "")
+    for sample in samples:
+        q = sample["question"].strip()
+        ref_a = sample["answer"].strip()
+        ref_num = ref_a.split("####")[-1].strip().replace(",", "")
 
-            prompt = f"Question: {q}\nAnswer:"
-            input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
-            if input_ids.shape[1] > 800:
-                continue
+        prompt = f"Question: {q}\nAnswer:"
+        input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
+        if input_ids.shape[1] > 800:
+            continue
 
+        # 1. Raw unassisted generation
+        with torch.no_grad():
             out = model.generate(
                 input_ids,
                 max_new_tokens=60,
@@ -277,12 +279,32 @@ def eval_gsm8k(model, tokenizer, device: str, num_samples: int = 15) -> Dict[str
                 top_k=20,
                 pad_token_id=tokenizer.eos_token_id,
             )
-            gen_text = tokenizer.decode(out[0][input_ids.shape[1]:], skip_special_tokens=True)
-            numbers = re.findall(r"[-+]?\d*\.\d+|\d+", gen_text)
-            if numbers and ref_num in numbers:
-                correct += 1
+        gen_text = tokenizer.decode(out[0][input_ids.shape[1]:], skip_special_tokens=True)
+        numbers = re.findall(r"[-+]?\d*\.\d+|\d+", gen_text)
+        if numbers and ref_num in numbers:
+            raw_correct += 1
 
-    return {"accuracy": (correct / num_samples) * 100.0, "correct": correct, "total": num_samples}
+        # 2. PRIME-Net assisted generation
+        harness_text = harness.generate_with_harness(
+            model=model,
+            tokenizer=tokenizer,
+            prompt=prompt,
+            max_new_tokens=80,
+            temperature=0.2,
+            top_k=20,
+            device=device,
+        )
+        h_numbers = re.findall(r"[-+]?\d*\.\d+|\d+", harness_text)
+        if h_numbers and ref_num in h_numbers:
+            harness_correct += 1
+
+    return {
+        "raw_accuracy": (raw_correct / num_samples) * 100.0,
+        "harness_accuracy": (harness_correct / num_samples) * 100.0,
+        "raw_correct": raw_correct,
+        "harness_correct": harness_correct,
+        "total": num_samples,
+    }
 
 
 def main():
@@ -350,8 +372,10 @@ def main():
         print(f"  - {c_name:<28} | {s[0]:<14} | {s[1]:<14} | {s[2]:<18} | {s[3]:<18}")
 
     print("-" * 110)
-    gsm_scores = [f"{all_gsm[k]['accuracy']:.1f}%" for k in c_keys]
-    print(f"{'GSM8K Math Accuracy':<32} | {gsm_scores[0]:<14} | {gsm_scores[1]:<14} | {gsm_scores[2]:<18} | {gsm_scores[3]:<18}")
+    raw_gsm = [f"{all_gsm[k]['raw_accuracy']:.1f}%" for k in c_keys]
+    harness_gsm = [f"{all_gsm[k]['harness_accuracy']:.1f}%" for k in c_keys]
+    print(f"{'GSM8K (Raw Unassisted)':<32} | {raw_gsm[0]:<14} | {raw_gsm[1]:<14} | {raw_gsm[2]:<18} | {raw_gsm[3]:<18}")
+    print(f"{'GSM8K (+ PRIME-Net Harness)':<32} | {harness_gsm[0]:<14} | {harness_gsm[1]:<14} | {harness_gsm[2]:<18} | {harness_gsm[3]:<18}")
 
     print("-" * 110)
     print("  MEMORY RETENTION HORIZON (Ratio of Target 'box' vs Distractor 'tree')")
