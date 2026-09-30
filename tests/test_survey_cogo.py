@@ -81,7 +81,8 @@ class TestSurveyCogo(unittest.TestCase):
         self.assertEqual(len(calls), 4)
 
         poly = self.parser.compute_polygon_from_pob(self.pob_lat, self.pob_lon, calls)
-        self.assertEqual(len(poly["corners"]), 5)  # POB + 4 corners
+        # Closed 4-sided tract has 4 physical boundary corners (POB + 3 corners)
+        self.assertEqual(len(poly["corners"]), 4)
         self.assertAlmostEqual(poly["total_perimeter_feet"], 600.0, delta=0.1)
         # Closure error should be nearly 0 (< 0.01 feet)
         self.assertLess(poly["misclosure_feet"], 0.01)
@@ -104,6 +105,50 @@ class TestSurveyCogo(unittest.TestCase):
         audit_fail = self.verifier.audit_survey_closure(0.5, 1000.0, "urban")
         self.assertFalse(audit_fail["alta_nsps_compliant"])
 
+    def test_ellipsoidal_area_subfoot_precision(self):
+        """Verifies ellipsoidal Gauss shoelace matches theoretical area within 0.001%."""
+        # 300 ft x 300 ft square = 90,000.0 sq ft
+        dist_m = 300.0 / 3.280839895013123
+        p0 = (35.0, -85.0)
+        p1 = vincenty_direct(p0[0], p0[1], 0.0, dist_m)[:2]
+        p2 = vincenty_direct(p1[0], p1[1], 90.0, dist_m)[:2]
+        p3 = vincenty_direct(p2[0], p2[1], 180.0, dist_m)[:2]
+
+        stats = polygon_geodesic_area_and_perimeter([p0, p1, p2, p3])
+        # Area error should be < 1.0 sq ft on a 90,000 sq ft parcel
+        self.assertLess(abs(stats["area_sq_feet"] - 90000.0), 1.0)
+        self.assertAlmostEqual(stats["area_acres"], 90000.0 / 43560.0, places=4)
+
+    def test_historical_units_and_cardinal_calls(self):
+        """Tests parsing of Texas varas, Gunter chains, and cardinal surveyor calls."""
+        text = """
+        BEGINNING at a cedar post;
+        THENCE Due North 100.00 feet to an iron rod;
+        THENCE N 45° E 100 varas to a stone;
+        THENCE East 5 chains to a marked tree;
+        THENCE South 100 links to the POINT OF BEGINNING.
+        """
+        calls = self.parser.parse_text_calls(text)
+        self.assertEqual(len(calls), 4)
+        # Due North
+        self.assertEqual(calls[0]["azimuth"], 0.0)
+        self.assertAlmostEqual(calls[0]["distance_feet"], 100.0, places=2)
+        # 100 varas = 277.78 feet
+        self.assertAlmostEqual(calls[1]["distance_feet"], 277.778, places=2)
+        # 5 chains = 330.0 feet
+        self.assertAlmostEqual(calls[2]["distance_feet"], 330.0, places=2)
+        # 100 links = 66.0 feet
+        self.assertAlmostEqual(calls[3]["distance_feet"], 66.0, places=2)
+
+    def test_curve_chord_call(self):
+        """Tests parsing of curve calls with chord bearings and distances."""
+        text = "THENCE along a curve to the left having a chord bearing of North 45° East and a chord distance of 125.0 feet to an iron pipe;"
+        calls = self.parser.parse_text_calls(text)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["azimuth"], 45.0)
+        self.assertAlmostEqual(calls[0]["distance_feet"], 125.0, places=2)
+
 
 if __name__ == "__main__":
     unittest.main()
+

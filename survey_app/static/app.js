@@ -107,22 +107,45 @@ function initSensors() {
     );
   }
 
-  // Device Compass Heading (DeviceOrientationEvent)
-  if (window.DeviceOrientationEvent) {
-    window.addEventListener(
-      "deviceorientation",
-      (e) => {
-        if (e.webkitCompassHeading) {
-          deviceHeading = e.webkitCompassHeading;
-        } else if (e.alpha !== null) {
-          deviceHeading = 360 - e.alpha;
-        }
-        updateNavigationHUD();
-      },
-      true
-    );
+  // Compass Heading with absolute orientation priority (Android Chrome & iOS Safari)
+  const onOrientation = (e) => {
+    if (e.webkitCompassHeading) {
+      // iOS Safari (degrees relative to magnetic north, clockwise)
+      deviceHeading = e.webkitCompassHeading;
+    } else if (e.alpha !== null) {
+      // Android / Standard W3C DeviceOrientationEvent
+      deviceHeading = (360 - e.alpha) % 360;
+    }
+    updateNavigationHUD();
+  };
+
+  if ("ondeviceorientationabsolute" in window) {
+    window.addEventListener("deviceorientationabsolute", onOrientation, true);
+  } else if (window.DeviceOrientationEvent) {
+    window.addEventListener("deviceorientation", onOrientation, true);
   }
+
+  // iOS 13+ permission request on user tap
+  document.addEventListener(
+    "click",
+    () => {
+      if (
+        typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function"
+      ) {
+        DeviceOrientationEvent.requestPermission()
+          .then((res) => {
+            if (res === "granted") {
+              window.addEventListener("deviceorientation", onOrientation, true);
+            }
+          })
+          .catch(() => {});
+      }
+    },
+    { once: true }
+  );
 }
+
 
 /**
  * 3. Render or Update User GPS Marker & Accuracy Circle
@@ -290,62 +313,135 @@ function selectTargetPin(pin) {
 }
 
 /**
- * 7. Live Real-Time Navigation HUD Updates
+ * 7. Client-Side Geodetic Navigation Vector (WGS-84 Vincenty Inverse)
+ * Enables 0ms latency 60fps needle tracking and complete offline autonomy in the field.
  */
-async function updateNavigationHUD() {
+function calculateLocalNavVector(userLat, userLon, targetLat, targetLon, headingDeg) {
+  const a = 6378137.0;
+  const f = 1.0 / 298.257223563;
+  const b = 6356752.314245;
+
+  if (Math.abs(userLat - targetLat) < 1e-9 && Math.abs(userLon - targetLon) < 1e-9) {
+    return { distM: 0.0, distFt: 0.0, azimuthDeg: 0.0, turnAngleDeg: 0.0, cardinal: "N" };
+  }
+
+  const phi1 = (userLat * Math.PI) / 180.0;
+  const L1 = (userLon * Math.PI) / 180.0;
+  const phi2 = (targetLat * Math.PI) / 180.0;
+  const L2 = (targetLon * Math.PI) / 180.0;
+  const deltaL = L2 - L1;
+
+  const tanU1 = (1.0 - f) * Math.tan(phi1);
+  const cosU1 = 1.0 / Math.sqrt(1.0 + tanU1 * tanU1);
+  const sinU1 = tanU1 * cosU1;
+
+  const tanU2 = (1.0 - f) * Math.tan(phi2);
+  const cosU2 = 1.0 / Math.sqrt(1.0 + tanU2 * tanU2);
+  const sinU2 = tanU2 * cosU2;
+
+  let lam = deltaL;
+  let lamPrev = 2.0 * Math.PI;
+  let sinSigma = 0.0, cosSigma = 0.0, sigma = 0.0;
+  let sinAlpha = 0.0, cos2Alpha = 0.0, cos2SigmaM = 0.0;
+
+  for (let i = 0; i < 50; i++) {
+    const sinLam = Math.sin(lam);
+    const cosLam = Math.cos(lam);
+    sinSigma = Math.sqrt(
+      (cosU2 * sinLam) ** 2 +
+      (cosU1 * sinU2 - sinU1 * cosU2 * cosLam) ** 2
+    );
+    if (sinSigma === 0) break;
+    cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLam;
+    sigma = Math.atan2(sinSigma, cosSigma);
+    sinAlpha = (cosU1 * cosU2 * sinLam) / sinSigma;
+    cos2Alpha = 1.0 - sinAlpha * sinAlpha;
+    cos2SigmaM = cos2Alpha !== 0 ? cosSigma - (2.0 * sinU1 * sinU2) / cos2Alpha : 0.0;
+    const C = (f / 16.0) * cos2Alpha * (4.0 + f * (4.0 - 3.0 * cos2Alpha));
+    lamPrev = lam;
+    lam = deltaL + (1.0 - C) * f * sinAlpha * (
+      sigma + C * sinSigma * (cos2SigmaM + C * cosSigma * (-1.0 + 2.0 * cos2SigmaM * cos2SigmaM))
+    );
+    if (Math.abs(lam - lamPrev) < 1e-12) break;
+  }
+
+  const u2 = cos2Alpha * (a * a - b * b) / (b * b);
+  const A = 1.0 + (u2 / 16384.0) * (4096.0 + u2 * (-768.0 + u2 * (320.0 - 175.0 * u2)));
+  const B = (u2 / 1024.0) * (256.0 + u2 * (-128.0 + u2 * (74.0 - 47.0 * u2)));
+  const deltaSigma = B * sinSigma * (
+    cos2SigmaM + (B / 4.0) * (
+      cosSigma * (-1.0 + 2.0 * cos2SigmaM * cos2SigmaM) -
+      (B / 6.0) * cos2SigmaM * (-3.0 + 4.0 * sinSigma * sinSigma) * (-3.0 + 4.0 * cos2SigmaM * cos2SigmaM)
+    )
+  );
+
+  const distM = b * A * (sigma - deltaSigma);
+  const distFt = distM * 3.280839895013123;
+
+  const alpha1 = Math.atan2(
+    cosU2 * Math.sin(lam),
+    cosU1 * sinU2 - sinU1 * cosU2 * Math.cos(lam)
+  );
+  const azimuthDeg = ((alpha1 * 180.0) / Math.PI + 360.0) % 360.0;
+
+  let turnAngle = (azimuthDeg - (headingDeg || 0.0)) % 360.0;
+  if (turnAngle > 180.0) turnAngle -= 360.0;
+  if (turnAngle < -180.0) turnAngle += 360.0;
+
+  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const cardinal = dirs[Math.floor(((azimuthDeg + 11.25) % 360.0) / 22.5)];
+
+  return { distM, distFt, azimuthDeg, turnAngleDeg: turnAngle, cardinal };
+}
+
+/**
+ * 8. Live Real-Time Navigation HUD Updates
+ */
+function updateNavigationHUD() {
   if (!activeTargetPin) return;
 
-  try {
-    const res = await fetch("/api/survey/nav-vector", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_lat: userLocation.lat,
-        user_lon: userLocation.lon,
-        target_lat: activeTargetPin.lat,
-        target_lon: activeTargetPin.lon,
-        device_heading: deviceHeading,
-      }),
-    });
+  // Immediate synchronous calculation on client for zero lag
+  const nav = calculateLocalNavVector(
+    userLocation.lat,
+    userLocation.lon,
+    activeTargetPin.lat,
+    activeTargetPin.lon,
+    deviceHeading
+  );
 
-    const data = await res.json();
+  const distFt = nav.distFt;
+  const distM = nav.distM;
 
-    // Distance display
-    const distFt = data.distance_feet;
-    const distM = data.distance_meters;
-    document.getElementById("dist-feet-val").textContent = distFt < 10 ? distFt.toFixed(1) : Math.round(distFt);
-    document.getElementById("dist-meters-val").textContent = `${distM.toFixed(1)} m`;
-    document.getElementById("bearing-val").textContent = `${Math.round(data.azimuth_deg)}°`;
-    document.getElementById("cardinal-val").textContent = data.cardinal_direction;
+  document.getElementById("dist-feet-val").textContent = distFt < 10 ? distFt.toFixed(1) : Math.round(distFt);
+  document.getElementById("dist-meters-val").textContent = `${distM.toFixed(1)} m`;
+  document.getElementById("bearing-val").textContent = `${Math.round(nav.azimuthDeg)}°`;
+  document.getElementById("cardinal-val").textContent = nav.cardinal;
 
-    // Rotate compass arrow
-    const navArrow = document.getElementById("nav-arrow");
-    const turnAngle = data.turn_angle_deg;
-    navArrow.style.transform = `rotate(${turnAngle}deg)`;
+  // Rotate compass arrow smoothly
+  const navArrow = document.getElementById("nav-arrow");
+  navArrow.style.transform = `rotate(${nav.turnAngleDeg}deg)`;
 
-    // Proximity Status Badge & Proximity Audio
-    const badge = document.getElementById("proximity-status-badge");
-    badge.className = "proximity-badge";
+  // Proximity Status Badge & Proximity Audio Radar
+  const badge = document.getElementById("proximity-status-badge");
+  badge.className = "proximity-badge";
 
-    if (distFt <= 3.0) {
-      badge.classList.add("badge-pinpoint");
-      badge.textContent = "📍 PINPOINT (< 3 FT) — DIRECTLY UNDERFOOT";
-      triggerProximityChirp(1200, 0.15); // Fast high pitch chirp
-    } else if (distFt <= 15.0) {
-      badge.classList.add("badge-near");
-      badge.textContent = "🎯 NEAR PIN (< 15 FT) — SWEEP METAL DETECTOR";
-      triggerProximityChirp(800, 0.4);
-    } else if (distFt <= 50.0) {
-      badge.classList.add("badge-far");
-      badge.textContent = "APPROACHING PIN (< 50 FT)";
-    } else {
-      badge.classList.add("badge-far");
-      badge.textContent = "FOLLOW ARROW TO CORNER PIN";
-    }
-  } catch (err) {
-    console.warn("Failed to update navigation vector:", err);
+  if (distFt <= 3.0) {
+    badge.classList.add("badge-pinpoint");
+    badge.textContent = "📍 PINPOINT (< 3 FT) — DIRECTLY UNDERFOOT";
+    triggerProximityChirp(1200, 0.15); // Fast high-pitch ping
+  } else if (distFt <= 15.0) {
+    badge.classList.add("badge-near");
+    badge.textContent = "🎯 NEAR PIN (< 15 FT) — SWEEP METAL DETECTOR";
+    triggerProximityChirp(800, 0.4);
+  } else if (distFt <= 50.0) {
+    badge.classList.add("badge-far");
+    badge.textContent = "APPROACHING PIN (< 50 FT)";
+  } else {
+    badge.classList.add("badge-far");
+    badge.textContent = "FOLLOW ARROW TO CORNER PIN";
   }
 }
+
 
 /**
  * 8. Audio Proximity Radar Chirp (Web Audio API)
