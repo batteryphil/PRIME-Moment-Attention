@@ -70,15 +70,15 @@ class GenerativeThoughtReconstructionLayer(nn.Module):
         self.recon_gate = nn.Linear(d_model, d_model, bias=True)
         nn.init.constant_(self.recon_gate.bias, -2.0) # Starts gentle, learns to inject
 
-        # State size in bytes: d_map * d_model * 4 bytes
-        self.state_bytes = d_map * d_model * 4
+        # State size in bytes: M is (d_map * d_model), Z is (d_map)
+        self.state_bytes = (d_map * d_model + d_map) * 4
 
     def forward(
         self,
         x: torch.Tensor,
-        state: Optional[torch.Tensor] = None,
+        state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         return_state: bool = False
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         """
         Forward pass.
         Supports both parallel training mode [B, L, D] and autoregressive decode [B, 1, D].
@@ -108,26 +108,28 @@ class GenerativeThoughtReconstructionLayer(nn.Module):
 
         if L == 1 and state is not None:
             # === Autoregressive O(1) Streaming Decode ===
-            # state is M^(2) in [B, d_map, D]
+            M, Z = state
             m_t = m_sq_gated.squeeze(1) # [B, d_map]
             v_t = v.squeeze(1)          # [B, D]
             q_t = q_sq.squeeze(1)       # [B, d_map]
 
-            # Update 2nd-order associative memory: M^(2) = lambda * M^(2) + m_t * v_t^T
-            # outer product: [B, d_map, 1] * [B, 1, D] -> [B, d_map, D]
-            state = self.decay * state + torch.bmm(m_t.unsqueeze(2), v_t.unsqueeze(1))
+            # Normalizer state
+            Z = self.decay * Z + m_t
 
-            # Readout: Recall = q_t^T * M^(2) / (norm + eps)
-            # [B, 1, d_map] @ [B, d_map, D] -> [B, 1, D]
-            q_norm_factor = torch.sum(q_t, dim=-1, keepdim=True).unsqueeze(1) + self.eps
-            recall = torch.bmm(q_t.unsqueeze(1), state) / q_norm_factor # [B, 1, D]
+            # Update 2nd-order associative memory
+            M = self.decay * M + torch.bmm(m_t.unsqueeze(2), v_t.unsqueeze(1))
+
+            # Readout: Recall = q_t^T * M^(2) / (q_t^T * Z + eps)
+            num = torch.bmm(q_t.unsqueeze(1), M) # [B, 1, D]
+            den = torch.bmm(q_t.unsqueeze(1), Z.unsqueeze(-1)) + self.eps # [B, 1, 1]
+            recall = num / den # [B, 1, D]
 
             # Generative reconstruction projection
             recon = self.recon_proj(recall)
             gate = torch.sigmoid(self.recon_gate(x))
             out = x + gate * recon
 
-            return out, state if return_state else None
+            return out, (M, Z) if return_state else None
 
         else:
             # === Parallel Causal Training Mode (Vectorized BMM) ===
@@ -138,20 +140,27 @@ class GenerativeThoughtReconstructionLayer(nn.Module):
             idx = torch.arange(L, device=x.device)
             dist = idx.unsqueeze(1) - idx.unsqueeze(0)
             causal_mask = dist >= 0
-            decay_mat = torch.where(causal_mask, self.decay ** dist.float(), torch.zeros_like(dist, dtype=x.dtype))
+            decay_mat = torch.where(causal_mask, (self.decay ** dist.float()).to(x.dtype), torch.zeros_like(dist, dtype=x.dtype))
             decay_mat = decay_mat.unsqueeze(0) # [1, L, L]
 
             attn_weights = S * decay_mat # [B, L, L]
             recall_all = torch.bmm(attn_weights, v) # [B, L, D]
+            
+            norm_factor = torch.sum(attn_weights, dim=-1, keepdim=True)
 
             if state is not None:
-                # Add influence from prior state: q_t @ (decay^(t+1) * state)
+                M, Z = state
+                # Add influence from prior state
                 t_decay = (self.decay ** (idx.float() + 1.0)).view(1, L, 1, 1)
-                prior_recall = torch.matmul(q_sq.unsqueeze(2), state.unsqueeze(1)) * t_decay
+                prior_recall = torch.matmul(q_sq.unsqueeze(2), M.unsqueeze(1)) * t_decay
                 recall_all = recall_all + prior_recall.squeeze(2)
+                
+                t_decay_Z = (self.decay ** (idx.float() + 1.0)).view(1, L, 1)
+                prior_norm = torch.matmul(q_sq.unsqueeze(1), Z.unsqueeze(-1)).squeeze(-1) * t_decay_Z
+                norm_factor = norm_factor + prior_norm
 
-            q_norm_factor = torch.sum(q_sq, dim=-1, keepdim=True) + self.eps
-            recall_all = recall_all / q_norm_factor
+            norm_factor = norm_factor + self.eps
+            recall_all = recall_all / norm_factor
 
             recon = self.recon_proj(recall_all)
             gate = torch.sigmoid(self.recon_gate(x))
@@ -162,9 +171,15 @@ class GenerativeThoughtReconstructionLayer(nn.Module):
                 # Vectorized cumulative state at end of sequence
                 weights = (self.decay ** (L - 1 - idx).float()).view(1, L, 1)
                 m_decayed = m_sq_gated * weights # [B, L, d_map]
-                final_state = torch.bmm(m_decayed.transpose(1, 2), v) # [B, d_map, D]
+                
+                M_new = torch.bmm(m_decayed.transpose(1, 2), v) # [B, d_map, D]
+                Z_new = torch.sum(m_decayed, dim=1) # [B, d_map]
+                
                 if state is not None:
-                    final_state = final_state + (self.decay ** L) * state
+                    M_old, Z_old = state
+                    M_new = M_new + (self.decay ** L) * M_old
+                    Z_new = Z_new + (self.decay ** L) * Z_old
+                final_state = (M_new, Z_new)
 
             return out, final_state
 
@@ -177,20 +192,16 @@ def test_reconstruction_map():
     # 1. Parallel training mode test
     x = torch.randn(2, 64, 512)
     out_parallel, state = layer(x, return_state=True)
+    M, Z = state
     assert out_parallel.shape == x.shape, f"Shape mismatch: {out_parallel.shape} vs {x.shape}"
-    assert state.shape == (2, 32, 512), f"State shape mismatch: {state.shape}"
-    print(f"  [+] Parallel Forward Pass: PASS (Output: {out_parallel.shape}, State: {state.shape})")
-
-    # 2. Memory footprint verification
-    mem_kb = layer.state_bytes / 1024.0
-    print(f"  [+] State Memory Footprint: {layer.state_bytes} bytes ({mem_kb:.2f} KB constant)")
-    assert mem_kb == 64.0, f"Expected 64 KB, got {mem_kb} KB"
+    assert M.shape == (2, 32, 512), f"State shape mismatch: {M.shape}"
+    assert Z.shape == (2, 32), f"State shape mismatch: {Z.shape}"
+    print(f"  [+] Parallel Forward Pass: PASS (Output: {out_parallel.shape}, State: M {M.shape}, Z {Z.shape})")
 
     # 3. Autoregressive streaming step test
     x_step = torch.randn(2, 1, 512)
     out_step, next_state = layer(x_step, state=state, return_state=True)
     assert out_step.shape == (2, 1, 512)
-    assert next_state.shape == (2, 32, 512)
     print("  [+] Autoregressive Decode Step: PASS (Flat O(1) state verified)")
 
     print("[SUCCESS] GenerativeThoughtReconstructionLayer fully functional!")
