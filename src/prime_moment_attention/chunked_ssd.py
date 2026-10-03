@@ -94,7 +94,10 @@ def chunked_prime_ssd_core(
     den_intra = torch.sum(A_intra, dim=-1, keepdim=True)
 
     # 3. Chunk deltas for moments and normalizers
-    w_chunk = torch.pow(decay, (C - 1 - idx).float()).view(1, 1, 1, C, 1)
+    w_chunk = torch.pow(decay, (C - 1 - idx).float()).view(1, 1, 1, C, 1).expand(B, H, num_chunks, C, 1).clone()
+    if pad_len > 0:
+        w_chunk[:, :, -1, -pad_len:, :] = 0.0
+
     k_w = k_chunks * w_chunk
     k2_w = (k_chunks**2) * w_chunk
     v_w = v_chunks * w_chunk
@@ -103,7 +106,7 @@ def chunked_prime_ssd_core(
     chunk_S1 = torch.matmul(k_w.transpose(-1, -2), v_chunks)
     chunk_S2 = torch.matmul(k2_w.transpose(-1, -2), v_chunks)
 
-    chunk_K0 = torch.sum(w_chunk, dim=3, keepdim=True).expand(B, H, num_chunks, 1, 1)
+    chunk_K0 = torch.sum(w_chunk, dim=3, keepdim=True)
     chunk_K1 = torch.sum(k_w, dim=3, keepdim=True)
     chunk_K2 = torch.sum(k2_w, dim=3, keepdim=True)
 
@@ -164,6 +167,16 @@ def chunked_prime_ssd_core(
         next_K0 = (inter_K0[:, :, last_c] * chunk_decay + chunk_K0[:, :, last_c]).squeeze(2)
         next_K1 = (inter_K1[:, :, last_c] * chunk_decay + chunk_K1[:, :, last_c]).squeeze(2)
         next_K2 = (inter_K2[:, :, last_c] * chunk_decay + chunk_K2[:, :, last_c]).squeeze(2)
+        
+        if pad_len > 0:
+            correction = math.pow(decay, -pad_len)
+            next_S0 *= correction
+            next_S1 *= correction
+            next_S2 *= correction
+            next_K0 *= correction
+            next_K1 *= correction
+            next_K2 *= correction
+            
         next_state = (next_S0, next_S1, next_S2, next_K0, next_K1, next_K2)
     else:
         next_state = None
