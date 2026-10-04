@@ -64,6 +64,14 @@ $(BIN_DIR)/bench_context_limits: bench_context_limits.c prime_moment.c prime_mom
 	$(CC) $(CFLAGS) -o $@ bench_context_limits.c prime_moment.c $(LDFLAGS)
 	@echo "Built context limits benchmark: $@"
 
+prove-limits: $(BIN_DIR)/prove_limits
+	$(BIN_DIR)/prove_limits
+
+$(BIN_DIR)/prove_limits: prove_limits.c prime_moment.c prime_moment.h
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(CFLAGS) -Wl,--wrap=malloc -o $@ prove_limits.c prime_moment.c $(LDFLAGS)
+	@echo "Built limits proof suite: $@"
+
 clean:
 	rm -rf $(BIN_DIR) *.o
 
