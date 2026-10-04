@@ -109,9 +109,9 @@ class GenerativeThoughtReconstructionLayer(nn.Module):
         if L == 1 and state is not None:
             # === Autoregressive O(1) Streaming Decode ===
             M, Z = state
-            m_t = m_sq_gated.squeeze(1) # [B, d_map]
             v_t = v.squeeze(1)          # [B, D]
-            q_t = q_sq.squeeze(1)       # [B, d_map]
+            m_t = m_sq_gated.squeeze(1).to(v_t.dtype) # [B, d_map]
+            q_t = q_sq.squeeze(1).to(v_t.dtype)       # [B, d_map]
 
             # Normalizer state
             Z = self.decay * Z + m_t
@@ -169,8 +169,8 @@ class GenerativeThoughtReconstructionLayer(nn.Module):
             final_state = None
             if return_state:
                 # Vectorized cumulative state at end of sequence
-                weights = (self.decay ** (L - 1 - idx).float()).view(1, L, 1)
-                m_decayed = m_sq_gated * weights # [B, L, d_map]
+                weights = (self.decay ** (L - 1 - idx).float()).view(1, L, 1).to(v.dtype)
+                m_decayed = (m_sq_gated * weights).to(v.dtype) # [B, L, d_map]
                 
                 M_new = torch.bmm(m_decayed.transpose(1, 2), v) # [B, d_map, D]
                 Z_new = torch.sum(m_decayed, dim=1) # [B, d_map]

@@ -63,12 +63,19 @@ class HybridWindowPrimeAttention(nn.Module):
         self.window_size = window_size
         self.decay = decay
         self.alpha = alpha  # Weight for local window vs recurrent memory
+        self.use_learnable_gate = True
 
         # Borrow exact projection weights and biases
         self.q_proj = original_attn.q_proj
         self.k_proj = original_attn.k_proj
         self.v_proj = original_attn.v_proj
         self.o_proj = original_attn.o_proj
+
+        # Stabilized Gating & Normalization
+        device = original_attn.q_proj.weight.device
+        dtype = torch.bfloat16
+        self.prime_norm = nn.LayerNorm(self.head_dim, dtype=dtype, device=device)
+        self.gate = nn.Parameter(torch.full((1, self.num_heads, 1, 1), -3.0, dtype=dtype, device=device))
 
     def forward(
         self,
@@ -143,7 +150,12 @@ class HybridWindowPrimeAttention(nn.Module):
             out_local = torch.matmul(attn_weights, value_states)
 
             # 3. Blend
-            fused = self.alpha * out_local + (1.0 - self.alpha) * out_prime
+            if self.use_learnable_gate:
+                out_prime_norm = self.prime_norm(out_prime.to(self.prime_norm.weight.dtype)).to(query_states.dtype)
+                g = torch.sigmoid(self.gate).to(query_states.dtype)
+                fused = (1.0 - g) * out_local + g * out_prime_norm
+            else:
+                fused = self.alpha * out_local + (1.0 - self.alpha) * out_prime
 
             if past_key_values is not None:
                 past_key_values.hybrid_prime_states[self.layer_idx] = {
@@ -188,7 +200,12 @@ class HybridWindowPrimeAttention(nn.Module):
             out_local = torch.matmul(attn_weights, v_full)
 
             # 3. Blend
-            fused = self.alpha * out_local + (1.0 - self.alpha) * out_prime
+            if self.use_learnable_gate:
+                out_prime_norm = self.prime_norm(out_prime.to(self.prime_norm.weight.dtype)).to(query_states.dtype)
+                g = torch.sigmoid(self.gate).to(query_states.dtype)
+                fused = (1.0 - g) * out_local + g * out_prime_norm
+            else:
+                fused = self.alpha * out_local + (1.0 - self.alpha) * out_prime
 
             state['k_win'] = k_full[:, :, -self.window_size:]
             state['v_win'] = v_full[:, :, -self.window_size:]
