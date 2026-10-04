@@ -132,7 +132,7 @@ def main():
     
     model.train()
     # Curriculum: start short, get longer
-    train_lengths = [1000]*5 + [2000]*5 + [4000]*5
+    train_lengths = [1000]*5 + [2000]*5
     for i, seq_len in enumerate(train_lengths):
         optimizer.zero_grad()
         input_ids, target_ids, _ = generate_passkey_task(tokenizer, seq_len)
