@@ -56,6 +56,14 @@ test-bundle: native zipalign
 bench: native
 	$(BIN_DIR)/prime --heads 8 --dim 64 --tokens 10000
 
+bench-limits: $(BIN_DIR)/bench_context_limits
+	$(BIN_DIR)/bench_context_limits
+
+$(BIN_DIR)/bench_context_limits: bench_context_limits.c prime_moment.c prime_moment.h
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(CFLAGS) -o $@ bench_context_limits.c prime_moment.c $(LDFLAGS)
+	@echo "Built context limits benchmark: $@"
+
 clean:
 	rm -rf $(BIN_DIR) *.o
 
