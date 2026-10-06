@@ -151,16 +151,16 @@ class GenerativeThoughtReconstructionLayer(nn.Module):
             if state is not None:
                 M, Z = state
                 # Add influence from prior state
-                t_decay = (self.decay ** (idx.float() + 1.0)).view(1, L, 1, 1)
+                t_decay = (self.decay ** (idx.float() + 1.0)).view(1, L, 1, 1).to(v.dtype)
                 prior_recall = torch.matmul(q_sq.unsqueeze(2), M.unsqueeze(1)) * t_decay
                 recall_all = recall_all + prior_recall.squeeze(2)
                 
-                t_decay_Z = (self.decay ** (idx.float() + 1.0)).view(1, L, 1)
-                prior_norm = torch.matmul(q_sq.unsqueeze(1), Z.unsqueeze(-1)).squeeze(-1) * t_decay_Z
+                t_decay_Z = (self.decay ** (idx.float() + 1.0)).view(1, L, 1).to(v.dtype)
+                prior_norm = torch.bmm(q_sq, Z.unsqueeze(-1)) * t_decay_Z
                 norm_factor = norm_factor + prior_norm
 
             norm_factor = norm_factor + self.eps
-            recall_all = recall_all / norm_factor
+            recall_all = (recall_all / norm_factor).to(v.dtype)
 
             recon = self.recon_proj(recall_all)
             gate = torch.sigmoid(self.recon_gate(x))

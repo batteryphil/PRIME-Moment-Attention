@@ -126,11 +126,17 @@ class PrimeMomentAttention(nn.Module):
             qt_pos = F.elu(qt) + 1.0
             kt_pos = F.elu(kt) + 1.0
 
+            # 2nd Order Taylor approximation updates
+            S0 = self.decay * S0 + vt
             S1 = self.decay * S1 + torch.einsum('bhd,bhe->bhde', kt_pos, vt)
+            S2 = self.decay * S2 + torch.einsum('bhd,bhe->bhde', kt_pos**2, vt)
+            
+            K0 = self.decay * K0 + 1.0
             K1 = self.decay * K1 + kt_pos
+            K2 = self.decay * K2 + (kt_pos**2)
 
-            num = torch.einsum('bhd,bhde->bhe', qt_pos, S1)
-            den = torch.sum(qt_pos * K1, dim=-1, keepdim=True).clamp(min=self.eps)
+            num = S0 + torch.einsum('bhd,bhde->bhe', qt_pos, S1) + 0.5 * torch.einsum('bhd,bhde->bhe', qt_pos**2, S2)
+            den = (K0 + torch.sum(qt_pos * K1, dim=-1, keepdim=True) + 0.5 * torch.sum((qt_pos**2) * K2, dim=-1, keepdim=True)).clamp(min=self.eps)
 
             y = (num / den).unsqueeze(2) # [B, H, 1, D]
 
