@@ -1,0 +1,270 @@
+{
+  "benchmark": "Server-Killer Batched Throughput & OOM Horizon",
+  "gpu": "AMD Radeon Graphics (15.92 GB VRAM)",
+  "data": {
+    "L_8192": {
+      "baseline_softmax": [
+        {
+          "status": "PASS",
+          "batch_size": 1,
+          "context_length": 8192,
+          "peak_vram_gb": 5.51,
+          "ttft_sec": 2.724,
+          "tok_per_sec_total": 5.6,
+          "tok_per_sec_per_user": 5.6
+        },
+        {
+          "status": "PASS",
+          "batch_size": 2,
+          "context_length": 8192,
+          "peak_vram_gb": 8.07,
+          "ttft_sec": 0.035,
+          "tok_per_sec_total": 6.9,
+          "tok_per_sec_per_user": 3.5
+        },
+        {
+          "status": "PASS",
+          "batch_size": 4,
+          "context_length": 8192,
+          "peak_vram_gb": 13.19,
+          "ttft_sec": 3.316,
+          "tok_per_sec_total": 77.0,
+          "tok_per_sec_per_user": 19.3
+        },
+        {
+          "status": "OOM",
+          "batch_size": 8,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 16,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 32,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 64,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        }
+      ],
+      "stage7_hybrid": [
+        {
+          "status": "PASS",
+          "batch_size": 1,
+          "context_length": 8192,
+          "peak_vram_gb": 5.38,
+          "ttft_sec": 4.468,
+          "tok_per_sec_total": 13.3,
+          "tok_per_sec_per_user": 13.3
+        },
+        {
+          "status": "PASS",
+          "batch_size": 2,
+          "context_length": 8192,
+          "peak_vram_gb": 7.82,
+          "ttft_sec": 1.981,
+          "tok_per_sec_total": 18.9,
+          "tok_per_sec_per_user": 9.5
+        },
+        {
+          "status": "PASS",
+          "batch_size": 4,
+          "context_length": 8192,
+          "peak_vram_gb": 12.67,
+          "ttft_sec": 4.189,
+          "tok_per_sec_total": 43.9,
+          "tok_per_sec_per_user": 11.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 8,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 16,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 32,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 64,
+          "context_length": 8192,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        }
+      ]
+    },
+    "L_16384": {
+      "baseline_softmax": [
+        {
+          "status": "PASS",
+          "batch_size": 1,
+          "context_length": 16384,
+          "peak_vram_gb": 8.07,
+          "ttft_sec": 0.053,
+          "tok_per_sec_total": 2.7,
+          "tok_per_sec_per_user": 2.7
+        },
+        {
+          "status": "PASS",
+          "batch_size": 2,
+          "context_length": 16384,
+          "peak_vram_gb": 13.19,
+          "ttft_sec": 4.281,
+          "tok_per_sec_total": 37.6,
+          "tok_per_sec_per_user": 18.8
+        },
+        {
+          "status": "OOM",
+          "batch_size": 4,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 8,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 16,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 32,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 64,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        }
+      ],
+      "stage7_hybrid": [
+        {
+          "status": "PASS",
+          "batch_size": 1,
+          "context_length": 16384,
+          "peak_vram_gb": 7.78,
+          "ttft_sec": 2.624,
+          "tok_per_sec_total": 8.4,
+          "tok_per_sec_per_user": 8.4
+        },
+        {
+          "status": "PASS",
+          "batch_size": 2,
+          "context_length": 16384,
+          "peak_vram_gb": 12.61,
+          "ttft_sec": 4.052,
+          "tok_per_sec_total": 10.0,
+          "tok_per_sec_per_user": 5.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 4,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 8,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 16,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 32,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        },
+        {
+          "status": "OOM",
+          "batch_size": 64,
+          "context_length": 16384,
+          "peak_vram_gb": "OOM (>15.92 GB)",
+          "ttft_sec": null,
+          "tok_per_sec_total": 0.0,
+          "tok_per_sec_per_user": 0.0
+        }
+      ]
+    }
+  }
+}

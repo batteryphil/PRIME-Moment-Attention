@@ -1,0 +1,20 @@
+{
+  "Standard Softmax": {
+    "encoder_latency_ms": 44.52,
+    "encoder_cosine_fidelity": 1.0,
+    "total_transcription_time_s": 0.21,
+    "transcription": " The left main tanes that then vice president Joe Biden's unmasking of general Flynn is no big deal. Everybody does it."
+  },
+  "PRIME Mid-Trunk": {
+    "encoder_latency_ms": 102.73,
+    "encoder_cosine_fidelity": 0.6746,
+    "total_transcription_time_s": 0.07,
+    "transcription": " and"
+  },
+  "100% Zero-Shot PRIME": {
+    "encoder_latency_ms": 60.19,
+    "encoder_cosine_fidelity": 0.2553,
+    "total_transcription_time_s": 0.08,
+    "transcription": " You"
+  }
+}

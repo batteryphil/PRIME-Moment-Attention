@@ -1,0 +1,76 @@
+{
+  "math": [
+    {
+      "title": "Linear Equation",
+      "prompt": "Solve for x: 3 * x + 7 = 31.\nStep-by-step:",
+      "latency_ms": 3985.92,
+      "output_with_registers": "Solve for x: 3 * x + 7 = 31.\nStep-by-step: Subtract 1 to get 3*x = 3, we can divide both sides by 2 to find the sum of the sum of the sum of the sum of the sum of the sum of the",
+      "output_without_registers": "Solve for x: 3 * x + 7 = 31.\nStep-by-step: Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub Sub, and the 5- this"
+    },
+    {
+      "title": "Proportional Ratio",
+      "prompt": "If 4 apples cost 8 dollars, how much do 10 apples cost?\nAnswer:",
+      "latency_ms": 442.08,
+      "output_with_registers": "If 4 apples cost 8 dollars, how much do 10 apples cost?\nAnswer: 8 8 8 8: 8 8 8: 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8",
+      "output_without_registers": "If 4 apples cost 8 dollars, how much do 10 apples cost?\nAnswer: 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8"
+    },
+    {
+      "title": "Linear Conservation",
+      "prompt": "Solve for x: 5 * x + 10 = 45.\nStep-by-step:",
+      "latency_ms": 429.63,
+      "output_with_registers": "Solve for x: 5 * x + 10 = 45.\nStep-by-step: Subtract 1 to get 5*x = 1, which is the sum of the sum of the sum of the sum of the sum of the sum of the sum of the sum of the sum",
+      "output_without_registers": "Solve for x: 5 * x + 10 = 45.\nStep-by-step: Sub Sub Sub Sub Subtract analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog analog"
+    },
+    {
+      "title": "Multi-Step Arithmetic",
+      "prompt": "Calculate: 15 * 4 + 20 / 2.\nAnswer:",
+      "latency_ms": 429.16,
+      "output_with_registers": "Calculate: 15 * 4 + 20 / 2.\nAnswer: Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon Kon",
+      "output_without_registers": "Calculate: 15 * 4 + 20 / 2.\nAnswer: 2"
+    },
+    {
+      "title": "Ohm's Law",
+      "prompt": "Find the electrical voltage across a circuit with current 4 A and resistance 12 Ohms.\nAnswer:",
+      "latency_ms": 21.86,
+      "output_with_registers": "Find the electrical voltage across a circuit with current 4 A and resistance 12 Ohms.\nAnswer:ie",
+      "output_without_registers": "Find the electrical voltage across a circuit with current 4 A and resistance 12 Ohms.\nAnswer: 10"
+    }
+  ],
+  "science": [
+    {
+      "title": "Thermodynamics",
+      "prompt": "Calculate the thermal heat required to raise 2 kg of water by 10 K.\nFormula: Q = m * c * deltaT.\nAnswer:",
+      "latency_ms": 21.98,
+      "output_with_registers": "Calculate the thermal heat required to raise 2 kg of water by 10 K.\nFormula: Q = m * c * deltaT.\nAnswer: reality",
+      "output_without_registers": "Calculate the thermal heat required to raise 2 kg of water by 10 K.\nFormula: Q = m * c * deltaT.\nAnswer: has a informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant informant"
+    },
+    {
+      "title": "Kinetic Energy",
+      "prompt": "What is the kinetic energy of an object of mass 4 kg moving at speed 5 m/s?\nFormula: E_k = 0.5 * m * v^2.\nAnswer:",
+      "latency_ms": 440.35,
+      "output_with_registers": "What is the kinetic energy of an object of mass 4 kg moving at speed 5 m/s?\nFormula: E_k = 0.5 * m * v^2.\nAnswer: herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds herds",
+      "output_without_registers": "What is the kinetic energy of an object of mass 4 kg moving at speed 5 m/s?\nFormula: E_k = 0.5 * m * v^2.\nAnswer: lettuce"
+    },
+    {
+      "title": "Gravity & Mass",
+      "prompt": "What happens to the gravitational force between two objects when the mass of one object is doubled?\nExplanation:",
+      "latency_ms": 445.88,
+      "output_with_registers": "What happens to the gravitational force between two objects when the mass of one object is doubled?\nExplanation: Theazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazelazel",
+      "output_without_registers": "What happens to the gravitational force between two objects when the mass of one object is doubled?\nExplanation: W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W"
+    },
+    {
+      "title": "Phase Transition",
+      "prompt": "Explain why water absorbs heat while changing from liquid to gas at 100 degrees Celsius without changing temperature.\nExplanation:",
+      "latency_ms": 437.04,
+      "output_with_registers": "Explain why water absorbs heat while changing from liquid to gas at 100 degrees Celsius without changing temperature.\nExplanation:\n\n* **Use a more decline**:\n* **Use a more nuanced and descriptive language**:\n\n* **Use a more precise and pure**:\n\n* **Use a",
+      "output_without_registers": "Explain why water absorbs heat while changing from liquid to gas at 100 degrees Celsius without changing temperature.\nExplanation:\n- demonstrate demonstrate demonstrate demonstrate demonstrate a tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest tallest"
+    },
+    {
+      "title": "Biological Photosynthesis",
+      "prompt": "What are the primary chemical inputs and outputs of oxygenic photosynthesis?\nSummary:",
+      "latency_ms": 434.73,
+      "output_with_registers": "What are the primary chemical inputs and outputs of oxygenic photosynthesis?\nSummary: Are there any other on the other hand, the when the other player is a DX DX DX DX DX DX DX DX DX DX, and the other wed wed wed wed wed wed wed wed wed wed",
+      "output_without_registers": "What are the primary chemical inputs and outputs of oxygenic photosynthesis?\nSummary: Prime Prime numbers are used in various areas of mathematics, including number theory, number theory, and number theory.\n\nThe study of company has far-reaching implications for our understanding of mathematics, number"
+    }
+  ]
+}

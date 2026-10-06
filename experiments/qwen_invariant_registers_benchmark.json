@@ -1,0 +1,24 @@
+{
+  "Base Qwen2.5-0.5B": {
+    "accuracy": 21.0,
+    "correct": 21,
+    "total": 100,
+    "avg_latency_ms": 143.05,
+    "avg_prompt_tokens": 28.1
+  },
+  "Prompt CoT Invariants": {
+    "accuracy": 85.0,
+    "correct": 85,
+    "total": 100,
+    "avg_latency_ms": 189.56,
+    "avg_prompt_tokens": 43.8
+  },
+  "Latent Invariant Registers": {
+    "accuracy": 55.00000000000001,
+    "correct": 55,
+    "total": 100,
+    "avg_latency_ms": 202.61,
+    "avg_prompt_tokens": 28.1
+  },
+  "training_time_s": 20.44
+}

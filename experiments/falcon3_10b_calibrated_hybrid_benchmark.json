@@ -1,0 +1,66 @@
+{
+  "Falcon3-10B + Calibrated Hybrid Attention": {
+    "math_score": "8/15 (53.3%)",
+    "math_passed_count": 8,
+    "deduction_score": "6/7 (85.7%)",
+    "deduction_passed_count": 6,
+    "niah": {
+      "gap_250": {
+        "success": true,
+        "latency_s": 2.17,
+        "peak_vram_mb": 4102.7,
+        "response": "94812.\n\nAnswer"
+      },
+      "gap_1000": {
+        "success": true,
+        "latency_s": 3.21,
+        "peak_vram_mb": 4340.6,
+        "response": "94812.\n\nAnswer"
+      },
+      "gap_2000": {
+        "success": true,
+        "latency_s": 5.1,
+        "peak_vram_mb": 4793.3,
+        "response": "94812.\n\nOutput"
+      },
+      "gap_4000": {
+        "success": true,
+        "latency_s": 11.02,
+        "peak_vram_mb": 6554.7,
+        "response": "94812.\n\nAnswer"
+      }
+    }
+  },
+  "Falcon3-10B + Calibrated Hybrid Attention + PRIME-Net": {
+    "math_score": "14/15 (93.3%)",
+    "math_passed_count": 14,
+    "deduction_score": "3/7 (42.9%)",
+    "deduction_passed_count": 3,
+    "niah": {
+      "gap_250": {
+        "success": true,
+        "latency_s": 2.17,
+        "peak_vram_mb": 4102.7,
+        "response": "94812.\n\nAnswer"
+      },
+      "gap_1000": {
+        "success": true,
+        "latency_s": 3.14,
+        "peak_vram_mb": 4341.8,
+        "response": "94812.\n\nAnswer"
+      },
+      "gap_2000": {
+        "success": true,
+        "latency_s": 5.11,
+        "peak_vram_mb": 4793.3,
+        "response": "94812.\n\nOutput"
+      },
+      "gap_4000": {
+        "success": true,
+        "latency_s": 11.06,
+        "peak_vram_mb": 6554.7,
+        "response": "94812.\n\nAnswer"
+      }
+    }
+  }
+}

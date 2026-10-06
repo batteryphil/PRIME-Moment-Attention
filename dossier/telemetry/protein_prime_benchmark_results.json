@@ -1,0 +1,149 @@
+{
+  "ubiquitin_1ubq": {
+    "length": 76,
+    "description": "Ubiquitin (1UBQ) - Canonical alpha/beta roll fold",
+    "conditions": {
+      "softmax_baseline": {
+        "latency_ms": 2218.62,
+        "cosine_fidelity": 1.0,
+        "pearson_corr": 1.0,
+        "top_L_overlap": 1.0,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_ubiquitin_1ubq_softmax.png"
+      },
+      "prime_mid_trunk": {
+        "injected_layers": [
+          3
+        ],
+        "latency_ms": 103.17,
+        "cosine_fidelity": 0.7079,
+        "pearson_corr": 0.6055,
+        "top_L_overlap": 0.5526,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_ubiquitin_1ubq_prime_mid_trunk.png"
+      },
+      "prime_dual_trunk": {
+        "injected_layers": [
+          2,
+          4
+        ],
+        "latency_ms": 8.75,
+        "cosine_fidelity": 0.5609,
+        "pearson_corr": 0.3309,
+        "top_L_overlap": 0.1579,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_ubiquitin_1ubq_prime_dual_trunk.png"
+      },
+      "prime_all_zeroshot": {
+        "injected_layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "latency_ms": 8.67,
+        "cosine_fidelity": 0.486,
+        "pearson_corr": 0.1617,
+        "top_L_overlap": 0.0526,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_ubiquitin_1ubq_prime_all_zeroshot.png"
+      }
+    }
+  },
+  "bpti_5pti": {
+    "length": 58,
+    "description": "Bovine Pancreatic Trypsin Inhibitor (5PTI) - Disulfide-rich fold",
+    "conditions": {
+      "softmax_baseline": {
+        "latency_ms": 12.65,
+        "cosine_fidelity": 1.0,
+        "pearson_corr": 1.0,
+        "top_L_overlap": 1.0,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_bpti_5pti_softmax.png"
+      },
+      "prime_mid_trunk": {
+        "injected_layers": [
+          3
+        ],
+        "latency_ms": 8.46,
+        "cosine_fidelity": 0.7289,
+        "pearson_corr": 0.5417,
+        "top_L_overlap": 0.1379,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_bpti_5pti_prime_mid_trunk.png"
+      },
+      "prime_dual_trunk": {
+        "injected_layers": [
+          2,
+          4
+        ],
+        "latency_ms": 7.81,
+        "cosine_fidelity": 0.6234,
+        "pearson_corr": 0.3074,
+        "top_L_overlap": 0.1034,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_bpti_5pti_prime_dual_trunk.png"
+      },
+      "prime_all_zeroshot": {
+        "injected_layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "latency_ms": 8.77,
+        "cosine_fidelity": 0.5449,
+        "pearson_corr": 0.1102,
+        "top_L_overlap": 0.0,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_bpti_5pti_prime_all_zeroshot.png"
+      }
+    }
+  },
+  "gb1": {
+    "length": 56,
+    "description": "Protein G B1 Domain (GB1) - 4-strand beta-sheet + alpha-helix",
+    "conditions": {
+      "softmax_baseline": {
+        "latency_ms": 8.44,
+        "cosine_fidelity": 1.0,
+        "pearson_corr": 1.0,
+        "top_L_overlap": 1.0,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_gb1_softmax.png"
+      },
+      "prime_mid_trunk": {
+        "injected_layers": [
+          3
+        ],
+        "latency_ms": 8.31,
+        "cosine_fidelity": 0.7152,
+        "pearson_corr": 0.6048,
+        "top_L_overlap": 0.2857,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_gb1_prime_mid_trunk.png"
+      },
+      "prime_dual_trunk": {
+        "injected_layers": [
+          2,
+          4
+        ],
+        "latency_ms": 8.14,
+        "cosine_fidelity": 0.6054,
+        "pearson_corr": 0.4005,
+        "top_L_overlap": 0.2857,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_gb1_prime_dual_trunk.png"
+      },
+      "prime_all_zeroshot": {
+        "injected_layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "latency_ms": 8.86,
+        "cosine_fidelity": 0.4973,
+        "pearson_corr": 0.1851,
+        "top_L_overlap": 0.0714,
+        "image_path": "/home/phil/.gemini/antigravity/scratch/contact_map_gb1_prime_all_zeroshot.png"
+      }
+    }
+  }
+}

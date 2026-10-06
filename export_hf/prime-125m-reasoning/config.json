@@ -1,0 +1,31 @@
+{
+  "architectures": [
+    "PrimeForCausalLM"
+  ],
+  "auto_map": {
+    "AutoConfig": "configuration_prime.PrimeConfig",
+    "AutoModelForCausalLM": "modeling_prime.PrimeForCausalLM"
+  },
+  "model_type": "prime",
+  "vocab_size": 50257,
+  "hidden_size": 768,
+  "num_layers": 12,
+  "num_heads": 12,
+  "head_dim": 64,
+  "num_kv_heads": 12,
+  "intermediate_size": 2048,
+  "decay": 0.995,
+  "use_qk_norm": true,
+  "rms_norm_eps": 1e-06,
+  "eps": 1.0,
+  "tie_word_embeddings": true,
+  "initializer_range": 0.02,
+  "use_selective": true,
+  "min_tau": 2.0,
+  "max_tau": 2000.0,
+  "bos_token_id": 50256,
+  "eos_token_id": 50256,
+  "pad_token_id": 50256,
+  "torch_dtype": "float32",
+  "transformers_version": "5.16.1"
+}

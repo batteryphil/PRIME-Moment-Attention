@@ -1,0 +1,108 @@
+{
+  "benchmark": "Crucible 3: Edge-Constrained Hardware Crucible",
+  "total_stream_tokens": 2500000,
+  "model_weights_gb": 3.09,
+  "prime_attn_state_mb": 36.0,
+  "prime_system_gb": 3.125,
+  "timeline": [
+    {
+      "tokens_processed": 0,
+      "softmax_kv_cache_gb": 0.0,
+      "softmax_total_ram_gb": 3.09,
+      "softmax_status_4gb": "ALIVE",
+      "softmax_status_8gb": "ALIVE",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 100000,
+      "softmax_kv_cache_gb": 2.67,
+      "softmax_total_ram_gb": 5.76,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "ALIVE",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 250000,
+      "softmax_kv_cache_gb": 6.676,
+      "softmax_total_ram_gb": 9.766,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "OOM_CRASH",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 500000,
+      "softmax_kv_cache_gb": 13.351,
+      "softmax_total_ram_gb": 16.441,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "OOM_CRASH",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 750000,
+      "softmax_kv_cache_gb": 20.027,
+      "softmax_total_ram_gb": 23.117,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "OOM_CRASH",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 1000000,
+      "softmax_kv_cache_gb": 26.703,
+      "softmax_total_ram_gb": 29.793,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "OOM_CRASH",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 1500000,
+      "softmax_kv_cache_gb": 40.054,
+      "softmax_total_ram_gb": 43.144,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "OOM_CRASH",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 2000000,
+      "softmax_kv_cache_gb": 53.406,
+      "softmax_total_ram_gb": 56.496,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "OOM_CRASH",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    },
+    {
+      "tokens_processed": 2500000,
+      "softmax_kv_cache_gb": 66.757,
+      "softmax_total_ram_gb": 69.847,
+      "softmax_status_4gb": "OOM_CRASH",
+      "softmax_status_8gb": "OOM_CRASH",
+      "prime_attn_state_mb": 36.0,
+      "prime_total_ram_gb": 3.125,
+      "prime_status_4gb": "ALIVE (PASS)",
+      "prime_status_8gb": "ALIVE (PASS)"
+    }
+  ]
+}

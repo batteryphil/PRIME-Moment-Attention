@@ -1,0 +1,106 @@
+{
+  "Full Softmax (Standard KV)": {
+    "250": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 2.945,
+      "peak_vram_mb": 3047.98
+    },
+    "1000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 0.6,
+      "peak_vram_mb": 3204.99
+    },
+    "2000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 1.018,
+      "peak_vram_mb": 3596.58
+    },
+    "4000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 2.894,
+      "peak_vram_mb": 5026.63
+    }
+  },
+  "Pure Sliding Window (W=512)": {
+    "250": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 1.046,
+      "peak_vram_mb": 3050.94
+    },
+    "1000": {
+      "success": false,
+      "output": "9481.",
+      "latency_s": 0.591,
+      "peak_vram_mb": 3208.43
+    },
+    "2000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 1.122,
+      "peak_vram_mb": 3608.16
+    },
+    "4000": {
+      "success": false,
+      "output": "9481.",
+      "latency_s": 3.32,
+      "peak_vram_mb": 5202.75
+    }
+  },
+  "Pure PRIME Recurrence": {
+    "250": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 0.476,
+      "peak_vram_mb": 3049.25
+    },
+    "1000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 0.863,
+      "peak_vram_mb": 3205.49
+    },
+    "2000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 1.78,
+      "peak_vram_mb": 3596.19
+    },
+    "4000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 4.607,
+      "peak_vram_mb": 5024.18
+    }
+  },
+  "Hybrid Window + PRIME (W=512)": {
+    "250": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 0.354,
+      "peak_vram_mb": 3050.94
+    },
+    "1000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 0.594,
+      "peak_vram_mb": 3208.43
+    },
+    "2000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 1.114,
+      "peak_vram_mb": 3608.16
+    },
+    "4000": {
+      "success": true,
+      "output": "94812",
+      "latency_s": 3.319,
+      "peak_vram_mb": 5202.75
+    }
+  }
+}

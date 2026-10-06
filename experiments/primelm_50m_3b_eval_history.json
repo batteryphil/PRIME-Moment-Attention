@@ -1,0 +1,1010 @@
+[
+  {
+    "step": 2500,
+    "tokens_trained": 180256768,
+    "loss": 34.2171,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Divide both sides by 2 to get x = 30. \u21b5 Final Answer: 30.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 564 Joules. \u21b5 Final Answer: 5 cavity cavity cavity cavity",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 7 * 16 = 1664 Joules. \u21b5 Final Answer:",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "The little girl was so happy that she said, \"I can make sure you can take a break.\" \u21b5  \u21b5 The little girl was so happy that she had a",
+        "rep_4": 0.2188
+      }
+    ],
+    "timestamp": "2026-09-22 07:07:35"
+  },
+  {
+    "step": 5000,
+    "tokens_trained": 262176768,
+    "loss": 31.1659,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "40 * 10 = 40 * 10 = 40. \u21b5 Final Answer: 40.",
+        "rep_4": 0.1429
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = corresponds Joules. \u21b5 Final Answer: redefged.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2.5 * m * v^2.5 * m * v^2.5 * m * v^2",
+        "rep_4": 0.6562
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and said, \"I am sorry, Lily. You are a good friend.\" Lily was sad and said, \"I am sorry, Lily. I am",
+        "rep_4": 0.2188
+      }
+    ],
+    "timestamp": "2026-09-22 07:49:54"
+  },
+  {
+    "step": 7500,
+    "tokens_trained": 344096768,
+    "loss": 28.9311,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 5 from both sides to get 5 * x = 5. \u21b5 Step 2: Divide both sides by 5 to get x = 5. \u21b5 Final Answer: 5",
+        "rep_4": 0.0625
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 480 Joules. \u21b5 Final Answer: 480.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 36 Joules. \u21b5 Final Answer: 36",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and proud of herself for being so kind andrilrilrilrilrilrilrilrilrilrilrilrilrilrilrilrilrilrilrilrilrilril",
+        "rep_4": 0.5625
+      }
+    ],
+    "timestamp": "2026-09-22 08:32:13"
+  },
+  {
+    "step": 10000,
+    "tokens_trained": 426016768,
+    "loss": 26.6847,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 5. \u21b5 Final Answer: 5",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 4 = 12 Joules. \u21b5 Final Answer: 12",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She wanted to eat it, but her mom said it was too heavy for her. \u21b5  \u21b5 Lily and her mom went to the garden. They saw the characteristics of the",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 09:14:33"
+  },
+  {
+    "step": 12500,
+    "tokens_trained": 507936768,
+    "loss": 25.6853,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get x = 30. \u21b5 Final Answer: 30.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q =Org. \u21b5 Calculation: Q = 4 * 4 = 48 Joules. \u21b5 Final Answer: 48.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 24 * 16 = 144 Joules. \u21b5 Final Answer: 144",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and thanked the girl for helping her Coh and rental. \u21b5  \u21b5 After a while, Lily and her little girl went to the park to play. They had",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 09:57:01"
+  },
+  {
+    "step": 15000,
+    "tokens_trained": 589856768,
+    "loss": 24.8307,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Divide both sides by 6 to get x = 4. \u21b5 Final Answer: 4.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 480 Joules. \u21b5 Final Answer: 480.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and excited to have such a great time. \u21b5  \u21b5 One day, Lily found a shiny key in the garden. She wanted to join the key and see",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 10:39:26"
+  },
+  {
+    "step": 17500,
+    "tokens_trained": 671776768,
+    "loss": 25.0506,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get x = 12. \u21b5 Final Answer: 12.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 480 Joules. \u21b5 Final Answer: 480.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Jou Joules. \u21b5 Final Answer:",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "Lily was so excited that she wanted to show her mommy. She ran to the garden and saw the key. Lily was so happy and she ran to show her mommy",
+        "rep_4": 0.0625
+      }
+    ],
+    "timestamp": "2026-09-22 11:21:55"
+  },
+  {
+    "step": 20000,
+    "tokens_trained": 753696768,
+    "loss": 24.0431,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 20. \u21b5 Final Answer: 20",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 96 Joules. \u21b5 Final Answer: 96",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She wanted to find it, but she was brave and decided to try it. She took herSea and put it on her bed. \u21b5  \u21b5 Lily was very sad and",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 12:04:18"
+  },
+  {
+    "step": 22500,
+    "tokens_trained": 835616768,
+    "loss": 23.7475,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Divide both sides by 2 to get x = 40. \u21b5 Final Answer: 40.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 96 Joules. \u21b5 Final Answer: 96",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so excited! She was so excited!  \u21b5  \u21b5 Lily was so excited! She couldn't wait to show her mommy. She had a special key!",
+        "rep_4": 0.125
+      }
+    ],
+    "timestamp": "2026-09-22 12:46:58"
+  },
+  {
+    "step": 25000,
+    "tokens_trained": 917536768,
+    "loss": 22.8218,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Divide both sides by x: x = 10. \u21b5 Step 2: Divide both sides by x: x = 7. \u21b5 Step 2: Divide both sides by x: x",
+        "rep_4": 0.4375
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy to see her friend, the key! They played together and had a great time.",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 13:29:28"
+  },
+  {
+    "step": 27500,
+    "tokens_trained": 999456768,
+    "loss": 22.2934,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 20. \u21b5 Final Answer: 20",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = I * R. \u21b5 Calculation: E = 0.5 * 4 * 36 = 96 Joules. \u21b5 Final Answer: 96.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She picked it up and started to draw. She used her mapping to make a appallingiro. \u21b5  \u21b5 \"Wow, Lily! I have a interactions with you!\" said Lily",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 14:11:55"
+  },
+  {
+    "step": 30000,
+    "tokens_trained": 1081376768,
+    "loss": 23.831,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 5. \u21b5 Final Answer: 5",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so excited! She picked it up and showed it to her mommy. \u21b5  \u21b5 When they got home, Lily was so excited. She was so excited to show",
+        "rep_4": 0.0312
+      }
+    ],
+    "timestamp": "2026-09-22 14:54:23"
+  },
+  {
+    "step": 32500,
+    "tokens_trained": 1163296768,
+    "loss": 22.3899,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Divide x x 5 by x + 15 = 40. \u21b5 Step 2: Divide x x 5 by x + 15 = 40. \u21b5 Step 2: Divide x x 5 by",
+        "rep_4": 0.5312
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She wanted to see the key, so she went to the garden and found a big, shiny key. She picked it up and showed it to her mom. They were so",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 15:36:43"
+  },
+  {
+    "step": 35000,
+    "tokens_trained": 1245216768,
+    "loss": 22.748,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides: x = 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 5. \u21b5 Final Answer:",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She wanted to pick it up, but it was too heavy for her.  \u21b5  \u21b5 Lily was very sad and started to cry. Suddenly, she heard a voice from",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 16:19:04"
+  },
+  {
+    "step": 37500,
+    "tokens_trained": 1327136768,
+    "loss": 21.1962,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get x = 30. \u21b5 Step 2: Divide both sides by x to get x = 3. \u21b5 Final Answer: 3.",
+        "rep_4": 0.0312
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and wanted to show it to her mommy. \u21b5  \u21b5 As they walked, Lily saw a little bird on the ground. She was curious and asked her",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 17:01:30"
+  },
+  {
+    "step": 40000,
+    "tokens_trained": 1409056768,
+    "loss": 21.4815,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 9 * x = 63. \u21b5 Step 2: Divide both sides by 9 to get x = 12. \u21b5 Final Answer: 12",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and hugged her mommy. \u21b5  \u21b5 Lily was so happy that she hugged her mommy and went off to play. She was so happy that she",
+        "rep_4": 0.125
+      }
+    ],
+    "timestamp": "2026-09-22 17:43:52"
+  },
+  {
+    "step": 42500,
+    "tokens_trained": 1490976768,
+    "loss": 20.5431,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 25. \u21b5 Final Answer: 25",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She wanted to see what was inside the key. Lily tried to open it, but it was too hard. She asked her mom, \"Can I open it, mom?\"",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 18:26:18"
+  },
+  {
+    "step": 45000,
+    "tokens_trained": 1572896768,
+    "loss": 22.8832,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Divide both sides by 5: x = 23 / 5 = <<23/5=7>>7. \u21b5 Combined, the number of times that amount is report by the",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 96 Joules. \u21b5 Final Answer: 96",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and put it on the plant. \u21b5  \u21b5 Lily picked up the key and showed it to her mom. Her mom said, \"Lily, you",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 19:08:40"
+  },
+  {
+    "step": 47500,
+    "tokens_trained": 1654816768,
+    "loss": 21.3679,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 75. \u21b5 Step 2: Divide both sides by 5 to get x = 9. \u21b5 Final Answer: 9",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and nuns jar, she couldn't believe her eyes. \u21b5  \u21b5 Lily was so happy that she had found a key in her garden. She was so",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 19:51:09"
+  },
+  {
+    "step": 50000,
+    "tokens_trained": 1736736768,
+    "loss": 21.9423,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides: 6 * x = 48. \u21b5 Step 2: Divide both sides by 6 to get x = 3. \u21b5 Final Answer: 3.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 96 Joules. \u21b5 Final Answer: 96",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and ate it all by herself. \u21b5  \u21b5 After a while, Lily went to the garden to find a key. She found a key and showed it to",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-22 20:33:37"
+  },
+  {
+    "step": 52500,
+    "tokens_trained": 1818656768,
+    "loss": 21.7206,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 5. \u21b5 Final Answer: 5",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and excited to see it. \u21b5  \u21b5 Lily was so happy and excited to see the key. She had never seen a key before and couldn't wait",
+        "rep_4": 0.125
+      }
+    ],
+    "timestamp": "2026-09-22 21:16:00"
+  },
+  {
+    "step": 55000,
+    "tokens_trained": 1900576768,
+    "loss": 21.4841,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Divide both sides by 6 to get x = 30. \u21b5 Final Answer: 30.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and ate all the patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented patented",
+        "rep_4": 0.7188
+      }
+    ],
+    "timestamp": "2026-09-22 21:58:21"
+  },
+  {
+    "step": 57500,
+    "tokens_trained": 1982496768,
+    "loss": 20.4574,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 12 * x = 168. \u21b5 Step 2: Divide both sides by 12 to get x = 42. \u21b5 Final Answer: 42",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy to have found it! \u21b5  \u21b5 Lily's eyes lit up with excitement. She was so happy to have found it! She was so happy to have",
+        "rep_4": 0.2812
+      }
+    ],
+    "timestamp": "2026-09-22 22:40:43"
+  },
+  {
+    "step": 60000,
+    "tokens_trained": 2064416768,
+    "loss": 20.3792,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 6 * x = 48. \u21b5 Step 2: Divide both sides by 6 to get x = 3. \u21b5 Final Answer: 3",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and thanked the key for being so kind. \u21b5  \u21b5 Lily was so happy and thanked the key for being so kind. She thanked the key for being",
+        "rep_4": 0.3438
+      }
+    ],
+    "timestamp": "2026-09-22 23:23:07"
+  },
+  {
+    "step": 62500,
+    "tokens_trained": 2146336768,
+    "loss": 21.1175,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 5. \u21b5 Final Answer: 5",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it in the Latino. \u21b5  \u21b5 Lily was so happy to have a key in the garden. She showed it to her friend, the little",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 00:05:41"
+  },
+  {
+    "step": 65000,
+    "tokens_trained": 2228256768,
+    "loss": 20.1915,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 20. \u21b5 Final Answer: 20",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and wanted to show it to her mommy. \u21b5  \u21b5 Lily asked her mommy, \"Can I have it?\" Her mommy said, \"",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 00:48:09"
+  },
+  {
+    "step": 67500,
+    "tokens_trained": 2310176768,
+    "loss": 20.9537,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 10. \u21b5 Final Answer: 10",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it in the appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled appalled",
+        "rep_4": 0.6875
+      }
+    ],
+    "timestamp": "2026-09-23 01:30:44"
+  },
+  {
+    "step": 70000,
+    "tokens_trained": 2392096768,
+    "loss": 20.1371,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 75. \u21b5 Step 2: Divide both sides by 5 to get x = 3. \u21b5 Final Answer: 3",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was so happy and thanked the key for being so kind. \u21b5  \u21b5 Lily was so happy that she had found the key in the garden. She was so happy and",
+        "rep_4": 0.0625
+      }
+    ],
+    "timestamp": "2026-09-23 02:13:08"
+  },
+  {
+    "step": 72500,
+    "tokens_trained": 2474016768,
+    "loss": 20.7621,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 6 * x = 42. \u21b5 Step 2: Divide both sides by 6 to get x = 10. \u21b5 Final Answer: 10",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it in the Latino. \u21b5  \u21b5 Lily showed the key to the key and said, \"Wow, look at that key! It's so",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 02:55:36"
+  },
+  {
+    "step": 75000,
+    "tokens_trained": 2555936768,
+    "loss": 21.0729,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides: 6 * x = 36. \u21b5 Step 2: Divide both sides by 6 to get x = 3. \u21b5 Final Answer: 3.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and ate it all up. \u21b5  \u21b5 After a while, Lily's mommy came to her room and said, \"Lily, you are so smart",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 03:38:03"
+  },
+  {
+    "step": 77500,
+    "tokens_trained": 2637856768,
+    "loss": 19.5833,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 6 * x = 42. \u21b5 Step 2: Divide both sides by 6 to get x = 9. \u21b5 Final Answer: 9",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it in the Latino. \u21b5  \u21b5 Lily's mommy told her that it was a very special key. Lily was so happy and thanked Lily",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 04:20:32"
+  },
+  {
+    "step": 80000,
+    "tokens_trained": 2719776768,
+    "loss": 20.1011,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 10. \u21b5 Final Answer: 10",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it in the Latino.  \u21b5  \u21b5 After a while, Lily's mommy came to the garden. She showed Lily how toERCie and",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 05:02:53"
+  },
+  {
+    "step": 82500,
+    "tokens_trained": 2801696768,
+    "loss": 20.9198,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 5 * x = 50. \u21b5 Step 2: Divide both sides by 5 to get x = 5. \u21b5 Final Answer: 5",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it on the ground. \u21b5  \u21b5 Lily showed the key to the key and said, \"Wow, look at it!\" Her friend, Tim",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 05:45:20"
+  },
+  {
+    "step": 85000,
+    "tokens_trained": 2883616768,
+    "loss": 20.0224,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 6 * x = 42. \u21b5 Step 2: Divide both sides by 6 to get x = 14. \u21b5 Final Answer: 14",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it on the ground. \u21b5  \u21b5 Lily was very happy and thanked the key. She showed it to her mom and dad and they all played",
+        "rep_4": 0.0312
+      }
+    ],
+    "timestamp": "2026-09-23 06:27:45"
+  },
+  {
+    "step": 87500,
+    "tokens_trained": 2965536768,
+    "loss": 20.7495,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 6 * x = 42. \u21b5 Step 2: Divide both sides by 6 to get x = 14. \u21b5 Final Answer: 14",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and put it in the Latino. \u21b5  \u21b5 Lily showed the key to the key and said, \"Wow, look at the key!\" Her mommy",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 07:10:13"
+  },
+  {
+    "step": 90000,
+    "tokens_trained": 3047456768,
+    "loss": 20.6351,
+    "probe_results": [
+      {
+        "prompt": "Solve for x: 5 * x + 15 = 40. Step 1:",
+        "generation": "Subtract 15 from both sides to get 6 * x = 42. \u21b5 Step 2: Divide both sides by 6 to get x = 10. \u21b5 Final Answer: 10",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate heat required for 4 kg water heated by 20 K. Formula:",
+        "generation": "Q = m * c * deltaT. \u21b5 Calculation: Q = 4 * 4 * 20 = 320 Joules. \u21b5 Final Answer: 320.",
+        "rep_4": 0.0
+      },
+      {
+        "prompt": "Problem: Calculate kinetic energy of mass 6 kg moving at speed 4 m/s. Formula:",
+        "generation": "E = 0.5 * m * v^2. \u21b5 Calculation: E = 0.5 * 6 * 16 = 48 Joules. \u21b5 Final Answer: 48",
+        "rep_4": 0.0938
+      },
+      {
+        "prompt": "Once upon a time, a little girl named Lily found a shiny key in the garden.",
+        "generation": "She was very happy and wanted to show her mom. \u21b5  \u21b5 Lily was so happy and thanked the key. She showed her mom the key and they all played together happily",
+        "rep_4": 0.0
+      }
+    ],
+    "timestamp": "2026-09-23 07:52:41"
+  }
+]
