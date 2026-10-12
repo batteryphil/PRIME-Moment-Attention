@@ -43,6 +43,19 @@ $(BIN_DIR)/prime.com: $(SRC) $(HEADERS)
 	$(COSMOCC) $(COSMO_CFLAGS) -o $@ $(SRC) $(COSMO_LDFLAGS)
 	@echo "Built Cosmopolitan APE binary: $@"
 
+$(BIN_DIR)/zipalign.com: zipalign.c
+	@mkdir -p $(BIN_DIR)
+	$(COSMOCC) $(COSMO_CFLAGS) -o $@ zipalign.c
+	@echo "Built Cosmopolitan APE zipalign tool: $@"
+
+cosmo-bundle: $(BIN_DIR)/prime.com $(BIN_DIR)/zipalign.com
+	@echo "Creating dummy weights for bundling..."
+	@python3 -c "import struct; f=open('$(BIN_DIR)/dummy_weights.bin','wb'); f.write(struct.pack('4f', 0.1234, 0.5678, 0.9012, 0.3456)); f.close()"
+	@cp $(BIN_DIR)/prime.com $(BIN_DIR)/prime_bundled.com
+	TMPDIR=$$(pwd)/../tmp HOME=$$(pwd)/../tmp sh $(BIN_DIR)/zipalign.com -a 4096 $(BIN_DIR)/prime_bundled.com $(BIN_DIR)/dummy_weights.bin weights.bin
+	@echo "Testing bundled APE..."
+	TMPDIR=$$(pwd)/../tmp HOME=$$(pwd)/../tmp sh $(BIN_DIR)/prime_bundled.com --test-mmap weights.bin
+
 test: native
 	$(BIN_DIR)/prime --verify
 

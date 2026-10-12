@@ -180,14 +180,22 @@ For edge devices, serverless inference, or environments without Python/PyTorch r
 
 ### Build & Benchmark C Engine
 ```bash
-# Compile and run C benchmark
-make bench
+# Download Cosmopolitan compiler locally (optional, make cosmo does this automatically)
+make get-cosmocc
 
-# Run C self-test verification suite
-make test
-
-# Build Cosmopolitan APE binary (if cosmocc is installed)
+# Build Cosmopolitan APE binary (prime.com)
 make cosmo
+
+# Build APE binary and embed dummy weights (prime_bundled.com)
+make cosmo-bundle
+
+# Bundle actual PyTorch weights into a portable executable
+./scripts/export_to_ape.py --ape c/bin/prime.com \
+                           --weights path/to/real_weights.bin \
+                           --out prime-125m.com
+
+# Run the bundled executable on Linux, macOS, or Windows
+sh ./prime-125m.com --test-mmap weights.bin
 ```
 
 ---
